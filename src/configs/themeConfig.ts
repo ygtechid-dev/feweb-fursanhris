@@ -54,10 +54,10 @@ export type Config = {
 }
 
 const themeConfig: Config = {
-  templateName: 'Vuexy',
+  templateName: 'HRIS',
   homePageUrl: '/dashboard',
-  settingsCookieName: 'vuexy-mui-next-demo-1',
-  mode: 'system', // 'system', 'light', 'dark'
+  settingsCookieName: 'fursan-hris-1',
+  mode: 'light', // 'system', 'light', 'dark'
   skin: 'default', // 'default', 'bordered'
   semiDark: false, // true, false
   layout: 'vertical', // 'vertical', 'collapsed', 'horizontal'

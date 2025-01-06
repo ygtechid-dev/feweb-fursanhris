@@ -24,11 +24,11 @@ const FooterContent = () => {
         <span className='text-textSecondary'>{`© ${new Date().getFullYear()}, Made with `}</span>
         <span>{`❤️`}</span>
         <span className='text-textSecondary'>{` by `}</span>
-        <Link href='https://pixinvent.com' target='_blank' className='text-primary uppercase'>
-          Pixinvent
+        <Link href='#' target='_blank' className='text-primary uppercase'>
+        PT Fursan Rich Global
         </Link>
       </p>
-      {!isBreakpointReached && (
+      {/* {!isBreakpointReached && (
         <div className='flex items-center gap-4'>
           <Link href='https://themeforest.net/licenses/standard' target='_blank' className='text-primary'>
             License
@@ -47,7 +47,7 @@ const FooterContent = () => {
             Support
           </Link>
         </div>
-      )}
+      )} */}
     </div>
   )
 }
