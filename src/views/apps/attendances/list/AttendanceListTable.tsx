@@ -4,20 +4,16 @@
 import { useEffect, useState, useMemo } from 'react'
 
 // Next Imports
-import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
-import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
 import Checkbox from '@mui/material/Checkbox'
 import IconButton from '@mui/material/IconButton'
 import { styled } from '@mui/material/styles'
 import TablePagination from '@mui/material/TablePagination'
-import type { TextFieldProps } from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 
 // Third-party Imports
@@ -41,12 +37,10 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 // Type Imports
 import type { ThemeColor } from '@core/types'
 import type { UsersType } from '@/types/apps/userTypes'
-import type { Locale } from '@configs/i18n'
 
 // Component Imports
 import TableFilters from './TableFilters'
 import AddUserDrawer from './AddUserDrawer'
-import OptionMenu from '@core/components/option-menu'
 import TablePaginationComponent from '@components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
 import CustomAvatar from '@core/components/mui/Avatar'
@@ -57,6 +51,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+import { TextFieldProps } from '@mui/material'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -125,19 +120,19 @@ const DebouncedInput = ({
 }
 
 // Vars
-const userRoleObj: UserRoleType = {
-  admin: { icon: 'tabler-crown', color: 'error' },
-  author: { icon: 'tabler-device-desktop', color: 'warning' },
-  editor: { icon: 'tabler-edit', color: 'info' },
-  maintainer: { icon: 'tabler-chart-pie', color: 'success' },
-  subscriber: { icon: 'tabler-user', color: 'primary' }
-}
+// const userRoleObj: UserRoleType = {
+//   admin: { icon: 'tabler-crown', color: 'error' },
+//   author: { icon: 'tabler-device-desktop', color: 'warning' },
+//   editor: { icon: 'tabler-edit', color: 'info' },
+//   maintainer: { icon: 'tabler-chart-pie', color: 'success' },
+//   subscriber: { icon: 'tabler-user', color: 'primary' }
+// }
 
-const userStatusObj: UserStatusType = {
-  active: 'success',
-  pending: 'warning',
-  inactive: 'secondary'
-}
+// const userStatusObj: UserStatusType = {
+//   active: 'success',
+//   pending: 'warning',
+//   inactive: 'secondary'
+// }
 
 // Column Definitions
 const columnHelper = createColumnHelper<UsersTypeWithAction>()
@@ -151,7 +146,7 @@ const AttendanceListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   const [globalFilter, setGlobalFilter] = useState('')
 
   // Hooks
-  const { lang: locale } = useParams()
+  // const { lang: locale } = useParams()
 
   const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
     () => [
@@ -334,15 +329,15 @@ const AttendanceListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
+  // const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
+  //   const { avatar, fullName } = params
 
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-    }
-  }
+  //   if (avatar) {
+  //     return <CustomAvatar src={avatar} size={34} />
+  //   } else {
+  //     return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
+  //   }
+  // }
 
   return (
     <>

@@ -12,14 +12,12 @@ import IconButton from '@mui/material/IconButton'
 
 // Third-party Imports
 import classnames from 'classnames'
-import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from 'cmdk'
+import { CommandDialog, CommandInput, CommandItem, CommandList } from 'cmdk'
 
 // Type Imports
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
-import DefaultSuggestions from './DefaultSuggestions'
-import NoResult from './NoResult'
 
 // Hook Imports
 import useVerticalNav from '@menu/hooks/useVerticalNav'
@@ -80,36 +78,36 @@ type SearchItemProps = {
 // }, [])
 
 // SearchItem Component for introduce the shortcut keys
-const SearchItem = ({ children, shortcut, value, currentPath, url, onSelect = () => {} }: SearchItemProps) => {
-  return (
-    <CommandItem
-      onSelect={onSelect}
-      value={value}
-      className={classnames('mli-2 mbe-px last:mbe-0 rounded', {
-        'active-searchItem': currentPath === url
-      })}
-    >
-      {children}
-      {shortcut && (
-        <div cmdk-vercel-shortcuts=''>
-          {shortcut.split(' ').map(key => {
-            return <kbd key={key}>{key}</kbd>
-          })}
-        </div>
-      )}
-    </CommandItem>
-  )
-}
+// const SearchItem = ({ children, shortcut, value, currentPath, url, onSelect = () => {} }: SearchItemProps) => {
+//   return (
+//     <CommandItem
+//       onSelect={onSelect}
+//       value={value}
+//       className={classnames('mli-2 mbe-px last:mbe-0 rounded', {
+//         'active-searchItem': currentPath === url
+//       })}
+//     >
+//       {children}
+//       {shortcut && (
+//         <div cmdk-vercel-shortcuts=''>
+//           {shortcut.split(' ').map(key => {
+//             return <kbd key={key}>{key}</kbd>
+//           })}
+//         </div>
+//       )}
+//     </CommandItem>
+//   )
+// }
 
 // Helper function to filter and limit results per section based on the number of sections
-const getFilteredResults = (sections: Section[]) => {
-  const limit = sections.length > 1 ? 3 : 5
+// const getFilteredResults = (sections: Section[]) => {
+//   const limit = sections.length > 1 ? 3 : 5
 
-  return sections.map(section => ({
-    ...section,
-    items: section.items.slice(0, limit)
-  }))
-}
+//   return sections.map(section => ({
+//     ...section,
+//     items: section.items.slice(0, limit)
+//   }))
+// }
 
 // Footer component for the search menu
 const CommandFooter = () => {
@@ -147,43 +145,43 @@ const NavSearch = () => {
   const router = useRouter()
   const pathName = usePathname()
   const { settings } = useSettings()
-  const { lang: locale } = useParams()
+  // const { lang: locale } = useParams()
   const { isBreakpointReached } = useVerticalNav()
 
   // When an item is selected from the search results
-  const onSearchItemSelect = (item: Item) => {
-    item.url.startsWith('http')
-      ? window.open(item.url, '_blank')
-      : router.push(item.excludeLang ? item.url : getLocalizedUrl(item.url, locale as Locale))
-    setOpen(false)
-  }
+  // const onSearchItemSelect = (item: Item) => {
+  //   item.url.startsWith('http')
+  //     ? window.open(item.url, '_blank')
+  //     : router.push(item.excludeLang ? item.url : getLocalizedUrl(item.url, locale as Locale))
+  //   setOpen(false)
+  // }
 
   // Filter the data based on the search query
-  const filteredData = (sections: Section[], query: string) => {
-    const searchQuery = query.trim().toLowerCase()
+  // const filteredData = (sections: Section[], query: string) => {
+  //   const searchQuery = query.trim().toLowerCase()
 
-    return sections
-      .filter(section => {
-        const sectionMatches = section.title.toLowerCase().includes(searchQuery)
+  //   return sections
+  //     .filter(section => {
+  //       const sectionMatches = section.title.toLowerCase().includes(searchQuery)
 
-        const itemsMatch = section.items.some(
-          item =>
-            item.name.toLowerCase().includes(searchQuery) ||
-            (item.shortcut && item.shortcut.toLowerCase().includes(searchQuery))
-        )
+  //       const itemsMatch = section.items.some(
+  //         item =>
+  //           item.name.toLowerCase().includes(searchQuery) ||
+  //           (item.shortcut && item.shortcut.toLowerCase().includes(searchQuery))
+  //       )
 
-        return sectionMatches || itemsMatch
-      })
-      .map(section => ({
-        ...section,
-        items: section.items.filter(
-          item =>
-            section.title.toLowerCase().includes(searchQuery) ||
-            item.name.toLowerCase().includes(searchQuery) ||
-            (item.shortcut && item.shortcut.toLowerCase().includes(searchQuery))
-        )
-      }))
-  }
+  //       return sectionMatches || itemsMatch
+  //     })
+  //     .map(section => ({
+  //       ...section,
+  //       items: section.items.filter(
+  //         item =>
+  //           section.title.toLowerCase().includes(searchQuery) ||
+  //           item.name.toLowerCase().includes(searchQuery) ||
+  //           (item.shortcut && item.shortcut.toLowerCase().includes(searchQuery))
+  //       )
+  //     }))
+  // }
 
   // const limitedData = getFilteredResults(filteredData(transformedData, searchValue))
 
@@ -216,12 +214,7 @@ const NavSearch = () => {
           <i className='tabler-search text-2xl' />
         </IconButton>
       ) : (
-        // <div className='flex items-center gap-2 cursor-pointer' onClick={() => setOpen(true)}>
-        //   <IconButton className='text-textPrimary' onClick={() => setOpen(true)}>
-        //     <i className='tabler-search text-2xl' />
-        //   </IconButton>
-        //   <div className='whitespace-nowrap select-none text-textDisabled'>Search ⌘K</div>
-        // </div>
+       
         <div className=""></div>
       )}
       <CommandDialog open={open} onOpenChange={setOpen}>

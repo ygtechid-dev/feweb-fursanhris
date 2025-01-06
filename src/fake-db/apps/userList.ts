@@ -1,6 +1,6 @@
 // Type Imports
 
-import { UsersType } from "@/types/apps/userTypes";
+import type { UsersType } from "@/types/apps/userTypes";
 
 export const db: UsersType[] = [
   {

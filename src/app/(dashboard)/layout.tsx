@@ -33,7 +33,7 @@ const Layout = async ({ children }: ChildrenType) => {
         systemMode={systemMode}
         verticalLayout={
           <VerticalLayout
-            navigation={<Navigation mode={mode} systemMode={systemMode} />}
+            navigation={<Navigation mode={mode} systemMode={systemMode} dictionary={''} />}
             navbar={<Navbar />}
             footer={<VerticalFooter />}
           >
@@ -41,7 +41,7 @@ const Layout = async ({ children }: ChildrenType) => {
           </VerticalLayout>
         }
         horizontalLayout={
-          <HorizontalLayout header={<Header />} footer={<HorizontalFooter />}>
+          <HorizontalLayout header={<Header dictionary={''} />} footer={<HorizontalFooter />}>
             {children}
           </HorizontalLayout>
         }

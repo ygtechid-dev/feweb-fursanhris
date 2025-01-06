@@ -90,7 +90,7 @@ const HorizontalMenu = ({ dictionary }: { dictionary: Awaited<ReturnType<typeof 
           menuSectionStyles: verticalMenuSectionStyles(verticalNavOptions, theme)
         }}
       >
-        <SubMenu label={dictionary['navigation'].dashboards} icon={<i className='tabler-smart-home' />}>
+        {/* <SubMenu label={dictionary['navigation'].dashboards} icon={<i className='tabler-smart-home' />}>
           <MenuItem href={`/${locale}/dashboards/crm`} icon={<i className='tabler-chart-pie-2' />}>
             {dictionary['navigation'].crm}
           </MenuItem>
@@ -414,7 +414,7 @@ const HorizontalMenu = ({ dictionary }: { dictionary: Awaited<ReturnType<typeof 
             </SubMenu>
           </SubMenu>
           <MenuItem disabled>{dictionary['navigation'].disabledMenu}</MenuItem>
-        </SubMenu>
+        </SubMenu> */}
       </Menu>
       {/* <Menu
         rootStyles={menuRootStyles(theme)}

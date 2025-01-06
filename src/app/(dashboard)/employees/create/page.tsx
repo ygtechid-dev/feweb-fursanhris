@@ -1,9 +1,14 @@
 // MUI Imports
-import ProductAddHeader from '@/views/apps/employee/add/ProductAddHeader'
-import PersonalDetail from '@/views/apps/employee/add/PersonalDetail'
 import Grid from '@mui/material/Grid'
+import ProductAddHeader from '@/views/apps/employee/add/ProductAddHeader'
+
+import PersonalDetail from '@/views/apps/employee/add/PersonalDetail'
+
+
 import CompanyDetail from '@/views/apps/employee/add/CompanyDetail'
+
 import Document from '@/views/apps/employee/add/Document'
+
 import BankAccount from '@/views/apps/employee/add/BankAccount'
 
 // Component Imports

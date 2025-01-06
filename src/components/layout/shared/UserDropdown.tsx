@@ -46,12 +46,10 @@ const BadgeContentSpan = styled('span')({
 const UserDropdown = () => {
   // States
   const [open, setOpen] = useState(false)
-  // Refs
   const anchorRef = useRef<HTMLDivElement>(null)
 
   // Hooks
   const router = useRouter()
-  // const { data: session } = useSession()
   const { settings } = useSettings()
   const { lang: locale } = useParams()
 
@@ -96,7 +94,6 @@ const UserDropdown = () => {
           ref={anchorRef}
           // alt={session?.user?.name || ''}
           alt={ ''}
-          // src={session?.user?.image || ''}
           src={ ''}
           onClick={handleDropdownOpen}
           className='cursor-pointer bs-[38px] is-[38px]'
