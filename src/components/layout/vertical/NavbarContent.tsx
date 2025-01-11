@@ -1,3 +1,4 @@
+'use client'
 // Third-party Imports
 import classnames from 'classnames'
 
@@ -15,6 +16,9 @@ import UserDropdown from '@components/layout/shared/UserDropdown'
 
 // Util Imports
 import { verticalLayoutClasses } from '@layouts/utils/layoutClasses'
+import { Button } from '@mui/material'
+import useVerticalNav from '@/@menu/hooks/useVerticalNav'
+import CustomIconButton from '@/@core/components/mui/IconButton'
 
 // Vars
 // const shortcuts: ShortcutsType[] = [
@@ -109,7 +113,7 @@ const NavbarContent = () => {
     <div className={classnames(verticalLayoutClasses.navbarContent, 'flex items-center justify-between gap-4 is-full')}>
       <div className='flex items-center gap-4'>
         <NavToggle />
-        <NavSearch />
+        {/* <NavSearch /> */}
       </div>
       <div className='flex items-center'>
         <LanguageDropdown />

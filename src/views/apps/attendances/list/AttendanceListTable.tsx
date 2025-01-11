@@ -261,14 +261,14 @@ const AttendanceListTable = ({ tableData }: { tableData?: UsersType[] }) => {
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
+            {/* <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
               <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-            <IconButton >
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton >
+            </IconButton> */}
+            <IconButton title='View'>
               <i className='tabler-eye text-textSecondary' />
+            </IconButton>
+            <IconButton  title='Manual Clock Out'>
+              <i className='tabler-logout text-textSecondary' />
             </IconButton>
             {/* <IconButton>
               <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>

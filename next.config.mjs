@@ -9,7 +9,13 @@ const nextConfig = {
       {
         source: '/',
         destination: '/dashboard',
-        permanent: true,
+        permanent: false,
+        locale: false
+      },
+      {
+        source: '/project-management-workspace',
+        destination: '/projects',
+        permanent: false,
         locale: false
       }
     ]

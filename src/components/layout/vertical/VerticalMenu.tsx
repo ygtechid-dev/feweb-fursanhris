@@ -78,9 +78,9 @@ const VerticalMenu = ({ scrollMenu }: Props) => {
         {/* </MenuSection> */}
         {/* <MenuSection label={'Super Admin'}> */}
         <SubMenu label='Companies 'icon={<i className='tabler-buildings' />}>
-        <MenuItem href='/companies'>
-          Company List
-        </MenuItem>
+          <MenuItem href='/companies'>
+            Company List
+          </MenuItem>
         <MenuItem href='/companies/branches'>
           Branches
         </MenuItem>
@@ -105,6 +105,42 @@ const VerticalMenu = ({ scrollMenu }: Props) => {
         <MenuItem href='/overtimes' icon={<i className='tabler-clock' />}>
           Overtimes
         </MenuItem>
+
+        <SubMenu label='Payrolls'icon={<i className='tabler-wallet' />}>
+          <MenuItem href='/salary'>
+            Employee Salary
+          </MenuItem>
+          <MenuItem href='/payslips'>
+            Payslip
+          </MenuItem>
+        </SubMenu>
+        <MenuItem href='/projects' icon={<i className='tabler-chart-bar' />}>
+          Projects
+        </MenuItem>
+        <SubMenu label='HR Admin Setup' icon={<i className='tabler-settings-2' />}>
+          <MenuItem href='/reward'>
+            Reward
+          </MenuItem>
+          <MenuItem href='/resignation'>
+            Resignation
+          </MenuItem>
+          <MenuItem href='/trip'>
+            Trip
+          </MenuItem>
+          <MenuItem href='/promotion'>
+            Promotion
+          </MenuItem>
+          <MenuItem href='/complaint'>
+            Complaints
+          </MenuItem>
+          <MenuItem href='/warning'>
+            Warning
+          </MenuItem>
+          <MenuItem href='/termination'>
+          Termination
+          </MenuItem>
+        </SubMenu>
+
         {/* </MenuSection> */}
       </Menu>
       {/* <Menu
