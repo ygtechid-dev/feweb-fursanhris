@@ -140,6 +140,9 @@ const VerticalMenu = ({ scrollMenu }: Props) => {
           Termination
           </MenuItem>
         </SubMenu>
+        <MenuItem href='/documents' icon={<i className='tabler-file' />}>
+          Document
+        </MenuItem>
 
         {/* </MenuSection> */}
       </Menu>

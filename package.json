@@ -55,6 +55,7 @@
     "emoji-mart": "5.6.0",
     "input-otp": "1.2.4",
     "keen-slider": "6.8.6",
+    "lucide-react": "^0.473.0",
     "mapbox-gl": "3.5.2",
     "negotiator": "0.6.3",
     "next": "14.2.5",
