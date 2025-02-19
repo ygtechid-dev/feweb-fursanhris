@@ -45,7 +45,6 @@ import type { Locale } from '@configs/i18n'
 
 // Component Imports
 import TableFilters from './TableFilters'
-import AddUserDrawer from './AddDrawer'
 import OptionMenu from '@core/components/option-menu'
 import TablePaginationComponent from '@components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
@@ -57,7 +56,6 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import AddDrawer from './AddDrawer'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import { deleteEmployee } from '@/services/employeeService'
