@@ -240,7 +240,7 @@ const ProjectListTable = ({ tableData }: { tableData?: UsersType[] }) => {
         cell: ({ row }) => (
           <div className='flex items-center'>
             <IconButton title='Go To Workspace'>
-              <Link href={'/1/project-dashboard'}>
+              <Link href={`/${locale}/1/project-dashboard`}>
               <i className='tabler-folder-symlink text-textSecondary' />
               </Link>
             </IconButton>

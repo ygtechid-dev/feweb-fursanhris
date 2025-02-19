@@ -19,6 +19,7 @@ import { verticalLayoutClasses } from '@layouts/utils/layoutClasses'
 import { Button } from '@mui/material'
 import useVerticalNav from '@/@menu/hooks/useVerticalNav'
 import CustomIconButton from '@/@core/components/mui/IconButton'
+import { useParams } from 'next/navigation'
 
 // Vars
 // const shortcuts: ShortcutsType[] = [
@@ -110,16 +111,18 @@ const notifications: NotificationsType[] = [
 
 const NavbarContentProject = () => {
   const { toggleVerticalNav, isBreakpointReached } = useVerticalNav()
+  const { lang: locale } = useParams()
   return (
     <div className={classnames(verticalLayoutClasses.navbarContent, 'flex items-center justify-between gap-4 is-full')}>
       <div className='flex items-center gap-4'>
         <NavToggle />
         {/* <NavSearch /> */}
 
-        {isBreakpointReached ?  <CustomIconButton href='/projects' aria-label='Back To Project List' color='primary' size='small' variant='contained'>
+        {isBreakpointReached ?  <CustomIconButton href={`/${locale}/projects`} aria-label='Back To Project List' color='primary' size='small' variant='contained'>
             <i className='tabler-arrow-left' />
-          </CustomIconButton> : <Button
-              href='/projects'
+          </CustomIconButton> : 
+          <Button
+              href={`/${locale}/projects`}
               variant='contained'
               startIcon={<i className='tabler-arrow-left' />}
               // onClick={() => setAddUserOpen(!addUserOpen)}
