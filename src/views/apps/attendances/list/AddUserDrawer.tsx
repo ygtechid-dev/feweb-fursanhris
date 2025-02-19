@@ -61,37 +61,63 @@ const AddUserDrawer = (props: Props) => {
     reset: resetForm,
     handleSubmit,
     formState: { errors }
-  } = useForm<FormValidateType>({
+  } = useForm<AttendanceEmployee>({
     defaultValues: {
-      fullName: '',
-      password: '',
-      username: '',
-      email: '',
-      role: '',
-      plan: '',
-      status: 'Absent'
+      employee_name: '',
+      date: '',
+      clock_in: '',
+      clock_in_location: '',
+      clock_in_latitude: '',
+      clock_in_longitude: '',
+      clock_in_photo: '',
+      clock_in_notes: '',
+      clock_out: '',
+      clock_out_location: '',
+      clock_out_latitude: '',
+      clock_out_longitude: '',
+      clock_out_photo: '',
+      clock_out_notes: '',
+      status: 'Present',
+      late: '',
+      early_leaving: '',
+      timezone: '',
+      overtime: '',
+      total_rest: '',
+      clock_in_formatted: '',
+      clock_out_formatted: ''
     }
   })
 
-  const onSubmit = (data: FormValidateType) => {
+  const onSubmit = (data: AttendanceEmployee) => {
     const newUser: AttendanceEmployee = {
-      fullName: data.fullName,
-      password: data.password,
-      username: data.username,
-      email: data.email,
-      role: data.role,
-      currentPlan: data.plan,
-      status: data.status,
-      company: formData.company,
-      country: formData.country,
-      contact: formData.contact,
-      billing: userData?.[Math.floor(Math.random() * 50) + 1].billing ?? 'Auto Debit'
+      employee_name: data.employee_name,
+      date: '',
+      clock_in: '',
+      clock_in_location: '',
+      clock_in_latitude: '',
+      clock_in_longitude: '',
+      clock_in_photo: '',
+      clock_in_notes: '',
+      clock_out: '',
+      clock_out_location: '',
+      clock_out_latitude: '',
+      clock_out_longitude: '',
+      clock_out_photo: '',
+      clock_out_notes: '',
+      status: 'Present',
+      late: '',
+      early_leaving: '',
+      timezone: '',
+      overtime: '',
+      total_rest: '',
+      clock_in_formatted: '',
+      clock_out_formatted: ''
     }
 
     setData([...(userData ?? []), newUser])
     handleClose()
     setFormData(initialData)
-    resetForm({ fullName: '',password: '', username: '', email: '', role: '', plan: '', status: '' })
+    resetForm()
   }
 
   const handleReset = () => {
@@ -117,7 +143,7 @@ const AddUserDrawer = (props: Props) => {
       <Divider />
       <div>
         <form onSubmit={handleSubmit(data => onSubmit(data))} className='flex flex-col gap-6 p-6'>
-          <Controller
+          {/* <Controller
             name='fullName'
             control={control}
             rules={{ required: true }}
@@ -132,20 +158,7 @@ const AddUserDrawer = (props: Props) => {
             )}
           />
           
-          {/* <Controller
-            name='username'
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <CustomTextField
-                {...field}
-                fullWidth
-                label='Username'
-                placeholder='johndoe'
-                {...(errors.username && { error: true, helperText: 'This field is required.' })}
-              />
-            )}
-          /> */}
+         
           <Controller
             name='email'
             control={control}
@@ -195,7 +208,7 @@ const AddUserDrawer = (props: Props) => {
                 <MenuItem value='subscriber'>Subscriber</MenuItem>
               </CustomTextField>
             )}
-          />
+          /> */}
           {/* <Controller
             name='plan'
             control={control}
@@ -217,7 +230,7 @@ const AddUserDrawer = (props: Props) => {
               </CustomTextField>
             )}
           /> */}
-          <Controller
+          {/* <Controller
             name='status'
             control={control}
             rules={{ required: true }}
@@ -230,12 +243,12 @@ const AddUserDrawer = (props: Props) => {
                 {...field}
                 {...(errors.status && { error: true, helperText: 'This field is required.' })}
               >
-                {/* <MenuItem value='pending'>Pending</MenuItem> */}
+                <MenuItem value='pending'>Pending</MenuItem>
                 <MenuItem value='active'>Active</MenuItem>
                 <MenuItem value='inactive'>Inactive</MenuItem>
               </CustomTextField>
             )}
-          />
+          /> */}
           {/* <CustomTextField
             label='Company'
             fullWidth
