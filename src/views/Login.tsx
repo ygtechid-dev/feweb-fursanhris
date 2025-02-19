@@ -97,37 +97,64 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
   const { lang: locale } = useParams()
 
-  const handleLogin = async (e:any) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     try {
+      // Explicitly type the event and ensure preventDefault
+      e.preventDefault?.()
+      
+      if (!email || !password) {
+        toast.error('Please enter both email and password')
+        return
+      }
+
+      setError('')
+      setLoading(true)
+
+      // Add timeout to axios request
       const response = await axiosInstance.post('/login', {
-        login:email,
+        login: email.trim(),
         password,
-        remember: rememberMe ,
-        platform:'web',
-        login_type:'email',
+        remember: rememberMe,
+        platform: 'web',
+        login_type: 'email',
+      }, {
+        timeout: 15000, // 15 second timeout
+        headers: {
+          'Content-Type': 'application/json',
+          // Add any needed headers
+        }
       })
 
-      console.log({response})
-
-      // Assuming the backend returns a token
       const { token, user } = response.data?.data
-      // Store the token
-      localStorage.setItem('token', token)
-      
-      // Optional: Store user data
-      localStorage.setItem('user', JSON.stringify(user))
 
-      // Redirect to dashboard
-      router.replace(`/${locale}/dashboard`)
-    } catch (err:any) {
-      toast.error(
-        err.response?.data?.message || 
-        'An error occurred during login. Please try again.'
-      )
+      // Check if we can access localStorage
+      try {
+        localStorage.setItem('token', token)
+        localStorage.setItem('user', JSON.stringify(user))
+      } catch (storageError) {
+        console.error('Storage error:', storageError)
+        toast.error('Unable to store login information. Please check your browser settings.')
+        return
+      }
+
+      // Add delay before redirect to ensure storage is complete
+      setTimeout(() => {
+        router.replace(`/${locale}/dashboard`)
+      }, 100)
+
+    } catch (err: any) {
+      let errorMessage = 'An error occurred during login. Please try again.'
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message
+      } else if (err.code === 'ECONNABORTED') {
+        errorMessage = 'Login request timed out. Please check your connection.'
+      } else if (!navigator.onLine) {
+        errorMessage = 'No internet connection. Please check your network.'
+      }
+      
+      toast.error(errorMessage)
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

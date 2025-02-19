@@ -1,8 +1,20 @@
 // lib/axios.ts
 import axios from 'axios';
 
+const getBaseURL = () => {
+  switch (process.env.NODE_ENV) {
+    case 'development':
+      return 'http://127.0.0.1:8000/api';
+    case 'test':
+    case 'production':
+      return 'http://103.196.155.202:3333/api';
+    default:
+      return 'http://127.0.0.1:8000/api';
+  }
+};
+
 const axiosInstance = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api',
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },
