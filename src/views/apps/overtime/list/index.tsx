@@ -2,16 +2,17 @@
 import Grid from '@mui/material/Grid'
 
 // Type Imports
-import type { UsersType } from '@/types/apps/userTypes'
 import OvertimeListTable from './OvertimeListTable'
+import { KeyedMutator } from 'swr'
+import { Overtime } from '@/types/overtimeType'
 
 // Component Imports
 
-const OvertimeList = ({ userData }: { userData?: UsersType[] }) => {
+const OvertimeList = ({ datas, mutate }: { datas?: Overtime[], mutate: KeyedMutator<any> }) => {
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
-        <OvertimeListTable tableData={userData} />
+        <OvertimeListTable tableData={datas} />
       </Grid>
     </Grid>
   )

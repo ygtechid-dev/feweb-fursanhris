@@ -18,6 +18,7 @@ import type { Mode } from '@core/types'
 
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 const ModeDropdown = () => {
   // States
@@ -29,6 +30,7 @@ const ModeDropdown = () => {
 
   // Hooks
   const { settings, updateSettings } = useSettings()
+  const {dictionary} = useDictionary()
 
   const handleClose = () => {
     setOpen(false)
@@ -92,7 +94,7 @@ const ModeDropdown = () => {
                     selected={settings.mode === 'light'}
                   >
                     <i className='tabler-sun' />
-                    Light
+                    {dictionary['content'].light}
                   </MenuItem>
                   <MenuItem
                     className='gap-3'
@@ -100,7 +102,7 @@ const ModeDropdown = () => {
                     selected={settings.mode === 'dark'}
                   >
                     <i className='tabler-moon-stars' />
-                    Dark
+                    {dictionary['content'].dark}
                   </MenuItem>
                   <MenuItem
                     className='gap-3'
@@ -108,7 +110,7 @@ const ModeDropdown = () => {
                     selected={settings.mode === 'system'}
                   >
                     <i className='tabler-device-laptop' />
-                    System
+                    {dictionary['content'].system}
                   </MenuItem>
                 </MenuList>
               </ClickAwayListener>

@@ -7,28 +7,30 @@ import Grid from '@mui/material/Grid'
 import MenuItem from '@mui/material/MenuItem'
 
 // Type Imports
-import type { UsersType } from '@/types/apps/userTypes'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import { Role } from '@/types/userTypes'
+import { User } from '@/types/apps/userTypes'
+import { DictionaryType } from '@/@core/types'
 
-const TableFilters = ({ setData, tableData }: { setData: (data: UsersType[]) => void; tableData?: UsersType[] }) => {
+const TableFilters = ({ setData, tableData, roles }: { setData: (data: User[]) => void; tableData?: User[], roles: Role[] }) => {
   // States
-  const [role, setRole] = useState<UsersType['role']>('')
-  const [plan, setPlan] = useState<UsersType['currentPlan']>('')
-  const [status, setStatus] = useState<UsersType['status']>('')
+  const [role, setRole] = useState<Role | string>('')
+  // const [plan, setPlan] = useState<User['currentPlan']>('')
+  const [status, setStatus] = useState<User['is_active']>(1)
 
   useEffect(() => {
     const filteredData = tableData?.filter(user => {
-      if (role && user.role !== role) return false
-      if (plan && user.currentPlan !== plan) return false
-      if (status && user.status !== status) return false
+      if (role && user.type !== role) return false
+      console.log({status, user:user.is_active})
+      if (user.is_active != status) return false
 
       return true
     })
 
     setData(filteredData || [])
-  }, [role, plan, status, tableData, setData])
+  }, [role, status, tableData, setData])
 
   return (
     <CardContent>
@@ -43,11 +45,11 @@ const TableFilters = ({ setData, tableData }: { setData: (data: UsersType[]) => 
             SelectProps={{ displayEmpty: true }}
           >
             <MenuItem value=''>Select Role</MenuItem>
-            <MenuItem value='admin'>Admin</MenuItem>
-            <MenuItem value='author'>Author</MenuItem>
-            <MenuItem value='editor'>Editor</MenuItem>
-            <MenuItem value='maintainer'>Maintainer</MenuItem>
-            <MenuItem value='subscriber'>Subscriber</MenuItem>
+            {roles.map(role => (
+                <MenuItem key={role.id} value={role.name}>
+                  {role.name}
+                </MenuItem>
+            ))}
           </CustomTextField>
         </Grid>
         {/* <Grid item xs={12} sm={4}>
@@ -72,13 +74,11 @@ const TableFilters = ({ setData, tableData }: { setData: (data: UsersType[]) => 
             fullWidth
             id='select-status'
             value={status}
-            onChange={e => setStatus(e.target.value)}
+            onChange={e => setStatus(parseInt(e.target.value))}
             SelectProps={{ displayEmpty: true }}
           >
-            <MenuItem value=''>Select Status</MenuItem>
-            {/* <MenuItem value='pending'>Pending</MenuItem> */}
-            <MenuItem value='active'>Active</MenuItem>
-            <MenuItem value='inactive'>Inactive</MenuItem>
+            <MenuItem value='1'>Active</MenuItem>
+            <MenuItem value='0'>Inactive</MenuItem>
           </CustomTextField>
         </Grid>
       </Grid>

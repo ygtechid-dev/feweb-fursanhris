@@ -17,7 +17,7 @@ import MenuList from '@mui/material/MenuList'
 import MenuItem from '@mui/material/MenuItem'
 
 // Type Imports
-import type { Locale } from '@configs/i18n'
+import { i18n, type Locale } from '@configs/i18n'
 
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
@@ -38,18 +38,7 @@ const getLocalePath = (pathName: string, locale: string) => {
 
 // Vars
 const languageData: LanguageDataType[] = [
-  {
-    langCode: 'en',
-    langName: 'English'
-  },
-  {
-    langCode: 'fr',
-    langName: 'French'
-  },
-  {
-    langCode: 'ar',
-    langName: 'Arabic'
-  }
+  ...i18n.languageData
 ]
 
 const LanguageDropdown = () => {
@@ -66,6 +55,10 @@ const LanguageDropdown = () => {
 
   const handleClose = () => {
     setOpen(false)
+  }
+  const handleClickMenuItem = (path : string) => {
+    setOpen(false)
+    window.location.href = path;
   }
 
   const handleToggle = () => {
@@ -96,9 +89,10 @@ const LanguageDropdown = () => {
                   {languageData.map(locale => (
                     <MenuItem
                       key={locale.langCode}
-                      component={Link}
-                      href={getLocalePath(pathName, locale.langCode)}
-                      onClick={handleClose}
+                      // component={Link}
+                      // target="_self"
+                      // href={getLocalePath(pathName, locale.langCode)}
+                      onClick={() => handleClickMenuItem(getLocalePath(pathName, locale.langCode))}
                       selected={lang === locale.langCode}
                     >
                       {locale.langName}

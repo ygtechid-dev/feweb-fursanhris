@@ -4,20 +4,22 @@ import Typography from '@mui/material/Typography'
 
 // Third Party Imports
 import type { useReactTable } from '@tanstack/react-table'
+import { useDictionary } from './dictionary-provider/DictionaryContext'
 
 const TablePaginationComponent = ({ table }: { table: ReturnType<typeof useReactTable> }) => {
+  const {dictionary} = useDictionary();
   return (
     <div className='flex justify-between items-center flex-wrap pli-6 border-bs bs-auto plb-[12.5px] gap-2'>
       <Typography color='text.disabled'>
-        {`Showing ${
+        {`${dictionary['content'].showing} ${
           table.getFilteredRowModel().rows.length === 0
             ? 0
             : table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1
         }
-        to ${Math.min(
+        ${dictionary['content'].to} ${Math.min(
           (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
           table.getFilteredRowModel().rows.length
-        )} of ${table.getFilteredRowModel().rows.length} entries`}
+        )} ${dictionary['content'].of} ${table.getFilteredRowModel().rows.length} ${dictionary['content'].entries}`}
       </Typography>
       <Pagination
         shape='rounded'

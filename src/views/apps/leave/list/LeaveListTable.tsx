@@ -4,7 +4,6 @@
 import { useEffect, useState, useMemo } from 'react'
 
 // Next Imports
-import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
 // MUI Imports
@@ -40,23 +39,20 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
 import TableFilters from './TableFilters'
 import AddUserDrawer from './AddUserDrawer'
-import OptionMenu from '@core/components/option-menu'
 import TablePaginationComponent from '@components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
-import CustomAvatar from '@core/components/mui/Avatar'
-
-// Util Imports
-import { getInitials } from '@/utils/getInitials'
-import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+import { KeyedMutator } from 'swr'
+import { Leave } from '@/types/leaveTypes'
+import { ucfirst } from '@/utils/string'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -67,7 +63,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type LeaveTypeWithAction = Leave & {
   action?: string
 }
 
@@ -124,25 +120,10 @@ const DebouncedInput = ({
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
 }
 
-// Vars
-const userRoleObj: UserRoleType = {
-  admin: { icon: 'tabler-crown', color: 'error' },
-  author: { icon: 'tabler-device-desktop', color: 'warning' },
-  editor: { icon: 'tabler-edit', color: 'info' },
-  maintainer: { icon: 'tabler-chart-pie', color: 'success' },
-  subscriber: { icon: 'tabler-user', color: 'primary' }
-}
-
-const userStatusObj: UserStatusType = {
-  active: 'success',
-  pending: 'warning',
-  inactive: 'secondary'
-}
-
 // Column Definitions
-const columnHelper = createColumnHelper<UsersTypeWithAction>()
+const columnHelper = createColumnHelper<LeaveTypeWithAction>()
 
-const LeaveListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const LeaveListTable = ({ tableData, mutate }: { tableData?: Leave[],  mutate: KeyedMutator<any> }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -151,9 +132,10 @@ const LeaveListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   const [globalFilter, setGlobalFilter] = useState('')
 
   // Hooks
-  const { lang: locale } = useParams()
+  // const { lang: locale } = useParams()
+  const { dictionary } = useDictionary()
 
-  const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
+  const columns = useMemo<ColumnDef<LeaveTypeWithAction, any>[]>(
     () => [
       {
         id: 'select',
@@ -177,106 +159,104 @@ const LeaveListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('fullName', {
-        header: 'Employee',
+      columnHelper.accessor('employee.name', {
+        header: dictionary['content'].employee,
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+              {row.original.employee.name}
+              </Typography>
+            </div>
+          </div>
+        )
+      }),
+      columnHelper.accessor('leave_type.title', {
+        header: dictionary['content'].leaveType,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.fullName}
+                {row.original.leave_type.title}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Leave Type',
+      columnHelper.accessor('applied_on', {
+        header: dictionary['content'].appliedOn,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Medical Leave
+              {row.original.applied_on}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Applied On',
+      columnHelper.accessor('start_date', {
+        header: dictionary['content'].startDate,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Sep 4, 2024
+              {row.original.start_date}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Start Date',
+      columnHelper.accessor('end_date', {
+        header: dictionary['content'].endDate,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Sep 5, 2024
+              {row.original.end_date}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'End Date',
+      columnHelper.accessor('total_leave_days', {
+        header: dictionary['content'].totalDays,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Sep 7, 2024
+              {row.original.total_leave_days}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Total Days',
+      columnHelper.accessor('leave_reason', {
+        header: dictionary['content'].leaveReason,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              3
+                {row.original.leave_reason} 
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Leave Reason',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              Medicle Leave
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('fullName', {
-        header: 'Status',
+      columnHelper.accessor('status', {
+        header: dictionary['content'].status,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
@@ -284,7 +264,7 @@ const LeaveListTable = ({ tableData }: { tableData?: UsersType[] }) => {
               {/* <Typography color='text.primary' className='font-medium'>
               Medicle Leave
               </Typography> */}
-              <Chip label='Approve' color='success'/>
+              <Chip label= {ucfirst(row.original.status)}  color='success'/>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
@@ -306,11 +286,14 @@ const LeaveListTable = ({ tableData }: { tableData?: UsersType[] }) => {
       //   )
       // }),
       columnHelper.accessor('action', {
-        header: 'Action',
+        header: dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
              <IconButton >
               <i className='tabler-copy-check text-textSecondary' />
+            </IconButton>
+            <IconButton >
+              <i className='tabler-eye text-textSecondary' />
             </IconButton>
             <IconButton >
               <i className='tabler-edit text-textSecondary' />
@@ -350,7 +333,7 @@ const LeaveListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as Leave[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -378,20 +361,11 @@ const LeaveListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
-
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-    }
-  }
 
   return (
     <>
       <Card>
-        <CardHeader title='Leave List' className='pbe-4' />
+        <CardHeader title={dictionary['content'].leaveList} className='pbe-4' />
         <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -408,7 +382,7 @@ const LeaveListTable = ({ tableData }: { tableData?: UsersType[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search User'
+              placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
             {/* <Button
@@ -425,7 +399,7 @@ const LeaveListTable = ({ tableData }: { tableData?: UsersType[] }) => {
               // onClick={() => setAddUserOpen(!addUserOpen)}
               className='max-sm:is-full'
             >
-              Add Leave
+              {dictionary['content'].addNewLeave}
             </Button>
           </div>
         </div>

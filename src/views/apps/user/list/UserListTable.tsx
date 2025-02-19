@@ -40,7 +40,7 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
+import type { User } from '@/types/apps/userTypes'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -57,6 +57,14 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+import { KeyedMutator } from 'swr'
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
+import { toast } from 'react-toastify'
+import { deleteUser, fetchRoles } from '@/services/userService'
+import EditUserDrawer from './EditUserDrawer'
+import { Role } from '@/types/userTypes'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -67,7 +75,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type UsersTypeWithAction = User & {
   action?: string
 }
 
@@ -124,15 +132,6 @@ const DebouncedInput = ({
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
 }
 
-// Vars
-const userRoleObj: UserRoleType = {
-  admin: { icon: 'tabler-crown', color: 'error' },
-  author: { icon: 'tabler-device-desktop', color: 'warning' },
-  editor: { icon: 'tabler-edit', color: 'info' },
-  maintainer: { icon: 'tabler-chart-pie', color: 'success' },
-  subscriber: { icon: 'tabler-user', color: 'primary' }
-}
-
 const userStatusObj: UserStatusType = {
   active: 'success',
   pending: 'warning',
@@ -142,16 +141,68 @@ const userStatusObj: UserStatusType = {
 // Column Definitions
 const columnHelper = createColumnHelper<UsersTypeWithAction>()
 
-const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const UserListTable = ({ tableData, mutate }: { tableData?: User[],  mutate: KeyedMutator<any> }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
   const [data, setData] = useState(...[tableData])
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
+  const [roles, setRoles] = useState<Role[]>([])
+
+  // Add new states for delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<User | null>(null)
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
+  const [editUserOpen, setEditUserOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
 
   // Hooks
   const { lang: locale } = useParams()
+  const {dictionary} = useDictionary();
+
+  const handleEditClick = (user: User) => {
+    setSelectedUser(user)
+    setEditUserOpen(true)
+  }
+
+  // Handle delete dialog
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+      if (!userToDelete) return
+     
+      try {
+        setIsDeleting(true)
+        
+        const response = await deleteUser(userToDelete.id)
+        
+        if (response.status) {
+          // Remove the deleted user from the table data
+          setData(prevData => prevData?.filter(user => user.id !== userToDelete.id))
+          setFilteredData(prevData => prevData?.filter(user => user.id !== userToDelete.id))
+          
+          // Show success message
+          toast.success(response.message || 'User deleted successfully')
+        }
+      } catch (error: any) {
+        // Handle error
+        toast.error(error?.response?.data?.message || 'Error deleting user')
+      } finally {
+        setIsDeleting(false)
+        handleDeleteCancel()
+      }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false)
+    setUserToDelete(null)
+  }
+
 
   const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
     () => [
@@ -177,91 +228,94 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('fullName', {
-        header: 'User',
+      columnHelper.accessor('first_name', {
+        header: dictionary['content'].fullName,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })}
+            {getAvatar({ avatar: row.original.avatar, first_name:row.original.first_name, last_name: row.original.last_name })}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-                {row.original.fullName}
+              {row.original.first_name} {row.original.last_name}
               </Typography>
-              <Typography variant='body2'>{row.original.username}</Typography>
+              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('role', {
-        header: 'Role',
+      columnHelper.accessor('email', {
+        header: dictionary['content'].email,
+        cell: ({ row }) => (
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.email}
+              </Typography>
+        )
+      }),
+      columnHelper.accessor('type', {
+        header: dictionary['content'].role,
         cell: ({ row }) => (
           <div className='flex items-center gap-2'>
-            <Icon
-              className={userRoleObj[row.original.role].icon}
-              sx={{ color: `var(--mui-palette-${userRoleObj[row.original.role].color}-main)` }}
-            />
+            {/* <Icon
+              className={userRoleObj[row.original.type].icon}
+              sx={{ color: `var(--mui-palette-${userRoleObj[row.original.type].color}-main)` }}
+            /> */}
             <Typography className='capitalize' color='text.primary'>
-              {row.original.role}
+              {row.original.type}
             </Typography>
           </div>
         )
       }),
-      // columnHelper.accessor('currentPlan', {
-      //   header: 'Plan',
-      //   cell: ({ row }) => (
-      //     <Typography className='capitalize' color='text.primary'>
-      //       {row.original.currentPlan}
-      //     </Typography>
-      //   )
-      // }),
-      // columnHelper.accessor('billing', {
-      //   header: 'Billing',
-      //   cell: ({ row }) => <Typography>{row.original.billing}</Typography>
-      // }),
-      columnHelper.accessor('status', {
-        header: 'Status',
+      columnHelper.accessor('is_active', {
+        header: dictionary['content'].status,
         cell: ({ row }) => (
           <div className='flex items-center gap-3'>
             <Chip
               variant='tonal'
-              label={row.original.status}
+              label={row.original.is_active ? 'Active' : 'Inactive'}
               size='small'
-              color={userStatusObj[row.original.status]}
+              color={userStatusObj[row.original.is_active ? 'active' : 'inactive']}
               className='capitalize'
             />
           </div>
         )
       }),
+    
+      // // columnHelper.accessor('currentPlan', {
+      // //   header: 'Plan',
+      // //   cell: ({ row }) => (
+      // //     <Typography className='capitalize' color='text.primary'>
+      // //       {row.original.currentPlan}
+      // //     </Typography>
+      // //   )
+      // // }),
+      // // columnHelper.accessor('billing', {
+      // //   header: 'Billing',
+      // //   cell: ({ row }) => <Typography>{row.original.billing}</Typography>
+      // // }),
+      // columnHelper.accessor('status', {
+      //   header: 'Status',
+      //   cell: ({ row }) => (
+      //     <div className='flex items-center gap-3'>
+      //       <Chip
+      //         variant='tonal'
+      //         label={row.original.status}
+      //         size='small'
+      //         color={userStatusObj[row.original.status]}
+      //         className='capitalize'
+      //       />
+      //     </div>
+      //   )
+      // }),
       columnHelper.accessor('action', {
-        header: 'Action',
+        header: dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-            <IconButton >
+           <IconButton onClick={() => handleEditClick(row.original)}>
               <i className='tabler-edit text-textSecondary' />
             </IconButton>
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-textSecondary' />
-              </Link>
-            </IconButton> */}
-            {/* <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'tabler-download',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
+            <IconButton onClick={() => handleDeleteClick(row.original)}>
+              <i className='tabler-trash text-textSecondary' />
+            </IconButton>
+           
           </div>
         ),
         enableSorting: false
@@ -272,7 +326,7 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as User[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -300,21 +354,34 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
+  const getAvatar = (params: Pick<User, 'avatar' | 'first_name' | 'last_name'>) => {
+    const { avatar, first_name, last_name  } = params
 
     if (avatar) {
       return <CustomAvatar src={avatar} size={34} />
     } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
+      return <CustomAvatar size={34}>{getInitials(`${first_name} ${last_name}`)}</CustomAvatar>
     }
   }
+
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const roleData = await fetchRoles()
+        setRoles(roleData)
+      } catch (error) {
+        console.error('Error loading roles:', error)
+      } finally {
+      }
+    }
+    loadRoles()
+  }, [])
 
   return (
     <>
       <Card>
-        <CardHeader title='Users' className='pbe-4' />
-        <TableFilters setData={setFilteredData} tableData={data} />
+        <CardHeader title={dictionary['content'].users} className='pbe-4' />
+        <TableFilters setData={setFilteredData} tableData={data} roles={roles} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select
@@ -330,7 +397,7 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search User'
+              placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
             {/* <Button
@@ -347,7 +414,7 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
               onClick={() => setAddUserOpen(!addUserOpen)}
               className='max-sm:is-full'
             >
-              Add New User
+              {dictionary['content'].addUser}
             </Button>
           </div>
         </div>
@@ -421,6 +488,27 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
         handleClose={() => setAddUserOpen(!addUserOpen)}
         userData={data}
         setData={setData}
+        mutate={mutate}
+        roles={roles}
+      />
+
+      <EditUserDrawer
+        open={editUserOpen}
+        handleClose={() => {
+          setEditUserOpen(false)
+          setSelectedUser(null)
+        }}
+        user={selectedUser}
+        mutate={mutate}
+      />
+
+       {/* Delete Confirmation Dialog */}
+       <ConfirmationDialog 
+        open={deleteDialogOpen} 
+        setOpen={setDeleteDialogOpen}
+        type='delete-user'
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeleting}
       />
     </>
   )

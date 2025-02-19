@@ -1,171 +1,169 @@
+// views/apps/employee/add/CompanyDetail.tsx
 'use client'
-
-// MUI Imports
-import Divider from '@mui/material/Divider'
+import { useEffect, useState } from 'react'
 import Grid from '@mui/material/Grid'
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-
-// Third-party Imports
-import classnames from 'classnames'
-import { useEditor, EditorContent } from '@tiptap/react'
-import { StarterKit } from '@tiptap/starter-kit'
-import { Underline } from '@tiptap/extension-underline'
-import { Placeholder } from '@tiptap/extension-placeholder'
-import { TextAlign } from '@tiptap/extension-text-align'
-import type { Editor } from '@tiptap/core'
-
-// Components Imports
-import CustomIconButton from '@core/components/mui/IconButton'
-import CustomTextField from '@core/components/mui/TextField'
-
-// Style Imports
-import '@/libs/styles/tiptapEditor.css'
 import { MenuItem } from '@mui/material'
-
-const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
-  if (!editor) {
-    return null
-  }
-
-  return (
-    <div className='flex flex-wrap gap-x-3 gap-y-1 pbs-6 pbe-4 pli-6'>
-      <CustomIconButton
-        {...(editor.isActive('bold') && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().toggleBold().run()}
-      >
-        <i className={classnames('tabler-bold', { 'text-textSecondary': !editor.isActive('bold') })} />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive('underline') && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-      >
-        <i className={classnames('tabler-underline', { 'text-textSecondary': !editor.isActive('underline') })} />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive('italic') && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-      >
-        <i className={classnames('tabler-italic', { 'text-textSecondary': !editor.isActive('italic') })} />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive('strike') && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-      >
-        <i className={classnames('tabler-strikethrough', { 'text-textSecondary': !editor.isActive('strike') })} />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive({ textAlign: 'left' }) && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().setTextAlign('left').run()}
-      >
-        <i
-          className={classnames('tabler-align-left', { 'text-textSecondary': !editor.isActive({ textAlign: 'left' }) })}
-        />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive({ textAlign: 'center' }) && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().setTextAlign('center').run()}
-      >
-        <i
-          className={classnames('tabler-align-center', {
-            'text-textSecondary': !editor.isActive({ textAlign: 'center' })
-          })}
-        />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive({ textAlign: 'right' }) && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().setTextAlign('right').run()}
-      >
-        <i
-          className={classnames('tabler-align-right', {
-            'text-textSecondary': !editor.isActive({ textAlign: 'right' })
-          })}
-        />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive({ textAlign: 'justify' }) && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-      >
-        <i
-          className={classnames('tabler-align-justified', {
-            'text-textSecondary': !editor.isActive({ textAlign: 'justify' })
-          })}
-        />
-      </CustomIconButton>
-    </div>
-  )
-}
+import { useFormContext } from 'react-hook-form'
+import QTextField from '@/@core/components/mui/QTextField'
+import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
+import { fetchBranches, fetchDepartmentsByBranch, fetchDesignationsByDepartment } from '@/services/employeeService'
+import { Branch, Department, Designation } from '@/types/apps/userTypes'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 const CompanyDetail = () => {
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({
-        placeholder: 'Write something here...'
-      }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph']
-      }),
-      Underline
-    ],
+  const { register, formState: { errors }, control, watch, setValue } = useFormContext()
+  
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [designations, setDesignations] = useState<Designation[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const {dictionary} = useDictionary();
 
-    content: `
-      <p>
-        Keep your account secure with authentication step.
-      </p>
-    `
-  })
+  const branchId = watch('branch_id')
+  const departmentId = watch('department_id')
+
+  // Fetch branches on component mount
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        setIsLoading(true)
+        const branchData = await fetchBranches()
+        setBranches(branchData)
+        setValue('department_id', '')
+        setValue('designation_id', '')
+      } catch (error) {
+        console.error('Error loading branches:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadBranches()
+  }, [])
+
+  // Fetch departments when branch changes
+  useEffect(() => {
+    const loadDepartments = async () => {
+      if (!branchId) {
+        setDepartments([])
+        setValue('department_id', '')
+        return
+      }
+
+      try {
+        setIsLoading(true)
+        const departmentData = await fetchDepartmentsByBranch(branchId)
+        setDepartments(departmentData)
+      } catch (error) {
+        console.error('Error loading departments:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadDepartments()
+  }, [branchId, setValue])
+
+  // Fetch designations when department changes
+  useEffect(() => {
+    const loadDesignations = async () => {
+      if (!branchId || !departmentId) {
+        setDesignations([])
+        setValue('designation_id', '')
+        return
+      }
+
+      try {
+        setIsLoading(true)
+        const designationData = await fetchDesignationsByDepartment(branchId, departmentId)
+        setDesignations(designationData)
+      } catch (error) {
+        console.error('Error loading designations:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadDesignations()
+  }, [branchId, departmentId, setValue])
 
   return (
     <Card>
-      <CardHeader title='Company Detail' />
+      <CardHeader title={`${dictionary['content'].company} ${dictionary['content'].detail}`} />
       <CardContent>
         <Grid container spacing={6} className='mbe-6'>
           <Grid item xs={12} sm={12}>
-            <CustomTextField fullWidth label='Employee ID' placeholder='' />
+            <QTextField
+              name='employee_id'
+              control={control}
+              fullWidth
+              readonly
+              label={dictionary['content'].employeeId}
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
-          <CustomTextField select fullWidth label='Select Branch' value={''}>
-            <MenuItem value={`male`}>Abc</MenuItem>
-            <MenuItem value={`female`}>BCA</MenuItem>
-          </CustomTextField>
+            <QTextField
+              name='branch_id'
+              control={control}
+              fullWidth
+              required
+              label={dictionary['content'].branch}
+              select
+              disabled={isLoading}
+            >
+              <MenuItem value="">Select Branch</MenuItem>
+              {branches.map(branch => (
+                <MenuItem key={branch.id} value={branch.id}>
+                  {branch.name}
+                </MenuItem>
+              ))}
+            </QTextField>
           </Grid>
-          
           <Grid item xs={12} sm={6}>
-          <CustomTextField select fullWidth label='Department' value={''}>
-            <MenuItem value={`male`}>Abc</MenuItem>
-            <MenuItem value={`female`}>BCA</MenuItem>
-          </CustomTextField>
+            <QTextField
+              name='department_id'
+              control={control}
+              fullWidth
+              required
+              label={dictionary['content'].department}
+              select
+              disabled={!branchId || isLoading}
+            >
+              <MenuItem value="">Select Department</MenuItem>
+              {departments.map(department => (
+                <MenuItem key={department.id} value={department.id}>
+                  {department.name}
+                </MenuItem>
+              ))}
+            </QTextField>
           </Grid>
           <Grid item xs={12} sm={6}>
-          <CustomTextField select fullWidth label='Select Designation' value={''}>
-            <MenuItem value={`male`}>Abc</MenuItem>
-            <MenuItem value={`female`}>BCA</MenuItem>
-          </CustomTextField>
+            <QTextField
+              name='designation_id'
+              control={control}
+              fullWidth
+              required
+              label={dictionary['content'].designation}
+              select
+              disabled={!departmentId || isLoading}
+            >
+              <MenuItem value="">Select Designation</MenuItem>
+              {designations.map(designation => (
+                <MenuItem key={designation.id} value={designation.id}>
+                  {designation.name}
+                </MenuItem>
+              ))}
+            </QTextField>
           </Grid>
           <Grid item xs={12} sm={12}>
-            <CustomTextField fullWidth label='Company Date of Joining' type='date' placeholder='' />
+            <QReactDatepicker
+              name='company_doj'
+              control={control}
+              label={dictionary['content'].companyDateofJoining}
+              required
+            />
           </Grid>
         </Grid>
-     
       </CardContent>
     </Card>
   )

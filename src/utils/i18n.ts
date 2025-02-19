@@ -2,7 +2,7 @@
 import { i18n } from '@configs/i18n'
 
 // Util Imports
-// import { ensurePrefix } from '@/utils/string'
+import { ensurePrefix } from '@/utils/string'
 
 // Check if the url is missing the locale
 export const isUrlMissingLocale = (url: string) => {
@@ -11,8 +11,7 @@ export const isUrlMissingLocale = (url: string) => {
 
 // Get the localized url
 export const getLocalizedUrl = (url: string, languageCode: string): string => {
-  // if (!url || !languageCode) throw new Error("URL or Language Code can't be empty")
+  if (!url || !languageCode) throw new Error("URL or Language Code can't be empty")
 
-  // return isUrlMissingLocale(url) ? `/${languageCode}${ensurePrefix(url, '/')}` :x url
-  return  url
+  return isUrlMissingLocale(url) ? `/${languageCode}${ensurePrefix(url, '/')}` : url
 }

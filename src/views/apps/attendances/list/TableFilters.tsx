@@ -7,28 +7,26 @@ import Grid from '@mui/material/Grid'
 import MenuItem from '@mui/material/MenuItem'
 
 // Type Imports
-import type { UsersType } from '@/types/apps/userTypes'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import { AttendanceEmployee } from '@/types/attendanceEmployeeTypes'
 
-const TableFilters = ({ setData, tableData }: { setData: (data: UsersType[]) => void; tableData?: UsersType[] }) => {
+const TableFilters = ({ setData, tableData }: { setData: (data: AttendanceEmployee[]) => void; tableData?: AttendanceEmployee[] }) => {
   // States
-  const [role, setRole] = useState<UsersType['role']>('')
-  const [plan, setPlan] = useState<UsersType['currentPlan']>('')
-  const [status, setStatus] = useState<UsersType['status']>('')
+  // const [role, setRole] = useState<UsersType['role']>('')
+  // const [plan, setPlan] = useState<UsersType['currentPlan']>('')
+  // const [status, setStatus] = useState<UsersType['status']>('')
 
   useEffect(() => {
     const filteredData = tableData?.filter(user => {
-      if (role && user.role !== role) return false
-      if (plan && user.currentPlan !== plan) return false
-      if (status && user.status !== status) return false
+    
 
       return true
     })
 
     setData(filteredData || [])
-  }, [role, plan, status, tableData, setData])
+  }, [ tableData, setData])
 
   return (
     <CardContent>

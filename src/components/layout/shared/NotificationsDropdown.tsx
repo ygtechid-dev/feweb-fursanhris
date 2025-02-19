@@ -39,6 +39,7 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getInitials } from '@/utils/getInitials'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 export type NotificationsType = {
   title: string
@@ -120,6 +121,7 @@ const NotificationDropdown = ({ notifications }: { notifications: NotificationsT
   const hidden = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'))
   const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'))
   const { settings } = useSettings()
+   const { dictionary } = useDictionary()
 
   const handleClose = () => {
     setOpen(false)
@@ -215,10 +217,10 @@ const NotificationDropdown = ({ notifications }: { notifications: NotificationsT
                 <div className='bs-full flex flex-col'>
                   <div className='flex items-center justify-between plb-3.5 pli-4 is-full gap-2'>
                     <Typography variant='h6' className='flex-auto'>
-                      Notifications
+                      {dictionary['content'].notifications}
                     </Typography>
                     {notificationCount > 0 && (
-                      <Chip size='small' variant='tonal' color='primary' label={`${notificationCount} New`} />
+                      <Chip size='small' variant='tonal' color='primary' label={`${notificationCount} ${dictionary['content'].new}`} />
                     )}
                     <Tooltip
                       title={readAll ? 'Mark all as unread' : 'Mark all as read'}

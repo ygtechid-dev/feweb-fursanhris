@@ -19,6 +19,8 @@ import StyledVerticalNavExpandIcon from '@menu/styles/vertical/StyledVerticalNav
 // Style Imports
 import menuItemStyles from '@core/styles/vertical/menuItemStyles'
 import menuSectionStyles from '@core/styles/vertical/menuSectionStyles'
+import { getDictionary } from '@/utils/getDictionary'
+import { useParams } from 'next/navigation'
 
 type RenderExpandIconProps = {
   open?: boolean
@@ -26,6 +28,7 @@ type RenderExpandIconProps = {
 }
 
 type Props = {
+  dictionary: Awaited<ReturnType<typeof getDictionary>>
   scrollMenu: (container: any, isPerfectScrollbar: boolean) => void
 }
 
@@ -35,13 +38,15 @@ const RenderExpandIcon = ({ open, transitionDuration }: RenderExpandIconProps) =
   </StyledVerticalNavExpandIcon>
 )
 
-const VerticalMenu = ({ scrollMenu }: Props) => {
+const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
   // Hooks
   const theme = useTheme()
   const verticalNavOptions = useVerticalNav()
+  const params = useParams()
 
   // Vars
   const { isBreakpointReached, transitionDuration } = verticalNavOptions
+  const { lang: locale } = params
 
   const ScrollWrapper = isBreakpointReached ? 'div' : PerfectScrollbar
 
@@ -68,80 +73,80 @@ const VerticalMenu = ({ scrollMenu }: Props) => {
         renderExpandedMenuItemIcon={{ icon: <i className='tabler-circle text-xs' /> }}
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
-        <MenuItem href='/dashboard' icon={<i className='tabler-smart-home' />}>
-          Dashboard
+        <MenuItem href={`/${locale}/dashboard`} icon={<i className='tabler-smart-home' />}>
+        {dictionary['navigation'].dashboard}
         </MenuItem>
         {/* <MenuSection label={'Administration'}> */}
-        <MenuItem href='/users' icon={<i className='tabler-users' />}>
-          Users
+        <MenuItem href={`/${locale}/users`} icon={<i className='tabler-users' />}>
+          {dictionary['navigation'].user}
         </MenuItem>
         {/* </MenuSection> */}
         {/* <MenuSection label={'Super Admin'}> */}
-        <SubMenu label='Companies 'icon={<i className='tabler-buildings' />}>
-          <MenuItem href='/companies'>
-            Company List
+        <SubMenu label={dictionary['navigation'].companies} icon={<i className='tabler-buildings' />}>
+          <MenuItem href={`/${locale}/companies`}>
+          {dictionary['navigation'].companyList}
           </MenuItem>
-        <MenuItem href='/companies/branches'>
-          Branches
+        <MenuItem href={`/${locale}/companies/branches`}>
+          {dictionary['navigation'].branches}
         </MenuItem>
-        <MenuItem href='/companies/departments'>
-          Departments
+        <MenuItem href={`/${locale}/companies/departments`}>
+          {dictionary['navigation'].departments}
         </MenuItem>
-        <MenuItem href='/companies/designations'>
-          Designation
+        <MenuItem href={`/${locale}/companies/designations`}>
+          {dictionary['navigation'].designations}
         </MenuItem>
         </SubMenu>
         {/* </MenuSection> */}
         {/* <MenuSection label={'Hrm'}> */}
-        <MenuItem href='/employees' icon={<i className='tabler-user' />}>
-          Employees
+        <MenuItem href={`/${locale}/employees`} icon={<i className='tabler-user' />}>
+          {dictionary['navigation'].employees}
         </MenuItem>
-        <MenuItem href='/attendances' icon={<i className='tabler-transfer-in' />}>
-          Attendances
+        <MenuItem href={`/${locale}/attendances`} icon={<i className='tabler-transfer-in' />}>
+        {dictionary['navigation'].attendances}
         </MenuItem>
-        <MenuItem href='/leaves' icon={<i className='tabler-door-exit' />}>
-          Leaves
+        <MenuItem href={`/${locale}/leaves`} icon={<i className='tabler-door-exit' />}>
+        {dictionary['navigation'].leaves}
         </MenuItem>
-        <MenuItem href='/overtimes' icon={<i className='tabler-clock' />}>
-          Overtimes
+        <MenuItem href={`/${locale}/overtimes`} icon={<i className='tabler-clock' />}>
+        {dictionary['navigation'].overtimes}
         </MenuItem>
 
-        <SubMenu label='Payrolls'icon={<i className='tabler-wallet' />}>
-          <MenuItem href='/salary'>
-            Employee Salary
+        <SubMenu label={dictionary['navigation'].payrolls} icon={<i className='tabler-wallet' />}>
+          <MenuItem href={`/${locale}/salary`}>
+          {dictionary['navigation'].employeeSalary}
           </MenuItem>
-          <MenuItem href='/payslips'>
-            Payslip
+          <MenuItem href={`/${locale}/payslips`}>
+          {dictionary['navigation'].payslip}
           </MenuItem>
         </SubMenu>
-        <MenuItem href='/projects' icon={<i className='tabler-chart-bar' />}>
-          Projects
+        <MenuItem href={`/${locale}/projects`} icon={<i className='tabler-chart-bar' />}>
+        {dictionary['navigation'].projects}
         </MenuItem>
-        <SubMenu label='HR Admin Setup' icon={<i className='tabler-settings-2' />}>
-          <MenuItem href='/reward'>
-            Reward
+        <SubMenu label={dictionary['navigation'].hrAdminSetup} icon={<i className='tabler-settings-2' />}>
+          <MenuItem href={`/${locale}/reward`}>
+          {dictionary['navigation'].reward}
           </MenuItem>
-          <MenuItem href='/resignation'>
-            Resignation
+          <MenuItem href={`/${locale}/resignation`}>
+          {dictionary['navigation'].resignation}
           </MenuItem>
-          <MenuItem href='/trip'>
-            Trip
+          <MenuItem href={`/${locale}/trip`}>
+          {dictionary['navigation'].trip}
           </MenuItem>
-          <MenuItem href='/promotion'>
-            Promotion
+          <MenuItem href={`/${locale}/promotion`}>
+          {dictionary['navigation'].promotion}
           </MenuItem>
-          <MenuItem href='/complaint'>
-            Complaints
+          <MenuItem href={`/${locale}/complaint`}>
+          {dictionary['navigation'].complaint}
           </MenuItem>
-          <MenuItem href='/warning'>
-            Warning
+          <MenuItem href={`/${locale}/warning`}>
+          {dictionary['navigation'].warning}
           </MenuItem>
-          <MenuItem href='/termination'>
-          Termination
+          <MenuItem href={`/${locale}/termination`}>
+          {dictionary['navigation'].termination}
           </MenuItem>
         </SubMenu>
-        <MenuItem href='/documents' icon={<i className='tabler-file' />}>
-          Document
+        <MenuItem href={`/${locale}/documents`} icon={<i className='tabler-file' />}>
+        {dictionary['navigation'].document}
         </MenuItem>
 
         {/* </MenuSection> */}
