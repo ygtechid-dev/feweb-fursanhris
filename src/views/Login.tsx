@@ -35,6 +35,7 @@ import themeConfig from '@configs/themeConfig'
 import { useImageVariant } from '@core/hooks/useImageVariant'
 import { useSettings } from '@core/hooks/useSettings'
 import axiosInstance from '@/libs/axios'
+import { toast } from 'react-toastify'
 
 // Styled Custom Components
 const LoginIllustration = styled('img')(({ theme }) => ({
@@ -119,9 +120,9 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
       localStorage.setItem('user', JSON.stringify(user))
 
       // Redirect to dashboard
-      router.push(`/`)
+      router.replace(`/${locale}/dashboard`)
     } catch (err:any) {
-      setError(
+      toast.error(
         err.response?.data?.message || 
         'An error occurred during login. Please try again.'
       )
