@@ -40,7 +40,7 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
+import type { Employee } from '@/types/apps/userTypes'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -59,6 +59,11 @@ import { getLocalizedUrl } from '@/utils/i18n'
 import tableStyles from '@core/styles/table.module.css'
 import AddDrawer from './AddDrawer'
 import { useRouter } from 'next/navigation'
+import { toast } from 'react-toastify'
+import { deleteEmployee } from '@/services/employeeService'
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -69,7 +74,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type UsersTypeWithAction = Employee & {
   action?: string
 }
 
@@ -144,7 +149,7 @@ const userStatusObj: UserStatusType = {
 // Column Definitions
 const columnHelper = createColumnHelper<UsersTypeWithAction>()
 
-const EmployeeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const EmployeeListTable = ({ tableData }: { tableData?: Employee[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -152,9 +157,53 @@ const EmployeeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
 
+   // Add states for delete dialog
+   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false)
+   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null)
+   const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
   // Hooks
   const { lang: locale } = useParams()
   const router = useRouter()
+  const {dictionary} = useDictionary();
+ 
+   // Handle dialog open
+   const handleDeleteDialogOpen = (employee: Employee) => {
+     setEmployeeToDelete(employee)
+     setDeleteDialogOpen(true)
+   }
+ 
+   // Handle dialog close
+   const handleDeleteDialogClose = () => {
+     setDeleteDialogOpen(false)
+     setEmployeeToDelete(null)
+   }
+ 
+   // Handle delete confirmation
+   const handleDeleteConfirm = async () => {
+     if (!employeeToDelete) return
+ 
+     try {
+       setIsDeleting(true)
+       
+       const response = await deleteEmployee(employeeToDelete.id)
+       
+       if (response.status) {
+         // Remove the deleted employee from the table data
+         setData(prevData => prevData?.filter(employee => employee.id !== employeeToDelete.id))
+         setFilteredData(prevData => prevData?.filter(employee => employee.id !== employeeToDelete.id))
+         
+         // Show success message
+         toast.success(response.message || 'Employee deleted successfully')
+       }
+     } catch (error: any) {
+       // Handle error
+       toast.error(error?.response?.data?.message || 'Error deleting employee')
+     } finally {
+       setIsDeleting(false)
+       handleDeleteDialogClose()
+     }
+   }
 
   const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
     () => [
@@ -180,84 +229,86 @@ const EmployeeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('username', {
-        header: 'Employee ID',
+      columnHelper.accessor('employee_id', {
+        header: dictionary['content'].employeeId,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-               123BASDA
+               {row.original?.employee_id}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Name',
+      columnHelper.accessor('name', {
+        header: dictionary['content'].name,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })}
+            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-                {row.original.fullName}
+                {row.original.name}
               </Typography>
-              <Typography variant='body2'>{row.original.username}</Typography>
             </div>
           </div>
         )
       }),
        columnHelper.accessor('email', {
-        header: 'Email',
+        header: dictionary['content'].email,
         cell: ({ row }) => (
-          <Typography className='capitalize' color='text.primary'>
+          <Typography className='' color='text.primary'>
             {row.original.email}
           </Typography>
         )
       }),
-       columnHelper.accessor('contact', {
-        header: 'Branch',
+       columnHelper.accessor('branch', {
+        header: dictionary['content'].branch,
         cell: ({ row }) => (
           <Typography className='capitalize' color='text.primary'>
-            ABC
+            {row.original?.branch?.name}
           </Typography>
         )
       }),
-       columnHelper.accessor('contact', {
-        header: 'Department',
+       columnHelper.accessor('department', {
+        header: dictionary['content'].department,
         cell: ({ row }) => (
           <Typography className='capitalize' color='text.primary'>
-            IT
+            {row.original?.department?.name}
           </Typography>
         )
       }),
-       columnHelper.accessor('contact', {
-        header: 'Designation',
+       columnHelper.accessor('designation', {
+        header: dictionary['content'].designation,
         cell: ({ row }) => (
           <Typography className='capitalize' color='text.primary'>
-            Software Engineer
+           {row.original?.designation?.name}
           </Typography>
         )
       }),
-       columnHelper.accessor('contact', {
-        header: 'Joining Date',
+       columnHelper.accessor('company_doj', {
+        header: dictionary['content'].joiningDate,
         cell: ({ row }) => (
           <Typography className='capitalize' color='text.primary'>
-            12 Sep 2024
+            {row.original?.company_doj}
           </Typography>
         )
       }),
       
       columnHelper.accessor('action', {
-        header: 'Action',
+        header: dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-            <IconButton >
+            <IconButton onClick={() => router.push(`/${locale}/employees/${row.original?.id}/edit`)}>
               <i className='tabler-edit text-textSecondary' />
+            </IconButton>
+            <IconButton 
+              onClick={() => handleDeleteDialogOpen(row.original)}
+              disabled={isDeleting}
+            >
+              <i className='tabler-trash text-textSecondary' />
             </IconButton>
             {/* <IconButton>
               <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
@@ -290,7 +341,7 @@ const EmployeeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as Employee[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -318,20 +369,20 @@ const EmployeeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
+  const getAvatar = (params: Pick<Employee, 'name'>) => {
+    const { name } = params
 
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-    }
+    // if (avatar) {
+    //   return <CustomAvatar src={avatar} size={34} />
+    // } else {
+      return <CustomAvatar size={34}>{getInitials(name as string)}</CustomAvatar>
+    // }
   }
 
   return (
     <>
       <Card>
-        <CardHeader title='Employee List' className='pbe-4' />
+        <CardHeader title={dictionary['content'].employeeList} className='pbe-4' />
         {/* <TableFilters setData={setFilteredData} tableData={data} /> */}
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -348,7 +399,7 @@ const EmployeeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search Employee'
+              placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
             {/* <Button
@@ -365,10 +416,10 @@ const EmployeeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
               startIcon={<i className='tabler-plus' />}
               // onClick={() => setAddUserOpen(!addUserOpen)}
               // onClick={() => router.push('/employees/create')}
-              href='/employees/create'
+              href={`/${locale}/employees/create`}
               className='max-sm:is-full'
             >
-              Add New Employee
+              {dictionary['content'].addEmployee}
             </Button>
           </div>
         </div>
@@ -437,11 +488,19 @@ const EmployeeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           }}
         />
       </Card>
-      <AddDrawer
+      {/* <AddDrawer
         open={addUserOpen}
         handleClose={() => setAddUserOpen(!addUserOpen)}
         userData={data}
         setData={setData}
+      /> */}
+
+      <ConfirmationDialog
+        open={deleteDialogOpen} 
+        setOpen={setDeleteDialogOpen}
+        type='delete-employee'
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeleting}
       />
     </>
   )

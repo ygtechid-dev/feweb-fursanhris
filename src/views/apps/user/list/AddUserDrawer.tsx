@@ -1,5 +1,5 @@
 // React Imports
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // MUI Imports
 import Button from '@mui/material/Button'
@@ -13,33 +13,29 @@ import Divider from '@mui/material/Divider'
 import { useForm, Controller } from 'react-hook-form'
 
 // Types Imports
-import type { UsersType } from '@/types/apps/userTypes'
 
 // Component Imports
-import CustomTextField from '@core/components/mui/TextField'
+
+import { User } from '@/types/apps/userTypes'
+import QTextField from '@/@core/components/mui/QTextField'
+import { toast } from 'react-toastify'
+import { Role } from '@/types/userTypes'
+import { fetchRoles, postUser } from '@/services/userService'
+import { KeyedMutator, useSWRConfig } from 'swr'
+import { useParams, useRouter } from 'next/navigation'
+import { Dictionary } from '@/@core/types'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 type Props = {
   open: boolean
   handleClose: () => void
-  userData?: UsersType[]
-  setData: (data: UsersType[]) => void
+  userData?: User[]
+  setData: (data: User[]) => void,
+  mutate: KeyedMutator<any>
+  roles:Role[]
 }
 
-type FormValidateType = {
-  fullName: string
-  password: string
-  username: string
-  email: string
-  role: string
-  plan: string
-  status: string
-}
 
-type FormNonValidateType = {
-  company: string
-  country: string
-  contact: string
-}
 
 // Vars
 const initialData = {
@@ -50,56 +46,71 @@ const initialData = {
 
 const AddUserDrawer = (props: Props) => {
   // Props
-  const { open, handleClose, userData, setData } = props
+  const { open, handleClose, userData, setData, roles } = props
 
   // States
-  const [formData, setFormData] = useState<FormNonValidateType>(initialData)
+  const [formData, setFormData] = useState<any>(initialData)
+  
+  const [isLoading, setIsLoading] = useState(false)
 
   // Hooks
-  const {
-    control,
-    reset: resetForm,
-    handleSubmit,
-    formState: { errors }
-  } = useForm<FormValidateType>({
+  const { mutate } = useSWRConfig()
+  const {dictionary} = useDictionary();
+  const router = useRouter()
+  const { lang:locale} = useParams();
+  const methods = useForm<User>({
     defaultValues: {
-      fullName: '',
-      password: '',
-      username: '',
+      first_name: '',
+      last_name: '',
       email: '',
-      role: '',
-      plan: '',
-      status: ''
+      password: '',
+      type: '',
     }
   })
 
-  const onSubmit = (data: FormValidateType) => {
-    const newUser: UsersType = {
-      id: (userData?.length && userData?.length + 1) || 1,
-      avatar: `/images/avatars/${Math.floor(Math.random() * 8) + 1}.png`,
-      fullName: data.fullName,
-      password: data.password,
-      username: data.username,
-      email: data.email,
-      role: data.role,
-      currentPlan: data.plan,
-      status: data.status,
-      company: formData.company,
-      country: formData.country,
-      contact: formData.contact,
-      billing: userData?.[Math.floor(Math.random() * 50) + 1].billing ?? 'Auto Debit'
-    }
+  const onSubmit = async (data: User) => {
+    try {
+      setIsLoading(true)
+      const res = await postUser(data)
 
-    setData([...(userData ?? []), newUser])
-    handleClose()
-    setFormData(initialData)
-    resetForm({ fullName: '',password: '', username: '', email: '', role: '', plan: '', status: '' })
+      if (res.status) {
+        // Properly mutate the SWR cache with the key
+        await mutate('/web/users', async (currentData: any) => {
+          console.log({currentData})
+          // If we have the response data, use it directly
+          if (res.data) {
+            return {
+              ...currentData,
+              data: [...(currentData?.data || []), res.data]
+            }
+          }
+          // If no response data, invalidate the cache to trigger a refetch
+          return undefined
+        })
+
+        toast.success(res?.message)
+        handleReset()
+      }
+    } catch (error) {
+      console.error('Error adding user:', error)
+      toast.error('Something went wrong!')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleReset = () => {
     handleClose()
-    setFormData(initialData)
+    methods.reset({
+      first_name: '',
+      last_name: '',
+      email: '',
+      password: '',
+      type: '',
+    });
   }
+
+  
 
   return (
     <Drawer
@@ -111,168 +122,103 @@ const AddUserDrawer = (props: Props) => {
       sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
     >
       <div className='flex items-center justify-between plb-5 pli-6'>
-        <Typography variant='h5'>Add New User</Typography>
+        <Typography variant='h5'>{dictionary['content'].addUser}</Typography>
         <IconButton size='small' onClick={handleReset}>
           <i className='tabler-x text-2xl text-textPrimary' />
         </IconButton>
       </div>
       <Divider />
       <div>
-        <form onSubmit={handleSubmit(data => onSubmit(data))} className='flex flex-col gap-6 p-6'>
-          <Controller
-            name='fullName'
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <CustomTextField
-                {...field}
-                fullWidth
-                label='Name'
-                placeholder='John Doe'
-                {...(errors.fullName && { error: true, helperText: 'This field is required.' })}
-              />
-            )}
-          />
+        <form onSubmit={methods.handleSubmit(data => onSubmit(data))} className='flex flex-col gap-6 p-6'>
+           <QTextField
+              name='first_name'
+              control={methods.control}
+              fullWidth
+              required
+              placeholder='Enter first name'
+              rules={{ 
+                minLength: {
+                  value: 3,
+                  message: 'first name must be at least 3 characters'
+                }
+              }}
+              label={dictionary['content'].firstName}
+            />
           
-          {/* <Controller
-            name='username'
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <CustomTextField
-                {...field}
-                fullWidth
-                label='Username'
-                placeholder='johndoe'
-                {...(errors.username && { error: true, helperText: 'This field is required.' })}
-              />
-            )}
-          /> */}
-          <Controller
-            name='email'
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <CustomTextField
-                {...field}
-                fullWidth
-                type='email'
-                label='Email'
-                placeholder='johndoe@gmail.com'
-                {...(errors.email && { error: true, helperText: 'This field is required.' })}
-              />
-            )}
-          />
-          <Controller
-            name='password'
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <CustomTextField
-                {...field}
-                type='password'
-                fullWidth
-                label='Password'
-                {...(errors.password && { error: true, helperText: 'This field is required.' })}
-              />
-            )}
-          />
-          <Controller
-            name='role'
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <CustomTextField
-                select
-                fullWidth
-                id='select-role'
-                label='Select Role'
-                {...field}
-                {...(errors.role && { error: true, helperText: 'This field is required.' })}
-              >
-                <MenuItem value='admin'>Admin</MenuItem>
-                <MenuItem value='author'>Author</MenuItem>
-                <MenuItem value='editor'>Editor</MenuItem>
-                <MenuItem value='maintainer'>Maintainer</MenuItem>
-                <MenuItem value='subscriber'>Subscriber</MenuItem>
-              </CustomTextField>
-            )}
-          />
-          {/* <Controller
-            name='plan'
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <CustomTextField
-                select
-                fullWidth
-                id='select-plan'
-                label='Select Plan'
-                {...field}
-                inputProps={{ placeholder: 'Select Plan' }}
-                {...(errors.plan && { error: true, helperText: 'This field is required.' })}
-              >
-                <MenuItem value='basic'>Basic</MenuItem>
-                <MenuItem value='company'>Company</MenuItem>
-                <MenuItem value='enterprise'>Enterprise</MenuItem>
-                <MenuItem value='team'>Team</MenuItem>
-              </CustomTextField>
-            )}
-          /> */}
-          <Controller
-            name='status'
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <CustomTextField
-                select
-                fullWidth
-                id='select-status'
-                label='Select Status'
-                {...field}
-                {...(errors.status && { error: true, helperText: 'This field is required.' })}
-              >
-                {/* <MenuItem value='pending'>Pending</MenuItem> */}
-                <MenuItem value='active'>Active</MenuItem>
-                <MenuItem value='inactive'>Inactive</MenuItem>
-              </CustomTextField>
-            )}
-          />
-          {/* <CustomTextField
-            label='Company'
-            fullWidth
-            placeholder='Company PVT LTD'
-            value={formData.company}
-            onChange={e => setFormData({ ...formData, company: e.target.value })}
-          /> */}
-          {/* <CustomTextField
-            select
-            fullWidth
-            id='country'
-            value={formData.country}
-            onChange={e => setFormData({ ...formData, country: e.target.value })}
-            label='Select Country'
-            inputProps={{ placeholder: 'Country' }}
-          >
-            <MenuItem value='India'>India</MenuItem>
-            <MenuItem value='USA'>USA</MenuItem>
-            <MenuItem value='Australia'>Australia</MenuItem>
-            <MenuItem value='Germany'>Germany</MenuItem>
-          </CustomTextField>
-          <CustomTextField
-            label='Contact'
-            type='number'
-            fullWidth
-            placeholder='(397) 294-5153'
-            value={formData.contact}
-            onChange={e => setFormData({ ...formData, contact: e.target.value })}
-          /> */}
+           <QTextField
+              name='last_name'
+              control={methods.control}
+              fullWidth
+              required
+              placeholder='Enter last name'
+              rules={{ 
+                minLength: {
+                  value: 3,
+                  message: 'last name must be at least 3 characters'
+                }
+              }}
+              label={dictionary['content'].lastName}
+            />
+
+          <QTextField
+              name='email'
+              control={methods.control}
+              fullWidth
+              required
+              placeholder='Enter email'
+              type='email' 
+              rules={{ 
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'Please enter a valid email address'
+                }
+              }}
+              label={dictionary['content'].email}
+            />
+
+            <QTextField
+             name='password'
+              control={methods.control}
+              fullWidth
+              required
+              placeholder='Enter password'
+              type='password' 
+              rules={{ 
+                minLength: {
+                  value: 8,
+                  message: 'Password must be at least 8 characters'
+                },
+                pattern: {
+                  value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                  message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+                }
+              }}
+              label={dictionary['content'].password}
+            />
+
+            <QTextField
+              name='type'
+              control={methods.control}
+              fullWidth
+              required
+              placeholder='Enter Role'
+              label={dictionary['content'].role}
+              select
+            >
+              <MenuItem value="">Select role</MenuItem>
+              {roles.map(role => (
+                <MenuItem key={role.id} value={role.id}>
+                  {role.name}
+                </MenuItem>
+              ))}
+            </QTextField>
+        
           <div className='flex items-center gap-4'>
             <Button variant='contained' type='submit'>
-              Submit
+            {isLoading ? `${dictionary['content'].submitting}...` : dictionary['content'].submit}
             </Button>
             <Button variant='tonal' color='error' type='reset' onClick={() => handleReset()}>
-              Cancel
+              {dictionary['content'].cancel}
             </Button>
           </div>
         </form>

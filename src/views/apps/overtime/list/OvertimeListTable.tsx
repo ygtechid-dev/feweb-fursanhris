@@ -40,7 +40,6 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -57,6 +56,9 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+import { Overtime } from '@/types/overtimeType'
+import { ucfirst } from '@/utils/string'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -67,7 +69,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type OvertimeWithAction = Overtime & {
   action?: string
 }
 
@@ -140,9 +142,9 @@ const userStatusObj: UserStatusType = {
 }
 
 // Column Definitions
-const columnHelper = createColumnHelper<UsersTypeWithAction>()
+const columnHelper = createColumnHelper<OvertimeWithAction>()
 
-const OvertimeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -151,9 +153,10 @@ const OvertimeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   const [globalFilter, setGlobalFilter] = useState('')
 
   // Hooks
-  const { lang: locale } = useParams()
+  // const { lang: locale } = useParams()
+  const { dictionary } = useDictionary()
 
-  const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
+  const columns = useMemo<ColumnDef<OvertimeWithAction, any>[]>(
     () => [
       {
         id: 'select',
@@ -177,93 +180,86 @@ const OvertimeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('fullName', {
-        header: 'Employee',
+      columnHelper.accessor('employee.name', {
+        header: dictionary['content'].employee,
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+              {row.original.employee.name}
+              </Typography>
+            </div>
+          </div>
+        )
+      }),
+      columnHelper.accessor('overtime_date', {
+        header: dictionary['content'].date,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.fullName}
+                {row.original.overtime_date}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Date',
+      columnHelper.accessor('hours', {
+        header: dictionary['content'].overtimeHours,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              14 Jan 2024 
+              {row.original.hours}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Overtime Hours',
+      columnHelper.accessor('start_time', {
+        header: dictionary['content'].clockIn,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Sep 4, 2024
+              {row.original.start_time}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Clock In',
+      columnHelper.accessor('end_time', {
+        header: dictionary['content'].clockOut,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              11:00 AM
+              {row.original.start_time}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Clock Out',
+      columnHelper.accessor('status', {
+        header: dictionary['content'].status,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              11:00 PM
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+              <Chip label= {ucfirst(row.original.status)} color={row.original.status == 'approved' ? 'success' : (row.original.status == 'pending' ? 'secondary' : 'error')}/>
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Clock Out',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Chip label='Rejected' color='error'/>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      
-     
-    
       columnHelper.accessor('action', {
-        header: 'Action',
+        header: dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
              <IconButton >
@@ -310,7 +306,7 @@ const OvertimeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as Overtime[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -338,20 +334,11 @@ const OvertimeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
-
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-    }
-  }
 
   return (
     <>
       <Card>
-        <CardHeader title='Overtime List' className='pbe-4' />
+        <CardHeader title={dictionary['content'].overtimeList} className='pbe-4' />
         <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -368,7 +355,7 @@ const OvertimeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search User'
+              placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
             {/* <Button
@@ -385,7 +372,7 @@ const OvertimeListTable = ({ tableData }: { tableData?: UsersType[] }) => {
               // onClick={() => setAddUserOpen(!addUserOpen)}
               className='max-sm:is-full'
             >
-              Add Overtime
+              {dictionary['content'].addNewOvertime}
             </Button>
           </div>
         </div>

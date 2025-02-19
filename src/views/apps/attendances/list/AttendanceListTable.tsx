@@ -36,7 +36,6 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
 
 // Component Imports
 import TableFilters from './TableFilters'
@@ -52,6 +51,9 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import { TextFieldProps } from '@mui/material'
+import { KeyedMutator } from 'swr'
+import { AttendanceEmployee } from '@/types/attendanceEmployeeTypes'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -62,7 +64,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type AttendanceEmployeeWithAction = AttendanceEmployee & {
   action?: string
 }
 
@@ -135,9 +137,9 @@ const DebouncedInput = ({
 // }
 
 // Column Definitions
-const columnHelper = createColumnHelper<UsersTypeWithAction>()
+const columnHelper = createColumnHelper<AttendanceEmployeeWithAction>()
 
-const AttendanceListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const AttendanceListTable = ({ tableData, mutate }: { tableData?: AttendanceEmployee[],  mutate: KeyedMutator<any> }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -147,8 +149,9 @@ const AttendanceListTable = ({ tableData }: { tableData?: UsersType[] }) => {
 
   // Hooks
   // const { lang: locale } = useParams()
+  const { dictionary } = useDictionary()
 
-  const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
+  const columns = useMemo<ColumnDef<AttendanceEmployeeWithAction, any>[]>(
     () => [
       {
         id: 'select',
@@ -172,72 +175,88 @@ const AttendanceListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('fullName', {
-        header: 'Employee',
+      columnHelper.accessor('employee_name', {
+        header: dictionary['content'].employee,
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+              {row.original.employee_name}
+              </Typography>
+            </div>
+          </div>
+        )
+      }),
+      columnHelper.accessor('date', {
+        header: dictionary['content'].date,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.fullName}
+              {row.original.date}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Date',
+      columnHelper.accessor('status', {
+        header: dictionary['content'].status,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Jan 11, 2025
+                {row.original.status}
               </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Status',
+      columnHelper.accessor('clock_in', {
+        header: dictionary['content'].clockIn,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Present
+              {row.original.clock_in}
               </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Clock In',
+      columnHelper.accessor('clock_out', {
+        header: dictionary['content'].clockOut,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              9:00 AM 
+              {row.original?.clock_out || '-'}
               </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Clock Out',
+      columnHelper.accessor('late', {
+        header: dictionary['content'].late,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              6:00 AM 
+              {row.original?.late || '-'}
               </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+            </div>
+          </div>
+        )
+      }),
+      columnHelper.accessor('early_leaving', {
+        header: dictionary['content'].earlyLeaving,
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+              {row.original?.early_leaving || '-'}
+              </Typography>
             </div>
           </div>
         )
@@ -258,7 +277,7 @@ const AttendanceListTable = ({ tableData }: { tableData?: UsersType[] }) => {
       //   )
       // }),
       columnHelper.accessor('action', {
-        header: 'Action',
+        header: dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
             {/* <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
@@ -301,7 +320,7 @@ const AttendanceListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as AttendanceEmployee[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -329,7 +348,7 @@ const AttendanceListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  // const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
+  // const getAvatar = (params: Pick<AttendanceEmployee, 'avatar' | 'fullName'>) => {
   //   const { avatar, fullName } = params
 
   //   if (avatar) {
@@ -342,7 +361,7 @@ const AttendanceListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   return (
     <>
       <Card>
-        <CardHeader title='Attendance List' className='pbe-4' />
+        <CardHeader title={dictionary['content'].attendanceList} className='pbe-4' />
         <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -359,7 +378,7 @@ const AttendanceListTable = ({ tableData }: { tableData?: UsersType[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search User'
+              placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
             {/* <Button

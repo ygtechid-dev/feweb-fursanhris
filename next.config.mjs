@@ -1,3 +1,4 @@
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -8,14 +9,20 @@ const nextConfig = {
     return [
       {
         source: '/',
-        destination: '/dashboard',
+        destination: '/en/dashboard',
+        permanent: true,
+        locale: false
+      },
+      {
+        source: '/:lang(en|fr|ar|id)',
+        destination: '/:lang/dashboard',
         permanent: false,
         locale: false
       },
       {
-        source: '/project-management-workspace',
+        source: '/en/project-management-workspace',
         destination: '/projects',
-        permanent: false,
+        permanent: true,
         locale: false
       }
     ]

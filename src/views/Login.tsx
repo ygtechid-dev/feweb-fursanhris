@@ -4,7 +4,7 @@
 import { useState } from 'react'
 
 // Next Imports
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 // MUI Imports
 import useMediaQuery from '@mui/material/useMediaQuery'
@@ -34,6 +34,7 @@ import themeConfig from '@configs/themeConfig'
 // Hook Imports
 import { useImageVariant } from '@core/hooks/useImageVariant'
 import { useSettings } from '@core/hooks/useSettings'
+import axiosInstance from '@/libs/axios'
 
 // Styled Custom Components
 const LoginIllustration = styled('img')(({ theme }) => ({
@@ -62,6 +63,12 @@ const MaskImg = styled('img')({
 const LoginV2 = ({ mode }: { mode: SystemMode }) => {
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false);
+
 
   // Vars
   const darkImg = '/images/pages/auth-mask-dark.png'
@@ -87,6 +94,41 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
   )
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
+  const { lang: locale } = useParams()
+
+  const handleLogin = async (e:any) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await axiosInstance.post('/login', {
+        login:email,
+        password,
+        remember: rememberMe ,
+        platform:'web',
+        login_type:'email',
+      })
+
+      // Assuming the backend returns a token
+      const { token, user } = response.data?.data
+      // Store the token
+      localStorage.setItem('token', token)
+      
+      // Optional: Store user data
+      localStorage.setItem('user', JSON.stringify(user))
+
+      // Redirect to dashboard
+      router.push(`/`)
+    } catch (err:any) {
+      setError(
+        err.response?.data?.message || 
+        'An error occurred during login. Please try again.'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className='flex bs-full justify-center'>
@@ -117,21 +159,17 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
             <Typography>Please sign-in to your account and start the adventure</Typography>
           </div>
           <form
-            noValidate
-            autoComplete='off'
-            onSubmit={e => {
-              e.preventDefault()
-              router.push('/')
-            }}
-            className='flex flex-col gap-5'
+            noValidate autoComplete='off' onSubmit={handleLogin} className='flex flex-col gap-5'
           >
-            <CustomTextField autoFocus fullWidth label='Email or Username' placeholder='Enter your email or username' />
+            <CustomTextField autoFocus fullWidth label='Email or Username' placeholder='Enter your email or username' value={email}  onChange={(e) => setEmail(e.target.value)} />
             <CustomTextField
               fullWidth
               label='Password'
               placeholder='············'
               id='outlined-adornment-password'
               type={isPasswordShown ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position='end'>
@@ -143,12 +181,15 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
               }}
             />
             <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
-              <FormControlLabel control={<Checkbox />} label='Remember me' />
+              <FormControlLabel control={<Checkbox 
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />} label='Remember me' />
               <Typography className='text-end' color='primary' component={Link}>
                 Forgot password?
               </Typography>
             </div>
-            <Button fullWidth variant='contained' type='submit'>
+            <Button fullWidth variant='contained' type='submit'  disabled={loading}>
               Login
             </Button>
             <div className='flex justify-center items-center flex-wrap gap-2'>
@@ -157,7 +198,7 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
                 Create an account
               </Typography>
             </div>
-            <Divider className='gap-2 text-textPrimary'>or</Divider>
+            {/* <Divider className='gap-2 text-textPrimary'>or</Divider>
             <div className='flex justify-center items-center gap-1.5'>
               <IconButton className='text-facebook' size='small'>
                 <i className='tabler-brand-facebook-filled' />
@@ -171,7 +212,7 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
               <IconButton className='text-error' size='small'>
                 <i className='tabler-brand-google-filled' />
               </IconButton>
-            </div>
+            </div> */}
           </form>
         </div>
       </div>

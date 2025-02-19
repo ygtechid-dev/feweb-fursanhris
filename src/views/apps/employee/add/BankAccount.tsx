@@ -24,6 +24,10 @@ import CustomTextField from '@core/components/mui/TextField'
 // Style Imports
 import '@/libs/styles/tiptapEditor.css'
 import { MenuItem } from '@mui/material'
+import { useFormContext, UseFormReturn } from 'react-hook-form'
+import { EmployeeFormData } from '@/types/apps/userTypes'
+import QTextField from '@/@core/components/mui/QTextField'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
   if (!editor) {
@@ -114,45 +118,60 @@ const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
   )
 }
 
-const BankAccount = () => {
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({
-        placeholder: 'Write something here...'
-      }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph']
-      }),
-      Underline
-    ],
-
-    content: `
-      <p>
-        Keep your account secure with authentication step.
-      </p>
-    `
-  })
+const BankAccount =  () => {
+ const { register, formState: { errors }, control } = useFormContext();
+  const {dictionary} = useDictionary();
 
   return (
     <Card>
-      <CardHeader title='Bank Account Detail' />
+      <CardHeader title={dictionary['content'].bankAccountDetail}/>
       <CardContent>
         <Grid container spacing={6} className='mbe-6'>
           <Grid item xs={12} sm={6}>
-            <CustomTextField fullWidth label='Account Holder Name' type='text' placeholder='' />
+            <QTextField
+                  name='account_holder_name'
+                  control={control}
+                  placeholder='Enter account holder name'
+                  fullWidth
+                  label={dictionary['content'].accountHolderName}
+                />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <CustomTextField fullWidth label='Account Number' type='number' placeholder='' />
+            <QTextField
+                  name='account_number'
+                  control={control}
+                  placeholder='Enter account number'
+                  type='number'
+                  fullWidth
+                  label={dictionary['content'].accountHolderName}
+                />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <CustomTextField fullWidth label='Bank Name' type='text' placeholder='' />
+            <QTextField
+                  name='bank_name'
+                  control={control}
+                  placeholder='Enter bank name'
+                  fullWidth
+                  label={dictionary['content'].bankName}
+                />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <CustomTextField fullWidth label='Bank Identifier Code' type='text' placeholder='' />
+            <QTextField
+                  name='bank_identifier_code'
+                  control={control}
+                  placeholder='Enter identifier code'
+                  fullWidth
+                  label={dictionary['content'].bankIdentifierCode}
+                />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <CustomTextField fullWidth label='Branch Location' type='text' placeholder='' />
+            <QTextField
+                  name='branch_location'
+                  control={control}
+                  placeholder='Enter branch location'
+                  fullWidth
+                  label={dictionary['content'].branchLocation}
+                />
           </Grid>
          
         </Grid>

@@ -1,138 +1,21 @@
 'use client'
 
-// MUI Imports
-import Divider from '@mui/material/Divider'
 import Grid from '@mui/material/Grid'
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-
-// Third-party Imports
-import classnames from 'classnames'
-import { useEditor, EditorContent } from '@tiptap/react'
-import { StarterKit } from '@tiptap/starter-kit'
-import { Underline } from '@tiptap/extension-underline'
-import { Placeholder } from '@tiptap/extension-placeholder'
-import { TextAlign } from '@tiptap/extension-text-align'
-import type { Editor } from '@tiptap/core'
-
-// Components Imports
-import CustomIconButton from '@core/components/mui/IconButton'
 import CustomTextField from '@core/components/mui/TextField'
-
-// Style Imports
-import '@/libs/styles/tiptapEditor.css'
 import { MenuItem } from '@mui/material'
-
-const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
-  if (!editor) {
-    return null
-  }
-
-  return (
-    <div className='flex flex-wrap gap-x-3 gap-y-1 pbs-6 pbe-4 pli-6'>
-      <CustomIconButton
-        {...(editor.isActive('bold') && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().toggleBold().run()}
-      >
-        <i className={classnames('tabler-bold', { 'text-textSecondary': !editor.isActive('bold') })} />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive('underline') && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-      >
-        <i className={classnames('tabler-underline', { 'text-textSecondary': !editor.isActive('underline') })} />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive('italic') && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-      >
-        <i className={classnames('tabler-italic', { 'text-textSecondary': !editor.isActive('italic') })} />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive('strike') && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-      >
-        <i className={classnames('tabler-strikethrough', { 'text-textSecondary': !editor.isActive('strike') })} />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive({ textAlign: 'left' }) && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().setTextAlign('left').run()}
-      >
-        <i
-          className={classnames('tabler-align-left', { 'text-textSecondary': !editor.isActive({ textAlign: 'left' }) })}
-        />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive({ textAlign: 'center' }) && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().setTextAlign('center').run()}
-      >
-        <i
-          className={classnames('tabler-align-center', {
-            'text-textSecondary': !editor.isActive({ textAlign: 'center' })
-          })}
-        />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive({ textAlign: 'right' }) && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().setTextAlign('right').run()}
-      >
-        <i
-          className={classnames('tabler-align-right', {
-            'text-textSecondary': !editor.isActive({ textAlign: 'right' })
-          })}
-        />
-      </CustomIconButton>
-      <CustomIconButton
-        {...(editor.isActive({ textAlign: 'justify' }) && { color: 'primary' })}
-        variant='tonal'
-        size='small'
-        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-      >
-        <i
-          className={classnames('tabler-align-justified', {
-            'text-textSecondary': !editor.isActive({ textAlign: 'justify' })
-          })}
-        />
-      </CustomIconButton>
-    </div>
-  )
-}
+import { useFormContext, UseFormReturn } from 'react-hook-form'
+import { EmployeeFormData } from '@/types/apps/userTypes'
+import { useEffect } from 'react'
+import QTextField from '@/@core/components/mui/QTextField'
+import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 const PersonalDetail = () => {
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({
-        placeholder: 'Write something here...'
-      }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph']
-      }),
-      Underline
-    ],
-
-    content: `
-      <p>
-        Keep your account secure with authentication step.
-      </p>
-    `
-  })
+  const { register, formState: { errors }, control } = useFormContext();
+  const {dictionary} = useDictionary();
 
   return (
     <Card>
@@ -140,44 +23,117 @@ const PersonalDetail = () => {
       <CardContent>
         <Grid container spacing={6} className='mbe-6'>
           <Grid item xs={12} sm={6}>
-            <CustomTextField fullWidth label='Name' placeholder='' />
+             <QTextField
+                  name='name'
+                  control={control}
+                  fullWidth
+                  required
+                  placeholder='Enter employee name'
+                  rules={{ 
+                    minLength: {
+                      value: 3,
+                      message: 'Name must be at least 3 characters'
+                    }
+                  }}
+                  label={dictionary['content'].name} 
+                />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <CustomTextField fullWidth label='Phone' placeholder='' />
+                <QTextField
+                  name='phone'
+                  control={control}
+                  fullWidth
+                  required
+                  placeholder='Enter phone'
+                  rules={{ 
+                    pattern: {
+                      value: /^[0-9]{10,13}$/,
+                      message: 'Please enter a valid phone number'
+                    }
+                  }}
+                  label={dictionary['content'].phone} 
+                />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <CustomTextField fullWidth label='Date of Birth' placeholder='' />
+                 <QReactDatepicker
+                  name='dob'
+                  control={control}
+                  label={dictionary['content'].dateOfBirth} 
+                  required
+                />
           </Grid>
           <Grid item xs={12} sm={6}>
-          <CustomTextField select fullWidth label='Gender' value={''}>
-            <MenuItem value={`male`}>Male</MenuItem>
-            <MenuItem value={`female`}>Female</MenuItem>
-          </CustomTextField>
+                <QTextField
+                  name='gender'
+                  control={control}
+                  fullWidth
+                  required
+                  placeholder='Enter gender'
+                  label={dictionary['content'].gender} 
+                  select
+                >
+                  <MenuItem value="">Select gender</MenuItem>
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                </QTextField>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <CustomTextField fullWidth label='Email' type='email' placeholder='' />
+            <QTextField
+                  name='email'
+                  control={control}
+                  fullWidth
+                  required
+                  placeholder='Enter email'
+                  type='email' 
+                  rules={{ 
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Please enter a valid email address'
+                    }
+                  }}
+                  label={dictionary['content'].email} 
+                />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <CustomTextField fullWidth label='Password' type='password' placeholder='' />
+            <QTextField
+                  name='password'
+                  control={control}
+                  fullWidth
+                  required
+                  placeholder='Enter password'
+                  type='password' 
+                  rules={{ 
+                    minLength: {
+                      value: 8,
+                      message: 'Password must be at least 8 characters'
+                    },
+                    pattern: {
+                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                      message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+                    }
+                  }}
+                  label={dictionary['content'].password} 
+                />
           </Grid>
         </Grid>
-       <Grid item xs={12}>
-       <CustomTextField
+        <Grid item xs={12}>
+            <QTextField
+                name='address'
+                control={control}
                 fullWidth
-                rows={4}
+                required
+                placeholder='Enter address'
                 multiline
-                label='Address'
-                placeholder='address...'
-                sx={{ '& .MuiInputBase-root.MuiFilledInput-root': { alignItems: 'baseline' } }}
-                // InputProps={{
-                //   startAdornment: (
-                //     <InputAdornment position='start'>
-                //       <i className='tabler-message' />
-                //     </InputAdornment>
-                //   )
-                // }}
+                rows={4}
+                rules={{ 
+                  minLength: {
+                    value: 10,
+                    message: 'Please enter a complete address'
+                  }
+                }}
+                label={dictionary['content'].address} 
               />
-       </Grid>
+        </Grid>
       </CardContent>
     </Card>
   )

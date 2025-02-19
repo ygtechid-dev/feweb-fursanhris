@@ -13,7 +13,7 @@ import Divider from '@mui/material/Divider'
 import { useForm, Controller } from 'react-hook-form'
 
 // Types Imports
-import type { UsersType } from '@/types/apps/userTypes'
+import type { Employee, UsersType } from '@/types/apps/userTypes'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
@@ -21,14 +21,13 @@ import CustomTextField from '@core/components/mui/TextField'
 type Props = {
   open: boolean
   handleClose: () => void
-  userData?: UsersType[]
-  setData: (data: UsersType[]) => void
+  userData?: Employee[]
+  setData: (data: Employee[]) => void
 }
 
 type FormValidateType = {
-  fullName: string
+  name: string
   password: string
-  username: string
   email: string
   role: string
   plan: string
@@ -63,9 +62,8 @@ const AddDrawer = (props: Props) => {
     formState: { errors }
   } = useForm<FormValidateType>({
     defaultValues: {
-      fullName: '',
+      name: '',
       password: '',
-      username: '',
       email: '',
       role: '',
       plan: '',
@@ -74,26 +72,25 @@ const AddDrawer = (props: Props) => {
   })
 
   const onSubmit = (data: FormValidateType) => {
-    const newUser: UsersType = {
-      id: (userData?.length && userData?.length + 1) || 1,
-      avatar: `/images/avatars/${Math.floor(Math.random() * 8) + 1}.png`,
-      fullName: data.fullName,
-      password: data.password,
-      username: data.username,
-      email: data.email,
-      role: data.role,
-      currentPlan: data.plan,
-      status: data.status,
-      company: formData.company,
-      country: formData.country,
-      contact: formData.contact,
-      billing: userData?.[Math.floor(Math.random() * 50) + 1].billing ?? 'Auto Debit'
-    }
+    // const newUser: Employee = {
+    //   id: (userData?.length && userData?.length + 1) || 1,
+    //   // avatar: `/images/avatars/${Math.floor(Math.random() * 8) + 1}.png`,
+    //   name: data.name,
+    //   password: data.password,
+    //   email: data.email,
+    //   // role: data.role,
+    //   // currentPlan: data.plan,
+    //   // status: data.status,
+    //   // company: formData.company,
+    //   // country: formData.country,
+    //   // contact: formData.contact,
+    //   // billing: userData?.[Math.floor(Math.random() * 50) + 1]?.billing ?? 'Auto Debit'
+    // }
 
-    setData([...(userData ?? []), newUser])
-    handleClose()
-    setFormData(initialData)
-    resetForm({ fullName: '',password: '', username: '', email: '', role: '', plan: '', status: '' })
+    // setData([...(userData ?? []), newUser])
+    // handleClose()
+    // setFormData(initialData)
+    // resetForm({ fullName: '',password: '', username: '', email: '', role: '', plan: '', status: '' })
   }
 
   const handleReset = () => {
