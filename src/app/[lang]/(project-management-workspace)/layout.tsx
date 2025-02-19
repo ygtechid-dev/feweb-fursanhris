@@ -27,6 +27,7 @@ import Loading from '@/components/Loading'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { i18n, Locale } from '@/configs/i18n'
 import { getDictionary } from '@/utils/getDictionary'
+import { DictionaryProvider } from '@/components/dictionary-provider/DictionaryContext'
 
 const Layout = async  ({ children, params }: ChildrenType & { params: { lang: Locale } })  => {
   // Vars
@@ -37,34 +38,35 @@ const Layout = async  ({ children, params }: ChildrenType & { params: { lang: Lo
 
   return (
     <Providers direction={direction}>
-        <AuthProvider lang={params.lang}>
-       <Suspense fallback={<Loading />}>
-       <ProtectedRoute lang={params.lang}> 
-        <LayoutWrapper
-            systemMode={systemMode}
-            verticalLayout={
-              <VerticalLayout
-                navigation={<NavigationProject mode={mode} systemMode={systemMode} dictionary={dictionary} />}
-                navbar={<NavbarProject />}
-                footer={<VerticalFooter />}
-              >
-                {children}
-              </VerticalLayout>
-            }
-            horizontalLayout={
-              <HorizontalLayout header={<Header dictionary={dictionary} />} footer={<HorizontalFooter />}>
-                {children}
-              </HorizontalLayout>
-            }
-          />
-          <ScrollToTop className='mui-fixed'>
-            <Button variant='contained' className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'>
-              <i className='tabler-arrow-up' />
-            </Button>
-          </ScrollToTop>
-        </ProtectedRoute>
-        
-       </Suspense>
+      <AuthProvider lang={params.lang}>
+         <DictionaryProvider dictionary={dictionary}>
+            <Suspense fallback={<Loading />}>
+              <ProtectedRoute lang={params.lang}> 
+                <LayoutWrapper
+                    systemMode={systemMode}
+                    verticalLayout={
+                      <VerticalLayout
+                        navigation={<NavigationProject mode={mode} systemMode={systemMode} dictionary={dictionary} />}
+                        navbar={<NavbarProject />}
+                        footer={<VerticalFooter />}
+                      >
+                        {children}
+                      </VerticalLayout>
+                    }
+                    horizontalLayout={
+                      <HorizontalLayout header={<Header dictionary={dictionary} />} footer={<HorizontalFooter />}>
+                        {children}
+                      </HorizontalLayout>
+                    }
+                  />
+                  <ScrollToTop className='mui-fixed'>
+                    <Button variant='contained' className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'>
+                      <i className='tabler-arrow-up' />
+                    </Button>
+                  </ScrollToTop>
+              </ProtectedRoute>
+            </Suspense>
+         </DictionaryProvider>
       </AuthProvider>
     </Providers>
   )
