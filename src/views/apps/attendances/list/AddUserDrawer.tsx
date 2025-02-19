@@ -13,16 +13,16 @@ import Divider from '@mui/material/Divider'
 import { useForm, Controller } from 'react-hook-form'
 
 // Types Imports
-import type { UsersType } from '@/types/apps/userTypes'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import { AttendanceEmployee } from '@/types/attendanceEmployeeTypes'
 
 type Props = {
   open: boolean
   handleClose: () => void
-  userData?: UsersType[]
-  setData: (data: UsersType[]) => void
+  userData?: AttendanceEmployee[]
+  setData: (data: AttendanceEmployee[]) => void
 }
 
 type FormValidateType = {
@@ -32,7 +32,7 @@ type FormValidateType = {
   email: string
   role: string
   plan: string
-  status: string
+  status: 'Present' | 'Absent' | 'Late' | 'Early';
 }
 
 type FormNonValidateType = {
@@ -69,14 +69,12 @@ const AddUserDrawer = (props: Props) => {
       email: '',
       role: '',
       plan: '',
-      status: ''
+      status: 'Absent'
     }
   })
 
   const onSubmit = (data: FormValidateType) => {
-    const newUser: UsersType = {
-      id: (userData?.length && userData?.length + 1) || 1,
-      avatar: `/images/avatars/${Math.floor(Math.random() * 8) + 1}.png`,
+    const newUser: AttendanceEmployee = {
       fullName: data.fullName,
       password: data.password,
       username: data.username,

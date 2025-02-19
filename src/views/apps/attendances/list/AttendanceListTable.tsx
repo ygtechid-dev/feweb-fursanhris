@@ -464,12 +464,12 @@ const AttendanceListTable = ({ tableData, mutate }: { tableData?: AttendanceEmpl
           }}
         />
       </Card>
-      <AddUserDrawer
+      {/* <AddUserDrawer
         open={addUserOpen}
         handleClose={() => setAddUserOpen(!addUserOpen)}
         userData={data}
         setData={setData}
-      />
+      /> */}
     </>
   )
 }
