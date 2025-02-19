@@ -54,7 +54,7 @@ export type Config = {
 }
 
 const themeConfig: Config = {
-  templateName: 'HRIS',
+  templateName: 'FURSAN-HRIS',
   homePageUrl: '/dashboard',
   settingsCookieName: 'fursan-hris-1',
   mode: 'light', // 'system', 'light', 'dark'

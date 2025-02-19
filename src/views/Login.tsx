@@ -111,6 +111,8 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
         login_type:'email',
       })
 
+      console.log({response})
+
       // Assuming the backend returns a token
       const { token, user } = response.data?.data
       // Store the token
@@ -190,7 +192,7 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
                 Forgot password?
               </Typography>
             </div>
-            <Button fullWidth variant='contained' type='submit'  disabled={loading}>
+            <Button fullWidth variant='contained' type='submit' disabled={loading}>
               Login
             </Button>
             <div className='flex justify-center items-center flex-wrap gap-2'>
