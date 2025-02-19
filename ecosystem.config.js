@@ -4,7 +4,7 @@ module.exports = {
     script: 'node_modules/next/dist/bin/next',
     args: 'start',
     env: {
-      NODE_ENV: 'staging',
+      NODE_ENV: 'dev',
       PORT: 3000
     }
   }]

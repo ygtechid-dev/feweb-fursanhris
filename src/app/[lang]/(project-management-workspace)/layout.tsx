@@ -25,23 +25,26 @@ import { AuthProvider } from '@/components/AuthProvider'
 import { Suspense } from 'react'
 import Loading from '@/components/Loading'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { i18n, Locale } from '@/configs/i18n'
+import { getDictionary } from '@/utils/getDictionary'
 
-const Layout = async ({ children }: ChildrenType) => {
+const Layout = async  ({ children, params }: ChildrenType & { params: { lang: Locale } })  => {
   // Vars
-  const direction = 'ltr'
+    const direction = i18n.langDirection[params.lang]
+    const dictionary = await getDictionary(params.lang)
   const mode = getMode()
   const systemMode = getSystemMode()
 
   return (
     <Providers direction={direction}>
-       <AuthProvider>
+        <AuthProvider lang={params.lang}>
        <Suspense fallback={<Loading />}>
-       <ProtectedRoute>
+       <ProtectedRoute lang={params.lang}> 
         <LayoutWrapper
             systemMode={systemMode}
             verticalLayout={
               <VerticalLayout
-                navigation={<NavigationProject mode={mode} systemMode={systemMode} dictionary={''} />}
+                navigation={<NavigationProject mode={mode} systemMode={systemMode} dictionary={dictionary} />}
                 navbar={<NavbarProject />}
                 footer={<VerticalFooter />}
               >
@@ -49,7 +52,7 @@ const Layout = async ({ children }: ChildrenType) => {
               </VerticalLayout>
             }
             horizontalLayout={
-              <HorizontalLayout header={<Header dictionary={''} />} footer={<HorizontalFooter />}>
+              <HorizontalLayout header={<Header dictionary={dictionary} />} footer={<HorizontalFooter />}>
                 {children}
               </HorizontalLayout>
             }
