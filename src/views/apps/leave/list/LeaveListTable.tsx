@@ -43,7 +43,6 @@ import type { Locale } from '@configs/i18n'
 
 // Component Imports
 import TableFilters from './TableFilters'
-import AddUserDrawer from './AddUserDrawer'
 import TablePaginationComponent from '@components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
 
@@ -468,12 +467,12 @@ const LeaveListTable = ({ tableData, mutate }: { tableData?: Leave[],  mutate: K
           }}
         />
       </Card>
-      <AddUserDrawer
+      {/* <AddUserDrawer
         open={addUserOpen}
         handleClose={() => setAddUserOpen(!addUserOpen)}
         userData={data}
         setData={setData}
-      />
+      /> */}
     </>
   )
 }
