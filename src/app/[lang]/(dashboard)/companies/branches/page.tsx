@@ -1,4 +1,5 @@
-
+"use client"
+import { fetcher } from "@/configs/config"
 /**
  * ! If you need data using an API call, uncomment the below API code, update the `process.env.API_URL` variable in the
  * ! `.env` file found at root of your project and also update the API endpoints like `/apps/user-list` in below example.
@@ -6,25 +7,29 @@
  * ! because we've used the server action for getting our static data.
  */
 
-import { getUserData } from "@/app/server/actions"
 import BranchList from "@/views/apps/branch/list"
+import useSWR from "swr"
 
-/* const getUserData = async () => {
-  // Vars
-  const res = await fetch(`${process.env.API_URL}/apps/user-list`)
 
-  if (!res.ok) {
-    throw new Error('Failed to fetch userData')
+const BranchListApp = () => {
+  const { data, error, isLoading, mutate } = useSWR('/branches', fetcher,{
+    // Enable auto refresh every 5 seconds
+    refreshInterval: 5000,
+    // Revalidate on focus
+    revalidateOnFocus: true,
+    // Revalidate on reconnect
+    revalidateOnReconnect: true
+  })
+
+  if (error) {
+    return <div>Failed to load branches data</div>
   }
 
-  return res.json()
-} */
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
 
-const BranchListApp = async () => {
-  // Vars
-  const data = await getUserData()
-
-  return <BranchList userData={data} />
+  return <BranchList datas={data?.data} mutate={mutate} />
 }
 
 export default BranchListApp

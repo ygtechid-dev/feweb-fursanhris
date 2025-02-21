@@ -212,6 +212,15 @@
     "new": "New",
     "light": "Light",
     "dark": "Dark",
-    "system": "System"
+    "system": "System",
+    "list": "List",
+    "branchList": "Branch List",
+    "departmentList": "Department List",
+    "designationList": "Position List",
+    "addNewBranch": "Add New Branch",
+    "addNewDepartment": "Add New Department",
+    "addNewDesignation": "Add New Position",
+    "noDataAvailable": "No data available",
+    "failedToLoadData": "Failed to load data"
   }
 }

@@ -212,6 +212,15 @@
     "new": "جديد",
     "light": "فاتح",
     "dark": "داكن",
-    "system": "النظام"
+    "system": "النظام",
+    "list": "قائمة",
+    "branchList": "قائمة الفروع",
+    "departmentList": "قائمة الأقسام",
+    "designationList": "قائمة المناصب",
+    "addNewBranch": "إضافة فرع جديد",
+    "addNewDepartment": "إضافة قسم جديد",
+    "addNewDesignation": "إضافة منصب جديد",
+    "noDataAvailable": "لا توجد بيانات متاحة",
+    "failedToLoadData": "فشل في تحميل البيانات"
   }
 }

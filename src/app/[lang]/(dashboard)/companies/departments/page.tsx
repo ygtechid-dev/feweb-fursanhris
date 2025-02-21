@@ -1,4 +1,4 @@
-
+"use client"
 /**
  * ! If you need data using an API call, uncomment the below API code, update the `process.env.API_URL` variable in the
  * ! `.env` file found at root of your project and also update the API endpoints like `/apps/user-list` in below example.
@@ -7,7 +7,9 @@
  */
 
 import { getUserData } from "@/app/server/actions"
+import { fetcher } from "@/configs/config"
 import DepartmentList from "@/views/apps/department/list"
+import useSWR from "swr"
 
 /* const getUserData = async () => {
   // Vars
@@ -20,11 +22,25 @@ import DepartmentList from "@/views/apps/department/list"
   return res.json()
 } */
 
-const DepartmentListApp = async () => {
-  // Vars
-  const data = await getUserData()
+const DepartmentListApp =  () => {
+  const { data, error, isLoading, mutate } = useSWR('/departments', fetcher,{
+    // Enable auto refresh every 5 seconds
+    refreshInterval: 5000,
+    // Revalidate on focus
+    revalidateOnFocus: true,
+    // Revalidate on reconnect
+    revalidateOnReconnect: true
+  })
 
-  return <DepartmentList userData={data} />
+  if (error) {
+    return <div>Failed to load departments data</div>
+  }
+
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
+
+  return <DepartmentList datas={data?.data} mutate={mutate} />
 }
 
 export default DepartmentListApp

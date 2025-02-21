@@ -451,7 +451,7 @@ const UserListTable = ({ tableData, mutate }: { tableData?: User[],  mutate: Key
               <tbody>
                 <tr>
                   <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                    No data available
+                  {dictionary['content'].noDataAvailable}
                   </td>
                 </tr>
               </tbody>

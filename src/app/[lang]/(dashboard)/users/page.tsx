@@ -30,7 +30,7 @@ const UserListApp = () => {
     return <div>Loading...</div>
   }
 
-  return <UserList userData={data?.data} mutate={mutate}/>
+  return <UserList datas={data?.data} mutate={mutate}/>
 }
 
 export default UserListApp

@@ -212,6 +212,15 @@
     "new": "Baru",
     "light": "Terang",
     "dark": "Gelap",
-    "system": "Sistem"
+    "system": "Sistem",
+    "list": "Daftar",
+    "branchList": "Daftar Cabang",
+    "departmentList": "Daftar Departemen",
+    "designationList": "Daftar Jabatan",
+    "addNewBranch": "Tambah Cabang Baru",
+    "addNewDepartment": "Tambah Departemen Baru",
+    "addNewDesignation": "Tambah Jabatan Baru",
+    "noDataAvailable": "Tidak ada data tersedia",
+    "failedToLoadData": "Gagal memuat data"
   }
 }

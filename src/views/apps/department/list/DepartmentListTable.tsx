@@ -40,7 +40,6 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -57,6 +56,9 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+import { Department } from '@/types/departmentTypes'
+import { KeyedMutator } from 'swr'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -67,7 +69,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type DepartmentWithAction = Department & {
   action?: string
 }
 
@@ -140,9 +142,9 @@ const userStatusObj: UserStatusType = {
 }
 
 // Column Definitions
-const columnHelper = createColumnHelper<UsersTypeWithAction>()
+const columnHelper = createColumnHelper<DepartmentWithAction>()
 
-const DepartmentListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const DepartmentListTable =({ tableData, mutate }: { tableData?: Department[],  mutate: KeyedMutator<any> })  => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -152,8 +154,9 @@ const DepartmentListTable = ({ tableData }: { tableData?: UsersType[] }) => {
 
   // Hooks
   const { lang: locale } = useParams()
+  const {dictionary} = useDictionary();
 
-  const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
+  const columns = useMemo<ColumnDef<DepartmentWithAction, any>[]>(
     () => [
       {
         id: 'select',
@@ -177,45 +180,41 @@ const DepartmentListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('fullName', {
-        header: 'Company',
+      // columnHelper.accessor('fullName', {
+      //   header: 'Company',
+      //   cell: ({ row }) => (
+      //     <div className='flex items-center gap-4'>
+      //       {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+      //       <div className='flex flex-col'>
+      //         <Typography color='text.primary' className='font-medium'>
+      //           ABC
+      //         </Typography>
+      //         {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+      //       </div>
+      //     </div>
+      //   )
+      // }),
+      columnHelper.accessor('branch.name', {
+        header: dictionary['content'].branch,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-                ABC
+                {row.original.branch.name}
               </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
-        header: 'Branch',
+      columnHelper.accessor('name', {
+        header: dictionary['content'].department,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-                {/* {row.original.fullName} */}
-                Canada
+                {row.original.name}
               </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('fullName', {
-        header: 'Department',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.fullName}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
@@ -223,7 +222,7 @@ const DepartmentListTable = ({ tableData }: { tableData?: UsersType[] }) => {
      
      
       columnHelper.accessor('action', {
-        header: 'Action',
+        header: dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
             <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
@@ -263,7 +262,7 @@ const DepartmentListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as Department[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -291,21 +290,11 @@ const DepartmentListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
-
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-    }
-  }
-
   return (
     <>
       <Card>
-        <CardHeader title='Department List' className='pbe-4' />
-        {/* <TableFilters setData={setFilteredData} tableData={data} /> */}
+        <CardHeader title={dictionary['content'].departmentList} className='pbe-4' />
+        <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select
@@ -321,7 +310,7 @@ const DepartmentListTable = ({ tableData }: { tableData?: UsersType[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search User'
+              placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
             {/* <Button
@@ -338,7 +327,7 @@ const DepartmentListTable = ({ tableData }: { tableData?: UsersType[] }) => {
               onClick={() => setAddUserOpen(!addUserOpen)}
               className='max-sm:is-full'
             >
-              Add New User
+              {dictionary['content'].addNewDepartment}
             </Button>
           </div>
         </div>
@@ -375,7 +364,7 @@ const DepartmentListTable = ({ tableData }: { tableData?: UsersType[] }) => {
               <tbody>
                 <tr>
                   <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                    No data available
+                  {dictionary['content'].noDataAvailable}
                   </td>
                 </tr>
               </tbody>
@@ -407,12 +396,12 @@ const DepartmentListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           }}
         />
       </Card>
-      <AddUserDrawer
+      {/* <AddUserDrawer
         open={addUserOpen}
         handleClose={() => setAddUserOpen(!addUserOpen)}
         userData={data}
         setData={setData}
-      />
+      /> */}
     </>
   )
 }
