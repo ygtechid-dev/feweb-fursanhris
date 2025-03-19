@@ -298,7 +298,7 @@ const AttendanceListTable = ({ tableData, mutate }: { tableData?: AttendanceEmpl
             </IconButton> */}
             <IconButton 
               title='View' 
-              onClick={() => handleViewClick(row.original.id)}
+              onClick={() => handleViewClick(row.original.id!)}
             >
               <i className='tabler-eye text-textSecondary' />
             </IconButton>

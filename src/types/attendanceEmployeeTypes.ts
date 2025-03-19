@@ -1,5 +1,5 @@
 export interface AttendanceEmployee {
-    id: number;
+    id?: number;
     date: string;
     employee_name: string;
     clock_in: string | null;
