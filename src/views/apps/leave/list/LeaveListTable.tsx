@@ -37,10 +37,6 @@ import {
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
-// Type Imports
-import type { ThemeColor } from '@core/types'
-import type { Locale } from '@configs/i18n'
-
 // Component Imports
 import TableFilters from './TableFilters'
 import TablePaginationComponent from '@components/TablePaginationComponent'
@@ -48,10 +44,23 @@ import CustomTextField from '@core/components/mui/TextField'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import { KeyedMutator } from 'swr'
-import { Leave } from '@/types/leaveTypes'
+import { KeyedMutator, ScopedMutator, useSWRConfig } from 'swr'
+import { Leave, LeaveType } from '@/types/leaveTypes'
 import { ucfirst } from '@/utils/string'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
+import { useForm } from 'react-hook-form'
+import QTextField from '@/@core/components/mui/QTextField'
+import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
+import { getEmployees } from '@/services/employeeService'
+import { Employee } from '@/types/apps/userTypes'
+import { deleteLeave, getLeaves, getLeaveTypes, postLeave, updateLeave } from '@/services/leaveService'
+import { toast } from 'react-toastify'
+import moment from 'moment'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import LeaveDetailsDialog from '../view/detail-leave/LeaveDetail'
+import LeaveStatusDialog from '../view/leave-update-status/LeaveUpdateStatusDialog'
+
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -64,14 +73,6 @@ declare module '@tanstack/table-core' {
 
 type LeaveTypeWithAction = Leave & {
   action?: string
-}
-
-type UserRoleType = {
-  [key: string]: { icon: string; color: string }
-}
-
-type UserStatusType = {
-  [key: string]: ThemeColor
 }
 
 // Styled Components
@@ -122,17 +123,52 @@ const DebouncedInput = ({
 // Column Definitions
 const columnHelper = createColumnHelper<LeaveTypeWithAction>()
 
-const LeaveListTable = ({ tableData, mutate }: { tableData?: Leave[],  mutate: KeyedMutator<any> }) => {
+const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
   // States
-  const [addUserOpen, setAddUserOpen] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
   const [data, setData] = useState(...[tableData])
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([])
+  const [dialogFetchLoading, setDialogFetchLoading] = useState(false)
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [objectToDelete, setObjectToDelete] = useState<Leave | null>(null)
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
+
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
+  const [selectedLeaveForStatus, setSelectedLeaveForStatus] = useState<Leave | null>(null)
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [leaveToEdit, setLeaveToEdit] = useState<Leave | null>(null)
 
   // Hooks
   // const { lang: locale } = useParams()
   const { dictionary } = useDictionary()
+  const methods = useForm<Leave>({
+      defaultValues: {
+      employee_id: 0,
+      leave_type_id: 0,
+      start_date: '',
+      end_date: '',
+      total_leave_days: '',
+      leave_reason: '',
+      emergency_contact: '',
+      remark: '',
+      status: 'pending',
+      }
+  })
+  const { cache, mutate: swrMutate } = useSWRConfig();
+
+  useEffect(() => {
+    setData(tableData)
+    setFilteredData(tableData)
+  }, [tableData])
 
   const columns = useMemo<ColumnDef<LeaveTypeWithAction, any>[]>(
     () => [
@@ -258,18 +294,12 @@ const LeaveListTable = ({ tableData, mutate }: { tableData?: Leave[],  mutate: K
         header: dictionary['content'].status,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
-              {/* <Typography color='text.primary' className='font-medium'>
-              Medicle Leave
-              </Typography> */}
-              <Chip label= {ucfirst(row.original.status)}  color='success'/>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+              <Chip label= {ucfirst(row.original.status)}  color={row.original.status == 'approved' ? 'success' : (row.original.status == 'pending' ? 'secondary' : 'error')}/>
             </div>
           </div>
         )
       }),
-     
       // columnHelper.accessor('status', {
       //   header: 'Status',
       //   cell: ({ row }) => (
@@ -288,40 +318,26 @@ const LeaveListTable = ({ tableData, mutate }: { tableData?: Leave[],  mutate: K
         header: dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
-             <IconButton >
-              <i className='tabler-copy-check text-textSecondary' />
-            </IconButton>
-            <IconButton >
+            {
+              row.original.status == 'pending' &&  (
+                <IconButton onClick={() => handleUpdateStatus(row.original)}>
+                  <i className='tabler-copy-check text-textSecondary' />
+                </IconButton>
+              )
+            }
+            <IconButton onClick={() => handleViewDetails(row.original)}>
               <i className='tabler-eye text-textSecondary' />
             </IconButton>
-            <IconButton >
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
+            {
+              row.original.status == 'pending' &&  (
+                <IconButton onClick={() => handleEditClick(row.original)}>
+                  <i className='tabler-edit text-textSecondary' />
+                </IconButton>
+              )
+            }
+            <IconButton onClick={() => handleDeleteClick(row.original)}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
-           
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-textSecondary' />
-              </Link>
-            </IconButton> */}
-            {/* <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'tabler-download',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
           </div>
         ),
         enableSorting: false
@@ -360,6 +376,106 @@ const LeaveListTable = ({ tableData, mutate }: { tableData?: Leave[],  mutate: K
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
+  const handleViewDetails = (leave: Leave) => {
+    setSelectedLeave(leave);
+    setDetailsDialogOpen(true);
+  };
+
+  const handleDialogOpen = async () => {
+    setDialogOpen(true)
+    setDialogFetchLoading(true)
+    
+    try {
+      // Load both employees and leaves in parallel
+      const [employeesResponse, leavesResponse] = await Promise.all([
+        getEmployees(),
+        getLeaveTypes()
+      ])
+      
+      setEmployees(employeesResponse?.data || [])
+      setLeaveTypes(leavesResponse?.data || [])
+    } catch (error) {
+      console.error('Error loading dialog data:', error)
+    } finally {
+      setDialogFetchLoading(false)
+    }
+  }
+
+  // Handle delete dialog
+  const handleDeleteClick = (user: Leave) => {
+    setObjectToDelete(user)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+        if (!objectToDelete) return
+       
+        try {
+          setIsDeleting(true)
+          
+          const response = await deleteLeave(objectToDelete.id)
+          
+          if (response.status) {
+            // Remove the deleted leave from the table data
+            setData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
+            setFilteredData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
+            
+            // Show success message
+            toast.success(response.message || dictionary['content'].leaveDeletedSuccessfully)
+          }
+        } catch (error: any) {
+          // Handle error
+          toast.error(error?.response?.data?.message || dictionary['content'].errorDeletingLeave)
+        } finally {
+          setIsDeleting(false)
+          handleDeleteCancel()
+        }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false)
+    setObjectToDelete(null)
+  }
+
+  // Add this function
+  const handleUpdateStatus = (leave: Leave) => {
+    setSelectedLeaveForStatus(leave)
+    setStatusDialogOpen(true)
+  }
+
+  const handleEditClick = async (leave: Leave) => {
+    setLeaveToEdit(leave)
+    setDialogFetchLoading(true)
+    setEditDialogOpen(true)
+    
+    try {
+      // Load both employees and leaves in parallel
+      const [employeesResponse, leavesResponse] = await Promise.all([
+        getEmployees(),
+        getLeaveTypes()
+      ])
+      
+      setEmployees(employeesResponse?.data || [])
+      setLeaveTypes(leavesResponse?.data || [])
+      
+      // Reset form with the leave data
+      methods.reset({
+        employee_id: leave.employee_id,
+        leave_type_id: leave.leave_type_id,
+        start_date: leave.start_date,
+        end_date: leave.end_date,
+        total_leave_days: leave.total_leave_days,
+        leave_reason: leave.leave_reason,
+        emergency_contact: leave.emergency_contact,
+        remark: leave.remark,
+        status: leave.status
+      })
+    } catch (error) {
+      console.error('Error loading dialog data:', error)
+    } finally {
+      setDialogFetchLoading(false)
+    }
+  }
 
   return (
     <>
@@ -395,7 +511,7 @@ const LeaveListTable = ({ tableData, mutate }: { tableData?: Leave[],  mutate: K
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
-              // onClick={() => setAddUserOpen(!addUserOpen)}
+              onClick={handleDialogOpen}
               className='max-sm:is-full'
             >
               {dictionary['content'].addNewLeave}
@@ -467,12 +583,259 @@ const LeaveListTable = ({ tableData, mutate }: { tableData?: Leave[],  mutate: K
           }}
         />
       </Card>
-      {/* <AddUserDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        userData={data}
-        setData={setData}
-      /> */}
+
+      <FormDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+        title={dictionary['content'].addNewLeave}
+        onSubmit={async (data:any) => {
+          try {
+            const formattedData = {
+              ...data,
+              start_date: data.start_date ? moment(data.start_date).format('YYYY-MM-DD') : '',
+              end_date: data.end_date ? moment(data.end_date).format('YYYY-MM-DD') : '',
+            }
+
+            const res = await postLeave(formattedData);
+            console.log({res})
+            if (res.status) {
+              swrMutate('/web/leaves')
+              toast.success(res.message)
+            }
+          } catch (error) {
+            console.log('Error post leave', error)
+          } finally{
+            methods.reset();
+            setDialogOpen(false)
+          }
+         
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+       <>
+        <QTextField
+          name='employee_id'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].employee}
+          disabled={dialogFetchLoading}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].employee}</MenuItem>
+          {employees.map((employee) => (
+          <MenuItem key={employee.id} value={employee.id}>
+            {employee.name}
+          </MenuItem>
+        ))}
+        </QTextField>
+
+        <QTextField
+          name='leave_type_id'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].leaveType}
+          disabled={dialogFetchLoading}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an leave type'
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].leaveType}</MenuItem>
+          {leaveTypes.map((leaveType) => (
+            <MenuItem key={leaveType.id} value={leaveType.id}>
+              {leaveType.title}
+            </MenuItem>
+          ))}
+        </QTextField>
+          
+        <div className="flex space-x-4">
+              <div className="flex-1">
+                <QReactDatepicker
+                  name="start_date"
+                  control={methods.control}
+                  label={dictionary['content'].startDate}
+                  required
+                />
+              </div>
+              <div className="flex-1">
+                <QReactDatepicker
+                  name="end_date"
+                  control={methods.control}
+                  label={dictionary['content'].endDate}
+                  required
+                />
+              </div>
+        </div>
+         
+       <QTextField
+          name='leave_reason'
+          control={methods.control}
+          fullWidth
+          required
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].leaveReason}`}
+          label={dictionary['content'].leaveReason}
+        />
+       <QTextField
+          name='remark'
+          control={methods.control}
+          fullWidth
+          required
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].remark}`}
+          label={dictionary['content'].remark}
+        />
+       </>
+      </FormDialog>
+
+      <FormDialog
+        open={editDialogOpen}
+        setOpen={setEditDialogOpen}
+        title={dictionary['content'].editLeave}
+        onSubmit={async (data:any) => {
+          try {
+            if (!leaveToEdit) return
+            
+            const formattedData = {
+              ...data,
+              start_date: data.start_date ? moment(data.start_date).format('YYYY-MM-DD') : '',
+              end_date: data.end_date ? moment(data.end_date).format('YYYY-MM-DD') : '',
+            }
+            
+            const res = await updateLeave(formattedData, leaveToEdit.id);
+            
+            const response = await res.json()
+            
+            if (response.status) {
+              // Update the local data
+              const updatedData = data?.map((leave: Leave) => 
+                leave.id === leaveToEdit.id ? { ...leave, ...formattedData } : leave
+              )
+              
+              setData(updatedData)
+              setFilteredData(updatedData)
+              
+              // Refresh data with SWR
+              swrMutate('/web/leaves')
+              toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
+            }
+          } catch (error) {
+            console.log('Error updating leave', error)
+            toast.error(dictionary['content'].errorUpdatingLeave)
+          } finally {
+            methods.reset()
+            setEditDialogOpen(false)
+            setLeaveToEdit(null)
+          }
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+        <>
+          <QTextField
+            name='employee_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={dictionary['content'].employee}
+            disabled={dialogFetchLoading}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].employee}</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+
+          <QTextField
+            name='leave_type_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={dictionary['content'].leaveType}
+            disabled={dialogFetchLoading}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an leave type'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].leaveType}</MenuItem>
+            {leaveTypes.map((leaveType) => (
+              <MenuItem key={leaveType.id} value={leaveType.id}>
+                {leaveType.title}
+              </MenuItem>
+            ))}
+          </QTextField>
+            
+          <div className="flex space-x-4">
+            <div className="flex-1">
+              <QReactDatepicker
+                name="start_date"
+                control={methods.control}
+                label={dictionary['content'].startDate}
+                required
+              />
+            </div>
+            <div className="flex-1">
+              <QReactDatepicker
+                name="end_date"
+                control={methods.control}
+                label={dictionary['content'].endDate}
+                required
+              />
+            </div>
+          </div>
+          
+          <QTextField
+            name='leave_reason'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].leaveReason}`}
+            label={dictionary['content'].leaveReason}
+          />
+          <QTextField
+            name='remark'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].remark}`}
+            label={dictionary['content'].remark}
+          />
+        </>
+      </FormDialog>
+
+       {/* Delete Confirmation Dialog */}
+       <ConfirmationDialog
+        open={deleteDialogOpen} 
+        setOpen={setDeleteDialogOpen}
+        type='delete-leave'
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeleting}
+      />
+
+      {/** Detail Dialog */}
+      <LeaveDetailsDialog
+        open={detailsDialogOpen}
+        setOpen={setDetailsDialogOpen}
+        leaveData={selectedLeave}
+      />
+
+      <LeaveStatusDialog
+        open={statusDialogOpen}
+        setOpen={setStatusDialogOpen}
+        leaveData={selectedLeaveForStatus}
+        onStatusUpdate={async () => {
+          await swrMutate('/web/leaves')
+        }}
+      />
     </>
   )
 }

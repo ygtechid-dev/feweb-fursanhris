@@ -40,7 +40,6 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -57,6 +56,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import AddDrawer from './AddDrawer'
+import { Resignation } from '@/types/resignationTypes'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -67,7 +67,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type ResignationWithAction = Resignation & {
   action?: string
 }
 
@@ -140,9 +140,9 @@ const userStatusObj: UserStatusType = {
 }
 
 // Column Definitions
-const columnHelper = createColumnHelper<UsersTypeWithAction>()
+const columnHelper = createColumnHelper<ResignationWithAction>()
 
-const ResignationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -153,7 +153,7 @@ const ResignationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   // Hooks
   const { lang: locale } = useParams()
 
-  const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
+  const columns = useMemo<ColumnDef<ResignationWithAction, any>[]>(
     () => [
       {
         id: 'select',
@@ -177,56 +177,56 @@ const ResignationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('employee_name', {
         header: 'Employee',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.fullName}
+              {row.original.employee_name}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('notice_date', {
         header: 'Resignation Date',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-                  Nov 1, 2024
+              {row.original.notice_date}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('resignation_date', {
         header: 'Last Working Day',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Dec 31, 2024
+              {row.original.resignation_date}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('description', {
         header: 'Reason',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Lorem ipsum, or lipsum.
+              {row.original.description}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
@@ -234,36 +234,7 @@ const ResignationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
         )
       }),
      
-      // columnHelper.accessor('fullName', {
-      //   header: 'Status',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-4'>
-      //       {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-      //       <div className='flex flex-col'>
-      //         {/* <Typography color='text.primary' className='font-medium'>
-      //         Medicle Leave
-      //         </Typography> */}
-      //         <Chip label='Approve' color='success'/>
-      //         {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-      //       </div>
-      //     </div>
-      //   )
-      // }),
      
-      // columnHelper.accessor('status', {
-      //   header: 'Status',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-3'>
-      //       <Chip
-      //         variant='tonal'
-      //         label={row.original.status}
-      //         size='small'
-      //         color={userStatusObj[row.original.status]}
-      //         className='capitalize'
-      //       />
-      //     </div>
-      //   )
-      // }),
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
@@ -274,28 +245,7 @@ const ResignationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
             <IconButton title='Delete' onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
-           
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-textSecondary' />
-              </Link>
-            </IconButton> */}
-            {/* <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'tabler-download',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
+          
           </div>
         ),
         enableSorting: false
@@ -306,7 +256,7 @@ const ResignationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as Resignation[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -334,21 +284,11 @@ const ResignationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
-
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-    }
-  }
-
   return (
     <>
       <Card>
         <CardHeader title='Resignation List' className='pbe-4' />
-        <TableFilters setData={setFilteredData} tableData={data} />
+        {/* <TableFilters setData={setFilteredData} tableData={data} /> */}
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select
@@ -450,12 +390,7 @@ const ResignationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           }}
         />
       </Card>
-      <AddDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        userData={data}
-        setData={setData}
-      />
+      
     </>
   )
 }

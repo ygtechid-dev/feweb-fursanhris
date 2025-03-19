@@ -9,3 +9,12 @@ export interface Department {
     updated_at: string;
     branch: Branch;
   }
+
+
+  export const defaultFormValuesDepartment= {
+    branch_id: 0,
+    name: '',
+    created_by: 0,
+    created_at: '', 
+    updated_at: '',
+  }

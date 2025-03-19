@@ -8,7 +8,7 @@ import { Overtime } from '@/types/overtimeType'
 
 // Component Imports
 
-const OvertimeList = ({ datas, mutate }: { datas?: Overtime[], mutate: KeyedMutator<any> }) => {
+const OvertimeList = ({ datas }: { datas?: Overtime[]}) => {
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>

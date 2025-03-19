@@ -40,7 +40,6 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -57,6 +56,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import AddDrawer from './AddDrawer'
+import { Termination } from '@/types/terminationTypes'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -67,7 +67,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type TerminationWithAction = Termination & {
   action?: string
 }
 
@@ -140,9 +140,9 @@ const userStatusObj: UserStatusType = {
 }
 
 // Column Definitions
-const columnHelper = createColumnHelper<UsersTypeWithAction>()
+const columnHelper = createColumnHelper<TerminationWithAction>()
 
-const TerminationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const TerminationListTable = ({ tableData }: { tableData?: Termination[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -153,7 +153,7 @@ const TerminationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   // Hooks
   const { lang: locale } = useParams()
 
-  const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
+  const columns = useMemo<ColumnDef<TerminationWithAction, any>[]>(
     () => [
       {
         id: 'select',
@@ -177,70 +177,70 @@ const TerminationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('employee.name', {
         header: 'Employee',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.fullName}
+              {row.original.employee.name}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('termination_type', {
         header: 'Termination Type',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Voluntary Termination 
+              {row.original.employee.name}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('notice_date', {
         header: 'Notice Date',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Oct 1, 2024
+              {row.original.notice_date}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('termination_date', {
         header: 'Termination Date',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Oct 6, 2024
+              {row.original.termination_date}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('description', {
         header: 'Description',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Lorem ipsum, or lipsum
+              {row.original.description}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
@@ -248,36 +248,6 @@ const TerminationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
         )
       }),
      
-      // columnHelper.accessor('fullName', {
-      //   header: 'Status',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-4'>
-      //       {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-      //       <div className='flex flex-col'>
-      //         {/* <Typography color='text.primary' className='font-medium'>
-      //         Medicle Leave
-      //         </Typography> */}
-      //         <Chip label='Approve' color='success'/>
-      //         {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-      //       </div>
-      //     </div>
-      //   )
-      // }),
-     
-      // columnHelper.accessor('status', {
-      //   header: 'Status',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-3'>
-      //       <Chip
-      //         variant='tonal'
-      //         label={row.original.status}
-      //         size='small'
-      //         color={userStatusObj[row.original.status]}
-      //         className='capitalize'
-      //       />
-      //     </div>
-      //   )
-      // }),
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
@@ -289,27 +259,7 @@ const TerminationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
            
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-textSecondary' />
-              </Link>
-            </IconButton> */}
-            {/* <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'tabler-download',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
+           
           </div>
         ),
         enableSorting: false
@@ -320,7 +270,7 @@ const TerminationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as Termination[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -347,16 +297,6 @@ const TerminationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
-
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
-
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-    }
-  }
 
   return (
     <>
@@ -464,12 +404,7 @@ const TerminationListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           }}
         />
       </Card>
-      <AddDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        userData={data}
-        setData={setData}
-      />
+     
     </>
   )
 }

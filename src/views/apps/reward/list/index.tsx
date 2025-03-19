@@ -2,16 +2,16 @@
 import Grid from '@mui/material/Grid'
 
 // Type Imports
-import type { UsersType } from '@/types/apps/userTypes'
 import RewardListTable from './RewardListTable'
+import { Reward } from '@/types/rewardTypes'
 
 // Component Imports
 
-const RewardList = ({ userData }: { userData?: UsersType[] }) => {
+const RewardList = ({ datas }: { datas?: Reward[] }) => {
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
-        <RewardListTable tableData={userData} />
+        <RewardListTable tableData={datas} />
       </Grid>
     </Grid>
   )

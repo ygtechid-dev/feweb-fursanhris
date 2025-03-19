@@ -56,9 +56,17 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import { Department } from '@/types/departmentTypes'
-import { KeyedMutator } from 'swr'
+import { defaultFormValuesDepartment, Department } from '@/types/departmentTypes'
+import { KeyedMutator, useSWRConfig } from 'swr'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import { useForm } from 'react-hook-form'
+import { deleteDepartment, postDepartment, updateDepartment } from '@/services/departmentService'
+import { toast } from 'react-toastify'
+import QTextField from '@/@core/components/mui/QTextField'
+import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import { getBranches } from '@/services/branchService'
+import { Branch } from '@/types/branchTypes'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -144,17 +152,37 @@ const userStatusObj: UserStatusType = {
 // Column Definitions
 const columnHelper = createColumnHelper<DepartmentWithAction>()
 
-const DepartmentListTable =({ tableData, mutate }: { tableData?: Department[],  mutate: KeyedMutator<any> })  => {
+const DepartmentListTable =({ tableData }: { tableData?: Department[] })  => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
   const [data, setData] = useState(...[tableData])
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
+  const [branches, setBranches] = useState<Branch[]>([])
+
+  const [dialogFetchLoading, setDialogFetchLoading] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
+    
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [objectToDelete, setObjectToDelete] = useState<Department | null>(null)
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [objectToEdit, setObjectToEdit] = useState<Department | null>(null)
 
   // Hooks
   const { lang: locale } = useParams()
   const {dictionary} = useDictionary();
+  const methods = useForm<Department>({
+      defaultValues: defaultFormValuesDepartment
+  })
+  const { cache, mutate: swrMutate } = useSWRConfig();
+
+  useEffect(() => {
+    setData(tableData)
+    setFilteredData(tableData)
+  }, [tableData])
 
   const columns = useMemo<ColumnDef<DepartmentWithAction, any>[]>(
     () => [
@@ -225,11 +253,11 @@ const DepartmentListTable =({ tableData, mutate }: { tableData?: Department[],  
         header: dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-            <IconButton >
+            <IconButton  onClick={() => handleEditClick(row.original)}>
               <i className='tabler-edit text-textSecondary' />
+            </IconButton>
+            <IconButton onClick={() => handleDeleteClick(row.original)}>
+              <i className='tabler-trash text-textSecondary' />
             </IconButton>
             {/* <IconButton>
               <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
@@ -290,6 +318,85 @@ const DepartmentListTable =({ tableData, mutate }: { tableData?: Department[],  
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
+   const handleDialogOpen = async () => {
+      methods.reset(defaultFormValuesDepartment)
+      setDialogOpen(true)
+      setDialogFetchLoading(true)
+      
+      try {
+        // Load both employees and leaves in parallel
+        const [branchesResponse] = await Promise.all([
+          getBranches(),
+        ])
+        
+        setBranches(branchesResponse?.data || [])
+      } catch (error) {
+        console.error('Error loading dialog data:', error)
+      } finally {
+        setDialogFetchLoading(false)
+      }
+    }
+  
+    const handleDeleteConfirm = async () => {
+          if (!objectToDelete) return
+          
+          try {
+            setIsDeleting(true)
+            
+            const response = await deleteDepartment(objectToDelete.id)
+            
+            if (response.status) {
+              // // Remove the deleted leave from the table data
+              // setData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
+              // setFilteredData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
+              
+              // Show success message
+              toast.success(response.message || dictionary['content'].leaveDeletedSuccessfully)
+            }
+          } catch (error: any) {
+            // Handle error
+            toast.error(error?.response?.data?.message || dictionary['content'].errorDeletingLeave)
+          } finally {
+            setIsDeleting(false)
+            handleDeleteCancel()
+          }
+    }
+  
+    const handleDeleteCancel = () => {
+      setDeleteDialogOpen(false)
+      setObjectToDelete(null)
+    }
+  
+    // Handle delete dialog
+    const handleDeleteClick = (user: Department) => {
+      setObjectToDelete(user)
+      setDeleteDialogOpen(true)
+    }
+  
+    const handleEditClick = async (object: Department) => {
+        setObjectToEdit(object)
+        setDialogFetchLoading(true)
+        setEditDialogOpen(true)
+  
+         try {
+             // Load both employees and leaves in parallel
+            const [branchesResponse] = await Promise.all([
+              getBranches(),
+            ])
+            
+            setBranches(branchesResponse?.data || [])
+             
+             // Reset form 
+             methods.reset({
+              ...object
+             })
+           } catch (error) {
+             console.error('Error loading dialog data:', error)
+           } finally {
+             setDialogFetchLoading(false)
+           }
+    }
+
   return (
     <>
       <Card>
@@ -324,7 +431,7 @@ const DepartmentListTable =({ tableData, mutate }: { tableData?: Department[],  
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
+              onClick={handleDialogOpen}
               className='max-sm:is-full'
             >
               {dictionary['content'].addNewDepartment}
@@ -396,12 +503,135 @@ const DepartmentListTable =({ tableData, mutate }: { tableData?: Department[],  
           }}
         />
       </Card>
-      {/* <AddUserDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        userData={data}
-        setData={setData}
-      /> */}
+
+      <FormDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+        title={dictionary['content'].addNewDepartment}
+        onSubmit={async (data:any) => {
+          try {
+            const res = await postDepartment(data);
+            // console.log({res})
+            if (res.status) {
+              swrMutate('/departments')
+              toast.success(res.message)
+            }
+          } catch (error) {
+            console.log('Error post branch', error)
+          } finally{
+            methods.reset();
+            setDialogOpen(false)
+          }
+         
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+       <>
+       <QTextField
+            name='branch_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={dictionary['content'].branch}
+            disabled={dialogFetchLoading}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an branch'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].branch}</MenuItem>
+            {branches.map((branch) => (
+              <MenuItem key={branch.id} value={branch.id}>
+                {branch.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+       <QTextField
+          name='name'
+          control={methods.control}
+          fullWidth
+          required
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].branch} ${dictionary['content'].name}`}
+          label={dictionary['content'].name}
+        />
+       </>
+      </FormDialog>
+
+      <FormDialog
+        open={editDialogOpen}
+        setOpen={setEditDialogOpen}
+        title={`${dictionary['content'].edit} ${dictionary['content'].branch}`}
+        onSubmit={async (data:any) => {
+          try {
+            if (!objectToEdit) return
+            
+            
+            const response = await updateDepartment(data, objectToEdit.id);
+            
+            if (response.status) {
+              // Update the local data
+              // const updatedData = data?.map((branch: Department) => 
+              //   branch.id === objectToEdit.id ? { ...branch, ...data } : branch
+              // )
+              
+              // setData(updatedData)
+              // setFilteredData(updatedData)
+              
+              // Refresh data with SWR
+              swrMutate('/departments')
+              toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
+            }
+          } catch (error) {
+            console.log('Error updating department', error)
+            toast.error(dictionary['content'].errorUpdatingLeave)
+          } finally {
+            methods.reset()
+            setEditDialogOpen(false)
+            setObjectToEdit(null)
+          }
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+        <>
+        <QTextField
+            name='branch_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={dictionary['content'].employee}
+            disabled={dialogFetchLoading}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].branch}</MenuItem>
+            {branches.map((branch) => (
+              <MenuItem key={branch.id} value={branch.id}>
+                {branch.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+
+          <QTextField
+            name='name'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].branch} ${dictionary['content'].name}`}
+            label={dictionary['content'].name}
+          />
+        </>
+      </FormDialog>
+
+       {/* Delete Confirmation Dialog */}
+       <ConfirmationDialog
+        open={deleteDialogOpen} 
+        setOpen={setDeleteDialogOpen}
+        type='delete-department'
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeleting}
+      />
     </>
   )
 }

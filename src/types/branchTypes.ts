@@ -8,3 +8,11 @@ export interface Branch {
   
   // Untuk array dari branches
 export type Branches = Branch[];
+
+
+export const defaultFormValuesBranch=  {
+  name: '',
+  created_by: 0,
+  created_at: '', 
+  updated_at: '',
+}

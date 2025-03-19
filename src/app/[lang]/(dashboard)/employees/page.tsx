@@ -1,6 +1,7 @@
 'use client'
 
 
+import { useDictionary } from "@/components/dictionary-provider/DictionaryContext"
 /**
  * ! If you need data using an API call, uncomment the below API code, update the `process.env.API_URL` variable in the
  * ! `.env` file found at root of your project and also update the API endpoints like `/apps/user-list` in below example.
@@ -15,7 +16,7 @@ import useSWR from 'swr'
 
 const EmployeeListApp = () => {
   // Vars
-  // const data = await getEmployees()
+  const { dictionary } = useDictionary()
   const { data, error, isLoading } = useSWR('/web/employees', fetcher,{
     // Enable auto refresh every 5 seconds
     refreshInterval: 5000,
@@ -26,7 +27,7 @@ const EmployeeListApp = () => {
   })
 
   if (error) {
-    return <div>Failed to load employees data</div>
+    return <div>{dictionary['content'].failedToLoadData}</div>
   }
 
   if (isLoading) {

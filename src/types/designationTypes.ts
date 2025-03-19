@@ -10,3 +10,12 @@ export interface Designation {
     updated_at: string;
     department: Department;
   }
+
+export const defaultFormValuesDesignation = {
+  branch_id: 0,
+  department_id: 0,
+  name: '',
+  created_by: 0,
+  created_at: '', 
+  updated_at: '',
+};

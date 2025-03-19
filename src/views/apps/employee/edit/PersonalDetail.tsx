@@ -16,6 +16,7 @@ import { useDictionary } from '@/components/dictionary-provider/DictionaryContex
 const PersonalDetail = () => {
   const { register, formState: { errors }, control } = useFormContext();
   const {dictionary} = useDictionary();
+  
 return (
   <Card>
     <CardHeader title='Personal Detail' />

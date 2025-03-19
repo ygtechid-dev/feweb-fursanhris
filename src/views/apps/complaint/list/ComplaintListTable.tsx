@@ -40,7 +40,6 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -57,6 +56,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import AddDrawer from './AddDrawer'
+import { Complaint } from '@/types/complaintTypes'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -67,7 +67,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type ComplaintWithAction = Complaint & {
   action?: string
 }
 
@@ -124,25 +124,11 @@ const DebouncedInput = ({
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
 }
 
-// Vars
-const userRoleObj: UserRoleType = {
-  admin: { icon: 'tabler-crown', color: 'error' },
-  author: { icon: 'tabler-device-desktop', color: 'warning' },
-  editor: { icon: 'tabler-edit', color: 'info' },
-  maintainer: { icon: 'tabler-chart-pie', color: 'success' },
-  subscriber: { icon: 'tabler-user', color: 'primary' }
-}
-
-const userStatusObj: UserStatusType = {
-  active: 'success',
-  pending: 'warning',
-  inactive: 'secondary'
-}
 
 // Column Definitions
-const columnHelper = createColumnHelper<UsersTypeWithAction>()
+const columnHelper = createColumnHelper<ComplaintWithAction>()
 
-const ComplaintListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -153,7 +139,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   // Hooks
   const { lang: locale } = useParams()
 
-  const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
+  const columns = useMemo<ColumnDef<ComplaintWithAction, any>[]>(
     () => [
       {
         id: 'select',
@@ -177,70 +163,70 @@ const ComplaintListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('complaint_from.name', {
         header: 'Complaint From',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Teresa R McRae 
+              {row.original?.complaint_from?.name || '-'}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('complaint_against.name', {
         header: 'Complaint Against',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Nathaniel Cortez 
+              {row.original?.complaint_against?.name || '-'}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('title', {
         header: 'Title',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Work Reason
+              {row.original.title}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('complaint_date', {
         header: 'Complaint Date',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Nov 28, 2024
+              {row.original.complaint_date}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('description', {
         header: 'Description',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Lorem ipsum, or lipsum
+              {row.original.description}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
@@ -248,36 +234,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: UsersType[] }) => {
         )
       }),
      
-      // columnHelper.accessor('fullName', {
-      //   header: 'Status',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-4'>
-      //       {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-      //       <div className='flex flex-col'>
-      //         {/* <Typography color='text.primary' className='font-medium'>
-      //         Medicle Leave
-      //         </Typography> */}
-      //         <Chip label='Approve' color='success'/>
-      //         {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-      //       </div>
-      //     </div>
-      //   )
-      // }),
-     
-      // columnHelper.accessor('status', {
-      //   header: 'Status',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-3'>
-      //       <Chip
-      //         variant='tonal'
-      //         label={row.original.status}
-      //         size='small'
-      //         color={userStatusObj[row.original.status]}
-      //         className='capitalize'
-      //       />
-      //     </div>
-      //   )
-      // }),
+    
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
@@ -288,28 +245,6 @@ const ComplaintListTable = ({ tableData }: { tableData?: UsersType[] }) => {
             <IconButton title='Delete' onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
-           
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-textSecondary' />
-              </Link>
-            </IconButton> */}
-            {/* <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'tabler-download',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
           </div>
         ),
         enableSorting: false
@@ -320,7 +255,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as Complaint[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -348,15 +283,6 @@ const ComplaintListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
-
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-    }
-  }
 
   return (
     <>
@@ -464,12 +390,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           }}
         />
       </Card>
-      <AddDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        userData={data}
-        setData={setData}
-      />
+      
     </>
   )
 }

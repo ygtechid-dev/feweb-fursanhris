@@ -1,91 +1,174 @@
 // React Imports
 import { useState, useEffect } from 'react'
-
 // MUI Imports
 import CardContent from '@mui/material/CardContent'
 import Grid from '@mui/material/Grid'
 import MenuItem from '@mui/material/MenuItem'
-
-// Type Imports
-import type { UsersType } from '@/types/apps/userTypes'
-
+import Snackbar from '@mui/material/Snackbar'
+import Alert from '@mui/material/Alert'
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
 import { Button } from '@mui/material'
+import { Payslip } from '@/types/payslipTypes'
+import axios from 'axios'
+import axiosInstance from '@/libs/axios'
+import { toast } from 'react-toastify'
+import { useSWRConfig } from 'swr'
 
-const GeneratePayslip = ({ setData, tableData }: { setData: (data: UsersType[]) => void; tableData?: UsersType[] }) => {
-  // States
-  const [role, setRole] = useState<UsersType['role']>('')
-  const [plan, setPlan] = useState<UsersType['currentPlan']>('')
-  const [status, setStatus] = useState<UsersType['status']>('')
+const GeneratePayslip = ({  tableData }: {  tableData?: Payslip[] }) => {
+  const [month, setMonth] = useState<string>('')
+  const [year, setYear] = useState<string>('')
+  const [loading, setLoading] = useState<boolean>(false)
+  const [alert, setAlert] = useState<{
+    open: boolean,
+    message: string,
+    severity: 'success' | 'error' | 'info' | 'warning'
+  }>({
+    open: false,
+    message: '',
+    severity: 'info'
+  })
 
+  const { mutate: swrMutate } = useSWRConfig();
+
+  // Get current month and year for default selection
   useEffect(() => {
-    const filteredData = tableData?.filter(user => {
-      if (role && user.role !== role) return false
-      if (plan && user.currentPlan !== plan) return false
-      if (status && user.status !== status) return false
+    const currentDate = new Date()
+    setMonth((currentDate.getMonth() + 1).toString())
+    setYear(currentDate.getFullYear().toString())
+  }, [])
 
-      return true
-    })
+  // Filter payslip data based on selected month and year
+  // useEffect(() => {
+  //   if (tableData && (month || year)) {
+  //     const filteredData = tableData.filter(payslip => {
+  //       const monthMatch = month ? payslip.month.toString() === month : true
+  //       const yearMatch = year ? payslip.year.toString() === year : true
+        
+  //       return monthMatch && yearMatch
+  //     })
+      
+  //     // setData(filteredData || [])
+  //   } else {
+  //     // setData(tableData || [])
+  //   }
+  // }, [tableData, month, year])
 
-    setData(filteredData || [])
-  }, [role, plan, status, tableData, setData])
+  // Generate payslip function
+  const handleGeneratePayslip = async () => {
+    if (!month || !year) {
+      toast.warning('Please select both month and year')
+      return
+    }
+    
+    setLoading(true)
+    try {
+      const response = await axiosInstance.post('/web/payslips/generate', { 
+        month, 
+        year 
+      })
+      
+      if (response.data.status) {
+        swrMutate('/web/payslips');
+        toast.success(response.data?.message || 'Payslips generated successfully')
+      }
+    } catch (error: any) {
+      console.error('Error generating payslip:', error)
+      
+      // Menampilkan pesan error dari response
+      const errorMessage = error.response?.data?.message || 
+                           error.response?.data?.error || 
+                           error.message || 
+                           'Error generating payslip'
+      
+      toast.error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCloseAlert = () => {
+    setAlert(prev => ({ ...prev, open: false }))
+  }
+
+  // Generate month options
+  const months = [
+    { value: '1', label: 'January' },
+    { value: '2', label: 'February' },
+    { value: '3', label: 'March' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'May' },
+    { value: '6', label: 'June' },
+    { value: '7', label: 'July' },
+    { value: '8', label: 'August' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' }
+  ]
+
+  // Generate year options (current year and 5 years before and after)
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 11 }, (_, i) => (currentYear - 5 + i).toString())
 
   return (
     <CardContent>
       <Grid container spacing={6}>
-      
         <Grid item xs={12} sm={4}>
           <CustomTextField
             select
             fullWidth
-            id='select-status'
-            value={status}
-            // onChange={e => setStatus(e.target.value)}
+            id='select-month'
+            label='Month'
+            value={month}
+            onChange={e => setMonth(e.target.value)}
             SelectProps={{ displayEmpty: true }}
           >
             <MenuItem value=''>Select Month</MenuItem>
-            {/* <MenuItem value='pending'>Pending</MenuItem> */}
-            <MenuItem value='active'>Jan</MenuItem>
-            <MenuItem value='inactive'>Feb</MenuItem>
-            <MenuItem value='inactive'>Mar</MenuItem>
-            <MenuItem value='inactive'>Apr</MenuItem>
-            <MenuItem value='inactive'>May</MenuItem>
-            <MenuItem value='inactive'>Jun</MenuItem>
-            <MenuItem value='inactive'>Jul</MenuItem>
+            {months.map(monthOption => (
+              <MenuItem key={monthOption.value} value={monthOption.value}>
+                {monthOption.label}
+              </MenuItem>
+            ))}
           </CustomTextField>
         </Grid>
         <Grid item xs={12} sm={4}>
           <CustomTextField
             select
             fullWidth
-            id='select-status'
-            value={status}
-            // onChange={e => setStatus(e.target.value)}
+            id='select-year'
+            label='Year'
+            value={year}
+            onChange={e => setYear(e.target.value)}
             SelectProps={{ displayEmpty: true }}
           >
             <MenuItem value=''>Select Year</MenuItem>
-            {/* <MenuItem value='pending'>Pending</MenuItem> */}
-            <MenuItem value='active'>2020</MenuItem>
-            <MenuItem value='inactive'>2021</MenuItem>
-            <MenuItem value='inactive'>2022</MenuItem>
-            <MenuItem value='inactive'>2023</MenuItem>
-            <MenuItem value='inactive'>2024</MenuItem>
-            <MenuItem value='inactive'>2025</MenuItem>
-            <MenuItem value='inactive'>2026</MenuItem>
+            {years.map(yearOption => (
+              <MenuItem key={yearOption} value={yearOption}>
+                {yearOption}
+              </MenuItem>
+            ))}
           </CustomTextField>
         </Grid>
-        <Grid item xs={12} sm={4}>
-           <Button
-              color='primary'
-              variant='contained'
-              startIcon={<i className='tabler-wand' />}
-              className='max-sm:is-full'
-            >
-              Generate
-            </Button>
+        <Grid item xs={12} sm={4} className='items-end'>
+          <Button
+            color='primary'
+            variant='contained'
+            startIcon={<i className='tabler-wand' />}
+            className='max-sm:is-full'
+            onClick={handleGeneratePayslip}
+            disabled={loading}
+          >
+            {loading ? 'Generating...' : 'Generate Payslip'}
+          </Button>
         </Grid>
       </Grid>
+
+      {/* <Snackbar open={alert.open} autoHideDuration={6000} onClose={handleCloseAlert}>
+        <Alert onClose={handleCloseAlert} severity={alert.severity}>
+          {alert.message}
+        </Alert>
+      </Snackbar> */}
     </CardContent>
   )
 }

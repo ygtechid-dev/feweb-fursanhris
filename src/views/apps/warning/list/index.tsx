@@ -2,16 +2,16 @@
 import Grid from '@mui/material/Grid'
 
 // Type Imports
-import type { UsersType } from '@/types/apps/userTypes'
 import WarningListTable from './WarningListTable'
+import { Warning } from '@/types/warningTypes'
 
 // Component Imports
 
-const WarningList = ({ userData }: { userData?: UsersType[] }) => {
+const WarningList = ({ datas }: { datas?: Warning[] }) => {
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
-        <WarningListTable tableData={userData} />
+        <WarningListTable tableData={datas} />
       </Grid>
     </Grid>
   )

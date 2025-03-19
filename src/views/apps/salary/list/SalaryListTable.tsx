@@ -40,7 +40,7 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
+import type { Employee } from '@/types/apps/userTypes'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -57,6 +57,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+import { formatPrice } from '@/utils/formatPrice'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -67,7 +68,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type EmployeeWithAction = Employee & {
   action?: string
 }
 
@@ -140,9 +141,9 @@ const userStatusObj: UserStatusType = {
 }
 
 // Column Definitions
-const columnHelper = createColumnHelper<UsersTypeWithAction>()
+const columnHelper = createColumnHelper<EmployeeWithAction>()
 
-const SalaryListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const SalaryListTable = ({ tableData }: { tableData?: Employee[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -153,7 +154,7 @@ const SalaryListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   // Hooks
   const { lang: locale } = useParams()
 
-  const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
+  const columns = useMemo<ColumnDef<EmployeeWithAction, any>[]>(
     () => [
       {
         id: 'select',
@@ -177,56 +178,56 @@ const SalaryListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('name', {
         header: 'Employee',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.fullName}
+              {row.original.name}
               </Typography>
-              <Typography variant='body2'>Company ABC</Typography>
+              {/* <Typography variant='body2'>Company ABC</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('salary_type', {
         header: 'Payroll Type',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Monthly Payslip
+              {row.original.salary_type}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('salary', {
         header: 'Salary',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              10,000,000
+              {formatPrice(row.original.salary || '')}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('net_salary', {
         header: 'Net Salary',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              9,764,780
+              {formatPrice(row.original.net_salary || '')}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
@@ -243,38 +244,11 @@ const SalaryListTable = ({ tableData }: { tableData?: UsersType[] }) => {
               <i className='tabler-copy-check text-textSecondary' />
             </IconButton> */}
             <IconButton title="View">
-            <Link href={'/salary/detail/1'} className='flex'>
+            <Link href={`/${locale}/salary/detail/${row.original.id}`} className='flex'>
               <i className='tabler-eye text-textSecondary' />
             </Link>
             </IconButton>
-            {/* <IconButton >
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton> */}
-            {/* <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton> */}
            
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-textSecondary' />
-              </Link>
-            </IconButton> */}
-            {/* <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'tabler-download',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
           </div>
         ),
         enableSorting: false
@@ -285,7 +259,7 @@ const SalaryListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as Employee[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -313,21 +287,21 @@ const SalaryListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
+  // const getAvatar = (params: Pick<Employee, 'avatar' | 'fullName'>) => {
+  //   const { avatar, fullName } = params
 
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-    }
-  }
+  //   if (avatar) {
+  //     return <CustomAvatar src={avatar} size={34} />
+  //   } else {
+  //     return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
+  //   }
+  // }
 
   return (
     <>
       <Card>
         <CardHeader title='Manage Employee Salary' className='pbe-4' />
-        <TableFilters setData={setFilteredData} tableData={data} />
+        {/* <TableFilters setData={setFilteredData} tableData={data} /> */}
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select
@@ -429,12 +403,12 @@ const SalaryListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           }}
         />
       </Card>
-      <AddUserDrawer
+      {/* <AddUserDrawer
         open={addUserOpen}
         handleClose={() => setAddUserOpen(!addUserOpen)}
         userData={data}
         setData={setData}
-      />
+      /> */}
     </>
   )
 }

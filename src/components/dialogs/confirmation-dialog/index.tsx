@@ -9,7 +9,21 @@ import Button from '@mui/material/Button'
 import classnames from 'classnames'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
-type ConfirmationType = 'delete-account' | 'unsubscribe' | 'suspend-account' | 'delete-order' | 'delete-customer' | 'delete-user' | 'delete-employee'
+type ConfirmationType = 'delete-account' 
+| 'unsubscribe' 
+| 'suspend-account' 
+| 'delete-order' 
+| 'delete-customer' 
+| 'delete-user' 
+| 'delete-employee'
+| 'delete-leave'
+| 'delete-branch'
+| 'delete-department'
+| 'delete-designation'
+| 'delete-overtime'
+| 'delete-payslip'
+| 'delete-allowance'
+| 'delete-deduction'
 
 type ConfirmationDialogProps = {
   open: boolean
@@ -60,6 +74,14 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, isLoading }: Confi
               {type === 'delete-customer' && 'Are you sure?'}
               {type === 'delete-user' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].user.toLowerCase()}?`}
               {type === 'delete-employee' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].employee.toLowerCase()}?`}
+              {type === 'delete-leave' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].leave.toLowerCase()}?`}
+              {type === 'delete-branch' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].branch.toLowerCase()}?`}
+              {type === 'delete-department' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].department.toLowerCase()}?`}
+              {type === 'delete-designation' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].designation.toLowerCase()}?`}
+              {type === 'delete-overtime' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['navigation'].overtimes.toLowerCase()}?`}
+              {type === 'delete-payslip' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['navigation'].payslip.toLowerCase()}?`}
+              {type === 'delete-allowance' && `${dictionary['content'].areYouSureWantToDelete} Allowance?`}
+              {type === 'delete-deduction' && `${dictionary['content'].areYouSureWantToDelete} Deduction?`}
             </Typography>
             {type === 'suspend-account' && (
               <Typography color='text.primary'>You won&#39;t be able to revert user!</Typography>
@@ -125,6 +147,14 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, isLoading }: Confi
                 {type === 'delete-customer' && 'Your customer removed successfully.'}
                 {type === 'delete-user' && dictionary['content'].yourUserRemovedSuccessfully}
                 {type === 'delete-employee' && dictionary['content'].yourEmployeeRemovedSuccessfully}
+                {type === 'delete-leave' && dictionary['content'].leaveRemovedSuccessfully}
+                {type === 'delete-branch' && 'Branch removed successfully'}
+                {type === 'delete-department' && 'Department removed successfully'}
+                {type === 'delete-designation' && 'Position removed successfully'}
+                {type === 'delete-overtime' && 'Overtime removed successfully'}
+                {type === 'delete-payslip' && 'Payslip removed successfully'}
+                {type === 'delete-allowance' && 'Allowance removed successfully'}
+                {type === 'delete-deduction' && 'Deduction removed successfully'}
               </>
             ) : (
               <>
@@ -135,6 +165,14 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, isLoading }: Confi
                 {type === 'delete-customer' && 'Customer Deletion Cancelled'}
                 {type === 'delete-user' && dictionary['content'].userDeletionCancelled}
                 {type === 'delete-employee' && dictionary['content'].employeeDeletionCancelled}
+                {type === 'delete-leave' && dictionary['content'].leaveDeletionCancelled}
+                {type === 'delete-branch' && 'Branch Deletion Cancelled'}
+                {type === 'delete-department' && 'Department Deletion Cancelled'}
+                {type === 'delete-designation' && 'Position Deletion Cancelled'}
+                {type === 'delete-overtime' && 'Overtime Deletion Cancelled'}
+                {type === 'delete-payslip' && 'Payslip Deletion Cancelled'}
+                {type === 'delete-allowance' && 'Allowance Deletion Cancelled'}
+                {type === 'delete-deduction' && 'Deduction Deletion Cancelled'}
               </>
             )}
           </Typography>

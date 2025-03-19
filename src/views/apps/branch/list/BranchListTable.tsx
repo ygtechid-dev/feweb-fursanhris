@@ -56,9 +56,16 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import { KeyedMutator } from 'swr'
-import { Branch, Branches } from '@/types/branchTypes'
+import { KeyedMutator, useSWRConfig } from 'swr'
+import { Branch, Branches, defaultFormValuesBranch } from '@/types/branchTypes'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
+import QTextField from '@/@core/components/mui/QTextField'
+import moment from 'moment'
+import { useForm } from 'react-hook-form'
+import { toast } from 'react-toastify'
+import { deleteBranch, postBranch, updateBranch } from '@/services/branchService'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -144,17 +151,36 @@ const userStatusObj: UserStatusType = {
 // Column Definitions
 const columnHelper = createColumnHelper<BranchWithAction>()
 
-const BranchListTable = ({ tableData, mutate }: { tableData?: Branches,  mutate: KeyedMutator<any> }) => {
+const BranchListTable = ({ tableData }: { tableData?: Branches }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
   const [data, setData] = useState(...[tableData])
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
+  
+  const [dialogOpen, setDialogOpen] = useState(false)
+  
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [objectToDelete, setObjectToDelete] = useState<Branch | null>(null)
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [objectToEdit, setObjectToEdit] = useState<Branch | null>(null)
+
 
   // Hooks
   const { lang: locale } = useParams()
   const {dictionary} = useDictionary();
+    const methods = useForm<Branch>({
+        defaultValues: defaultFormValuesBranch
+    })
+  const { cache, mutate: swrMutate } = useSWRConfig();
+
+  useEffect(() => {
+    setData(tableData)
+    setFilteredData(tableData)
+  }, [tableData])
 
   const columns = useMemo<ColumnDef<BranchWithAction, any>[]>(
     () => [
@@ -227,11 +253,11 @@ const BranchListTable = ({ tableData, mutate }: { tableData?: Branches,  mutate:
         header: dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-            <IconButton >
+            <IconButton  onClick={() => handleEditClick(row.original)}>
               <i className='tabler-edit text-textSecondary' />
+            </IconButton>
+            <IconButton onClick={() => handleDeleteClick(row.original)}>
+              <i className='tabler-trash text-textSecondary' />
             </IconButton>
           </div>
         ),
@@ -271,6 +297,56 @@ const BranchListTable = ({ tableData, mutate }: { tableData?: Branches,  mutate:
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
+  const handleDialogOpen = async () => {
+    methods.reset(defaultFormValuesBranch)
+    setDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+        if (!objectToDelete) return
+        
+        try {
+          setIsDeleting(true)
+          
+          const response = await deleteBranch(objectToDelete.id)
+          
+          if (response.status) {
+            // Remove the deleted leave from the table data
+            setData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
+            setFilteredData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
+            
+            // Show success message
+            toast.success(response.message || dictionary['content'].leaveDeletedSuccessfully)
+          }
+        } catch (error: any) {
+          // Handle error
+          toast.error(error?.response?.data?.message || dictionary['content'].errorDeletingLeave)
+        } finally {
+          setIsDeleting(false)
+          handleDeleteCancel()
+        }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false)
+    setObjectToDelete(null)
+  }
+
+  // Handle delete dialog
+  const handleDeleteClick = (user: Branch) => {
+    setObjectToDelete(user)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleEditClick = async (object: Branch) => {
+      setObjectToEdit(object)
+      setEditDialogOpen(true)
+
+      methods.reset({
+        ...object
+      })
+  }
+
   return (
     <>
       <Card>
@@ -305,7 +381,7 @@ const BranchListTable = ({ tableData, mutate }: { tableData?: Branches,  mutate:
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
+              onClick={handleDialogOpen}
               className='max-sm:is-full'
             >
               {dictionary['content'].addNewBranch}
@@ -377,12 +453,98 @@ const BranchListTable = ({ tableData, mutate }: { tableData?: Branches,  mutate:
           }}
         />
       </Card>
-      {/* <AddUserDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        userData={data}
-        setData={setData}
-      /> */}
+
+      <FormDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+        title={dictionary['content'].addNewBranch}
+        onSubmit={async (data:any) => {
+          try {
+            const res = await postBranch(data);
+            console.log({res})
+            if (res.status) {
+              swrMutate('/branches')
+              toast.success(res.message)
+            }
+          } catch (error) {
+            console.log('Error post branch', error)
+          } finally{
+            methods.reset();
+            setDialogOpen(false)
+          }
+         
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+       <>
+       <QTextField
+          name='name'
+          control={methods.control}
+          fullWidth
+          required
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].branch} ${dictionary['content'].name}`}
+          label={dictionary['content'].name}
+        />
+       </>
+      </FormDialog>
+
+      <FormDialog
+        open={editDialogOpen}
+        setOpen={setEditDialogOpen}
+        title={`${dictionary['content'].edit} ${dictionary['content'].branch}`}
+        onSubmit={async (data:any) => {
+          try {
+            if (!objectToEdit) return
+            
+            
+            const res = await updateBranch(data, objectToEdit.id);
+            
+            const response = await res.json()
+            
+            if (response.status) {
+              // Update the local data
+              const updatedData = data?.map((branch: Branch) => 
+                branch.id === objectToEdit.id ? { ...branch, ...data } : branch
+              )
+              
+              setData(updatedData)
+              setFilteredData(updatedData)
+              
+              // Refresh data with SWR
+              swrMutate('/branches')
+              toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
+            }
+          } catch (error) {
+            console.log('Error updating leave', error)
+            toast.error(dictionary['content'].errorUpdatingLeave)
+          } finally {
+            methods.reset()
+            setEditDialogOpen(false)
+            setObjectToEdit(null)
+          }
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+        <>
+          <QTextField
+            name='name'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].branch} ${dictionary['content'].name}`}
+            label={dictionary['content'].name}
+          />
+        </>
+      </FormDialog>
+
+       {/* Delete Confirmation Dialog */}
+       <ConfirmationDialog
+        open={deleteDialogOpen} 
+        setOpen={setDeleteDialogOpen}
+        type='delete-branch'
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeleting}
+      />
     </>
   )
 }

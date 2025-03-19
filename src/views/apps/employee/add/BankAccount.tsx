@@ -143,7 +143,7 @@ const BankAccount =  () => {
                   placeholder='Enter account number'
                   type='number'
                   fullWidth
-                  label={dictionary['content'].accountHolderName}
+                  label={dictionary['content'].accountNumber}
                 />
           </Grid>
           <Grid item xs={12} sm={6}>

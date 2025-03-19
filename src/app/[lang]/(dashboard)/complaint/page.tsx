@@ -1,31 +1,30 @@
 
-/**
- * ! If you need data using an API call, uncomment the below API code, update the `process.env.API_URL` variable in the
- * ! `.env` file found at root of your project and also update the API endpoints like `/apps/user-list` in below example.
- * ! Also, remove the above server action import and the action itself from the `src/app/server/actions.ts` file to clean up unused code
- * ! because we've used the server action for getting our static data.
- */
-
-import { getUserData } from "@/app/server/actions"
+'use client'
+import { useDictionary } from "@/components/dictionary-provider/DictionaryContext";
+import { fetcher } from "@/configs/config";
 import ComplaintList from "@/views/apps/complaint/list"
-
-
-/* const getUserData = async () => {
-  // Vars
-  const res = await fetch(`${process.env.API_URL}/apps/user-list`)
-
-  if (!res.ok) {
-    throw new Error('Failed to fetch userData')
-  }
-
-  return res.json()
-} */
+import useSWR from "swr";
 
 const ComplaintListApp = async () => {
-  // Vars
-  const data = await getUserData()
+  const {dictionary} = useDictionary();
+  const { data, error, isLoading, mutate } = useSWR('/web/complaints', fetcher,{
+    // Enable auto refresh every 5 seconds
+    refreshInterval: 5000,
+    // Revalidate on focus
+    revalidateOnFocus: true,
+    // Revalidate on reconnect
+    revalidateOnReconnect: true
+  })
 
-  return <ComplaintList userData={data} />
+  if (error) {
+    return <div>{dictionary['content'].failedToLoadData}</div>
+  }
+
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
+
+  return <ComplaintList datas={data?.data?.complaints} />
 }
 
 export default ComplaintListApp

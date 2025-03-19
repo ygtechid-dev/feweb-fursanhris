@@ -1,31 +1,33 @@
+'use client'
 
-/**
- * ! If you need data using an API call, uncomment the below API code, update the `process.env.API_URL` variable in the
- * ! `.env` file found at root of your project and also update the API endpoints like `/apps/user-list` in below example.
- * ! Also, remove the above server action import and the action itself from the `src/app/server/actions.ts` file to clean up unused code
- * ! because we've used the server action for getting our static data.
- */
 
-import { getUserData } from "@/app/server/actions"
+import { useDictionary } from "@/components/dictionary-provider/DictionaryContext";
+import { fetcher } from "@/configs/config";
 import PromotionList from "@/views/apps/promotion/list"
+import useSWR from "swr";
 
 
-/* const getUserData = async () => {
-  // Vars
-  const res = await fetch(`${process.env.API_URL}/apps/user-list`)
 
-  if (!res.ok) {
-    throw new Error('Failed to fetch userData')
+const PromotionListApp =  () => {
+  const {dictionary} = useDictionary();
+  const { data, error, isLoading, mutate } = useSWR('/web/promotions', fetcher,{
+    // Enable auto refresh every 5 seconds
+    refreshInterval: 5000,
+    // Revalidate on focus
+    revalidateOnFocus: true,
+    // Revalidate on reconnect
+    revalidateOnReconnect: true
+  })
+
+  if (error) {
+    return <div>{dictionary['content'].failedToLoadData}</div>
   }
 
-  return res.json()
-} */
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
 
-const PromotionListApp = async () => {
-  // Vars
-  const data = await getUserData()
-
-  return <PromotionList userData={data} />
+  return <PromotionList datas={data?.data?.promotions} />
 }
 
 export default PromotionListApp

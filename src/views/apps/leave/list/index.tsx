@@ -4,15 +4,14 @@ import Grid from '@mui/material/Grid'
 // Type Imports
 import LeaveListTable from './LeaveListTable'
 import { Leave } from '@/types/leaveTypes'
-import { KeyedMutator } from 'swr'
 
 // Component Imports
 
-const LeaveList = ({ datas, mutate }: { datas?: Leave[], mutate: KeyedMutator<any> }) => {
+const LeaveList = ({ datas }: { datas?: Leave[] }) => {
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
-        <LeaveListTable tableData={datas}  mutate={mutate}/>
+        <LeaveListTable tableData={datas}/>
       </Grid>
     </Grid>
   )

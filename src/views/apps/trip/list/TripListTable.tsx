@@ -40,7 +40,6 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -57,6 +56,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import AddDrawer from './AddDrawer'
+import { Trip } from '@/types/tripTypes'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -67,7 +67,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type TripWithAction = Trip & {
   action?: string
 }
 
@@ -124,25 +124,10 @@ const DebouncedInput = ({
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
 }
 
-// Vars
-const userRoleObj: UserRoleType = {
-  admin: { icon: 'tabler-crown', color: 'error' },
-  author: { icon: 'tabler-device-desktop', color: 'warning' },
-  editor: { icon: 'tabler-edit', color: 'info' },
-  maintainer: { icon: 'tabler-chart-pie', color: 'success' },
-  subscriber: { icon: 'tabler-user', color: 'primary' }
-}
-
-const userStatusObj: UserStatusType = {
-  active: 'success',
-  pending: 'warning',
-  inactive: 'secondary'
-}
-
 // Column Definitions
-const columnHelper = createColumnHelper<UsersTypeWithAction>()
+const columnHelper = createColumnHelper<TripWithAction>()
 
-const TripListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -153,7 +138,7 @@ const TripListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   // Hooks
   const { lang: locale } = useParams()
 
-  const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
+  const columns = useMemo<ColumnDef<TripWithAction, any>[]>(
     () => [
       {
         id: 'select',
@@ -177,107 +162,76 @@ const TripListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('employee_name', {
         header: 'Employee',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.fullName}
+              {row.original.employee_name}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('start_date', {
         header: 'Start Date',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-                  Nov 1, 2024
+                {row.original.start_date}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('end_date', {
         header: 'End Date',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Dec 31, 2024
+                {row.original.end_date}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('purpose_of_visit', {
         header: 'Purpose of Trip',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Consequatur ex atqu
+              {row.original.purpose_of_visit}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('description', {
         header: 'Description',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Lorem ipsum, or lipsum
+              {row.original.description}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-     
-      // columnHelper.accessor('fullName', {
-      //   header: 'Status',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-4'>
-      //       {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-      //       <div className='flex flex-col'>
-      //         {/* <Typography color='text.primary' className='font-medium'>
-      //         Medicle Leave
-      //         </Typography> */}
-      //         <Chip label='Approve' color='success'/>
-      //         {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-      //       </div>
-      //     </div>
-      //   )
-      // }),
-     
-      // columnHelper.accessor('status', {
-      //   header: 'Status',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-3'>
-      //       <Chip
-      //         variant='tonal'
-      //         label={row.original.status}
-      //         size='small'
-      //         color={userStatusObj[row.original.status]}
-      //         className='capitalize'
-      //       />
-      //     </div>
-      //   )
-      // }),
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
@@ -288,28 +242,6 @@ const TripListTable = ({ tableData }: { tableData?: UsersType[] }) => {
             <IconButton title='Delete' onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
-           
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-textSecondary' />
-              </Link>
-            </IconButton> */}
-            {/* <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'tabler-download',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
           </div>
         ),
         enableSorting: false
@@ -320,7 +252,7 @@ const TripListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as Trip[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -347,16 +279,6 @@ const TripListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
-
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
-
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-    }
-  }
 
   return (
     <>
@@ -464,12 +386,7 @@ const TripListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           }}
         />
       </Card>
-      <AddDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        userData={data}
-        setData={setData}
-      />
+     
     </>
   )
 }

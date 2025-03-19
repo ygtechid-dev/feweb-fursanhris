@@ -19,6 +19,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { i18n, Locale } from '@/configs/i18n'
 import { getDictionary } from '@/utils/getDictionary'
 import { DictionaryProvider } from '@/components/dictionary-provider/DictionaryContext'
+import { SWRConfig } from 'swr'
 
 const Layout = async ({ children, params }: ChildrenType & { params: { lang: Locale } }) => {
   const direction = i18n.langDirection[params.lang]
@@ -28,39 +29,47 @@ const Layout = async ({ children, params }: ChildrenType & { params: { lang: Loc
   
   return (
     <Providers direction={direction}>
-      <AuthProvider lang={params.lang}>
-        <DictionaryProvider dictionary={dictionary}>
-          <Suspense fallback={<Loading />}>
-            <ProtectedRoute lang={params.lang}> 
-              <LayoutWrapper
-                systemMode={systemMode}
-                verticalLayout={
-                  <VerticalLayout
-                    navigation={<Navigation mode={mode} systemMode={systemMode} dictionary={dictionary}/>}
-                    navbar={<Navbar />}
-                    footer={<VerticalFooter />}
+       <SWRConfig 
+           value={{ 
+            revalidateOnFocus: false,
+            revalidateIfStale: false,
+            revalidateOnReconnect: false
+          }}
+        >
+          <AuthProvider lang={params.lang}>
+            <DictionaryProvider dictionary={dictionary}>
+              <Suspense fallback={<Loading />}>
+                <ProtectedRoute lang={params.lang}> 
+                  <LayoutWrapper
+                    systemMode={systemMode}
+                    verticalLayout={
+                      <VerticalLayout
+                        navigation={<Navigation mode={mode} systemMode={systemMode} dictionary={dictionary}/>}
+                        navbar={<Navbar />}
+                        footer={<VerticalFooter />}
+                      >
+                        {children}
+                      </VerticalLayout>
+                    }
+                    horizontalLayout={
+                      <HorizontalLayout header={<Header dictionary={dictionary} />} footer={<HorizontalFooter />}>
+                        {children}
+                      </HorizontalLayout>
+                    }
+                  />
+                </ProtectedRoute>
+                <ScrollToTop className='mui-fixed'>
+                  <Button
+                    variant='contained'
+                    className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'
                   >
-                    {children}
-                  </VerticalLayout>
-                }
-                horizontalLayout={
-                  <HorizontalLayout header={<Header dictionary={dictionary} />} footer={<HorizontalFooter />}>
-                    {children}
-                  </HorizontalLayout>
-                }
-              />
-            </ProtectedRoute>
-            <ScrollToTop className='mui-fixed'>
-              <Button
-                variant='contained'
-                className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'
-              >
-                <i className='tabler-arrow-up' />
-              </Button>
-            </ScrollToTop>
-          </Suspense>
-        </DictionaryProvider>
-      </AuthProvider>
+                    <i className='tabler-arrow-up' />
+                  </Button>
+                </ScrollToTop>
+              </Suspense>
+            </DictionaryProvider>
+          </AuthProvider>
+       </SWRConfig>
     </Providers>
   )
 }

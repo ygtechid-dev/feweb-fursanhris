@@ -128,6 +128,7 @@ export interface Employee {
   salary_type: string | null
   account_type: string | null
   salary: number
+  net_salary?: number
   is_active: number
   created_by: number
   created_at: string

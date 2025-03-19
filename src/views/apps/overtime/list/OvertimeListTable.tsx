@@ -56,9 +56,22 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import { Overtime } from '@/types/overtimeType'
+import { defaultFormValuesOvertime, Overtime } from '@/types/overtimeType'
 import { ucfirst } from '@/utils/string'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import { Employee } from '@/types/apps/userTypes'
+import { useForm } from 'react-hook-form'
+import { useSWRConfig } from 'swr'
+import { deleteOvertime, postOvertime, updateOvertime } from '@/services/overtimeService'
+import { toast } from 'react-toastify'
+import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
+import moment from 'moment'
+import QTextField from '@/@core/components/mui/QTextField'
+import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
+import { getEmployees } from '@/services/employeeService'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import OvertimeDetailsDialog from '../view/detail-overtime/OvertimeDetail'
+import OvertimeStatusDialog from '../view/overtime-update-status/OvertimeStatusDialog'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -151,10 +164,35 @@ const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
   const [data, setData] = useState(...[tableData])
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [dialogFetchLoading, setDialogFetchLoading] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [objectToDelete, setObjectToDelete] = useState<Overtime | null>(null)
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedOvertime, setSelectedOvertime] = useState<Overtime | null>(null);
+
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
+  const [selectedOvertimeForStatus, setSelectedOvertimeForStatus] = useState<Overtime | null>(null)
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [overtimeToEdit, setOvertimeToEdit] = useState<Overtime | null>(null)
 
   // Hooks
   // const { lang: locale } = useParams()
   const { dictionary } = useDictionary()
+  const methods = useForm<Overtime>({
+      defaultValues: defaultFormValuesOvertime
+  })
+  const { cache, mutate: swrMutate } = useSWRConfig();
+
+  useEffect(() => {
+    setData(tableData)
+    setFilteredData(tableData)
+  }, [tableData])
 
   const columns = useMemo<ColumnDef<OvertimeWithAction, any>[]>(
     () => [
@@ -241,7 +279,7 @@ const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.start_time}
+              {row.original.end_time}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
@@ -262,41 +300,27 @@ const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
         header: dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
-             <IconButton >
-              <i className='tabler-copy-check text-textSecondary' />
-            </IconButton>
-            <IconButton >
-              <i className='tabler-eye text-textSecondary' />
-            </IconButton>
-            <IconButton >
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-           
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-textSecondary' />
-              </Link>
-            </IconButton> */}
-            {/* <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'tabler-download',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
-          </div>
+          {
+            row.original.status == 'pending' &&  (
+              <IconButton onClick={() => handleUpdateStatus(row.original)}>
+                <i className='tabler-copy-check text-textSecondary' />
+              </IconButton>
+            )
+          }
+          <IconButton onClick={() => handleViewDetails(row.original)}>
+            <i className='tabler-eye text-textSecondary' />
+          </IconButton>
+          {
+            row.original.status == 'pending' &&  (
+              <IconButton onClick={() => handleEditClick(row.original)}>
+                <i className='tabler-edit text-textSecondary' />
+              </IconButton>
+            )
+          }
+          <IconButton onClick={() => handleDeleteClick(row.original)}>
+            <i className='tabler-trash text-textSecondary' />
+          </IconButton>
+        </div>
         ),
         enableSorting: false
       })
@@ -334,6 +358,97 @@ const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
+  const handleViewDetails = (obj: Overtime) => {
+      setSelectedOvertime(obj);
+      setDetailsDialogOpen(true);
+    };
+  
+    const handleDialogOpen = async () => {
+      setDialogOpen(true)
+      setDialogFetchLoading(true)
+      
+      try {
+        // Load both employees and leaves in parallel
+        const [employeesResponse] = await Promise.all([
+          getEmployees(),
+        ])
+        
+        setEmployees(employeesResponse?.data || [])
+      } catch (error) {
+        console.error('Error loading dialog data:', error)
+      } finally {
+        setDialogFetchLoading(false)
+      }
+    }
+  
+    // Handle delete dialog
+    const handleDeleteClick = (user: Overtime) => {
+      setObjectToDelete(user)
+      setDeleteDialogOpen(true)
+    }
+  
+    const handleDeleteConfirm = async () => {
+          if (!objectToDelete) return
+         
+          try {
+            setIsDeleting(true)
+            
+            const response = await deleteOvertime(objectToDelete.id)
+            
+            if (response.status) {
+              // Remove the deleted leave from the table data
+              setData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
+              setFilteredData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
+              
+              // Show success message
+              toast.success(response.message || dictionary['content'].leaveDeletedSuccessfully)
+            }
+          } catch (error: any) {
+            // Handle error
+            toast.error(error?.response?.data?.message || dictionary['content'].errorDeletingLeave)
+          } finally {
+            setIsDeleting(false)
+            handleDeleteCancel()
+          }
+    }
+  
+    const handleDeleteCancel = () => {
+      setDeleteDialogOpen(false)
+      setObjectToDelete(null)
+    }
+  
+    // Add this function
+    const handleUpdateStatus = (obj: Overtime) => {
+      setSelectedOvertimeForStatus(obj)
+      setStatusDialogOpen(true)
+    }
+  
+    const handleEditClick = async (obj: Overtime) => {
+      setOvertimeToEdit(obj)
+      // setDialogFetchLoading(true)
+      setEditDialogOpen(true)
+      
+      try {
+        // Load both employees and leaves in parallel
+        const [employeesResponse] = await Promise.all([
+          getEmployees(),
+        ])
+        
+        setEmployees(employeesResponse?.data || [])
+        
+        // Reset form with the leave data
+        methods.reset({
+          ...obj,
+          overtime_date: obj.overtime_date ? moment(obj.overtime_date).format('YYYY-MM-DD') : '',
+          start_time: moment(`${obj.overtime_date} ${obj.start_time}`).toString(),
+          end_time:  moment(`${obj.overtime_date} ${obj.end_time}`).toString(),
+        })
+      } catch (error) {
+        console.error('Error loading dialog data:', error)
+      } finally {
+        setDialogFetchLoading(false)
+      }
+    }
 
   return (
     <>
@@ -369,7 +484,7 @@ const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
-              // onClick={() => setAddUserOpen(!addUserOpen)}
+              onClick={handleDialogOpen}
               className='max-sm:is-full'
             >
               {dictionary['content'].addNewOvertime}
@@ -441,12 +556,261 @@ const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
           }}
         />
       </Card>
-      {/* <AddUserDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        userData={data}
-        setData={setData}
-      /> */}
+    
+      <FormDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+        title={dictionary['content'].addNewOvertime}
+        onSubmit={async (data:any) => {
+          try {
+            const formattedData = {
+              ...data,
+              overtime_date: data.overtime_date ? moment(data.overtime_date).format('YYYY-MM-DD') : '',
+              start_time: data.start_time ? moment(data.start_time).format('HH:mm') : '',
+              end_time: data.end_time ? moment(data.end_time).format('HH:mm') : '',
+            }
+
+            const res = await postOvertime(formattedData);
+            console.log({res})
+            if (res.status) {
+              swrMutate('/web/overtimes')
+              toast.success(res.message)
+            }
+          } catch (error) {
+            console.log('Error post leave', error)
+          } finally{
+            methods.reset();
+            setDialogOpen(false)
+          }
+         
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+       <>
+        <QTextField
+          name='employee_id'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].employee}
+          disabled={dialogFetchLoading}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].employee}</MenuItem>
+          {employees.map((employee) => (
+          <MenuItem key={employee.id} value={employee.id}>
+            {employee.name}
+          </MenuItem>
+        ))}
+        </QTextField>
+{/* 
+        <QTextField
+          name='title'
+          control={methods.control}
+          fullWidth
+          required
+          placeholder={`${dictionary['content'].enter} title`}
+          label={'Title'}
+        /> */}
+
+        <QReactDatepicker
+          name="overtime_date"
+          control={methods.control}
+          label={'Overtime Date'}
+          required
+        />
+
+
+
+        <div className="flex space-x-4">
+              <div className="flex-1">
+                <QReactDatepicker
+                  name="start_time"
+                  control={methods.control}
+                  label={'Start Time'}
+                  required
+                  showTimeSelectOnly={true}
+                  showTimeSelect={true}
+                  timeFormat="HH:mm"
+                  dateFormat="HH:mm"
+                  timeIntervals={30}
+                  placeholderText="HH:MM"
+                />
+              </div>
+              <div className="flex-1">
+                <QReactDatepicker
+                  name="end_time"
+                  control={methods.control}
+                  label={ 'End Time'}
+                  required
+                  showTimeSelectOnly={true}
+                  showTimeSelect={true}
+                  timeFormat="HH:mm"
+                  dateFormat="HH:mm"
+                  timeIntervals={30}
+                  placeholderText="HH:MM"
+                />
+              </div>
+        </div>
+       <QTextField
+          name='remark'
+          control={methods.control}
+          fullWidth
+          required
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].remark}`}
+          label={dictionary['content'].remark}
+        />
+       </>
+      </FormDialog>
+
+      <FormDialog
+        open={editDialogOpen}
+        setOpen={setEditDialogOpen}
+        title={`Edit Overtime`}
+        onSubmit={async (data:any) => {
+          try {
+            if (!overtimeToEdit) return
+            
+            const formattedData = {
+              ...data,
+              start_date: data.start_date ? moment(data.start_date).format('YYYY-MM-DD') : '',
+              end_date: data.end_date ? moment(data.end_date).format('YYYY-MM-DD') : '',
+            }
+            
+            const res = await updateOvertime(formattedData, overtimeToEdit.id);
+            
+            const response = await res.json()
+            
+            if (response.status) {
+              // Update the local data
+              const updatedData = data?.map((overtime: Overtime) => 
+                overtime.id === overtimeToEdit.id ? { ...overtime, ...formattedData } : overtime
+              )
+              
+              setData(updatedData)
+              setFilteredData(updatedData)
+              
+              // Refresh data with SWR
+              swrMutate('/web/leaves')
+              toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
+            }
+          } catch (error) {
+            console.log('Error updating overtime', error)
+            toast.error(dictionary['content'].errorUpdatingLeave)
+          } finally {
+            methods.reset()
+            setEditDialogOpen(false)
+            setOvertimeToEdit(null)
+          }
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+          <>
+        <QTextField
+          name='employee_id'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].employee}
+          disabled={dialogFetchLoading}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].employee}</MenuItem>
+          {employees.map((employee) => (
+          <MenuItem key={employee.id} value={employee.id}>
+            {employee.name}
+          </MenuItem>
+        ))}
+        </QTextField>
+
+        {/* <QTextField
+          name='title'
+          control={methods.control}
+          fullWidth
+          required
+          placeholder={`${dictionary['content'].enter} title`}
+          label={'Title'}
+        /> */}
+
+        <QReactDatepicker
+          name="overtime_date"
+          control={methods.control}
+          label={'Overtime Date'}
+          required
+        />
+
+
+
+        <div className="flex space-x-4">
+              <div className="flex-1">
+                <QReactDatepicker
+                  name="start_time"
+                  control={methods.control}
+                  label={'Start Time'}
+                  required
+                  showTimeSelectOnly={true}
+                  showTimeSelect={true}
+                  timeFormat="HH:mm"
+                  dateFormat="HH:mm"
+                  timeIntervals={30}
+                  placeholderText="HH:MM"
+                />
+              </div>
+              <div className="flex-1">
+                <QReactDatepicker
+                  name="end_time"
+                  control={methods.control}
+                  label={ 'End Time'}
+                  required
+                  showTimeSelectOnly={true}
+                  showTimeSelect={true}
+                  timeFormat="HH:mm"
+                  dateFormat="HH:mm"
+                  timeIntervals={30}
+                  placeholderText="HH:MM"
+                />
+              </div>
+        </div>
+       <QTextField
+          name='remark'
+          control={methods.control}
+          fullWidth
+          required
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].remark}`}
+          label={dictionary['content'].remark}
+        />
+       </>
+      </FormDialog>
+
+      <OvertimeDetailsDialog
+        open={detailsDialogOpen}
+        setOpen={setDetailsDialogOpen}
+        overtimeData={selectedOvertime}
+      />
+
+       {/* Delete Confirmation Dialog */}
+       <ConfirmationDialog
+        open={deleteDialogOpen} 
+        setOpen={setDeleteDialogOpen}
+        type='delete-overtime'
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeleting}
+      />
+
+      <OvertimeStatusDialog
+        open={statusDialogOpen}
+        setOpen={setStatusDialogOpen}
+        overtimeData={selectedOvertimeForStatus}
+        onStatusUpdate={async () => {
+          await swrMutate('/web/overtimes')
+        }}
+      />
     </>
   )
 }

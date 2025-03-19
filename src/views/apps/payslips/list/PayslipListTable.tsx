@@ -40,7 +40,6 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -58,6 +57,15 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import GeneratePayslip from './GeneratePayslip'
+import { Payslip } from '@/types/payslipTypes'
+import { formatPrice } from '@/utils/formatPrice'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import { deletePayslips, updatePayslipPaymentStatus } from '@/services/payslipService'
+import { toast } from 'react-toastify'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import PaymentConfirmationDialog from '@/components/dialogs/payment-confirmation-dialog/PaymentConfirmationDialog'
+import { useSWRConfig } from 'swr'
+import PayslipViewDialog from '../view/PayslipViewDialog'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -68,7 +76,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type PayslipWithAction = Payslip & {
   action?: string
 }
 
@@ -125,25 +133,10 @@ const DebouncedInput = ({
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
 }
 
-// Vars
-const userRoleObj: UserRoleType = {
-  admin: { icon: 'tabler-crown', color: 'error' },
-  author: { icon: 'tabler-device-desktop', color: 'warning' },
-  editor: { icon: 'tabler-edit', color: 'info' },
-  maintainer: { icon: 'tabler-chart-pie', color: 'success' },
-  subscriber: { icon: 'tabler-user', color: 'primary' }
-}
-
-const userStatusObj: UserStatusType = {
-  active: 'success',
-  pending: 'warning',
-  inactive: 'secondary'
-}
-
 // Column Definitions
-const columnHelper = createColumnHelper<UsersTypeWithAction>()
+const columnHelper = createColumnHelper<PayslipWithAction>()
 
-const PayslipListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const PayslipListTable = ({ tableData }: { tableData?: Payslip[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -151,10 +144,29 @@ const PayslipListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [objectToDelete, setObjectToDelete] = useState<Payslip | null>(null)
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+  const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null)
+  const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false)
+
+  const [viewDialogOpen, setViewDialogOpen] = useState(false)
+  const [selectedViewPayslip, setSelectedViewPayslip] = useState<Payslip | null>(null)
+
+
   // Hooks
   const { lang: locale } = useParams()
+  const { dictionary } = useDictionary()
+  const { mutate: swrMutate } = useSWRConfig();
 
-  const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
+  useEffect(() => {
+    setData(tableData)
+    setFilteredData(tableData)
+  }, [tableData])
+
+  const columns = useMemo<ColumnDef<PayslipWithAction, any>[]>(
     () => [
       {
         id: 'select',
@@ -178,63 +190,62 @@ const PayslipListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('employee.name', {
         header: 'Employee',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.fullName}
+              {row.original?.employee?.name}
               </Typography>
-              <Typography variant='body2'>Company ABC</Typography>
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('employee.salary_type', {
         header: 'Payroll Type',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              Monthly Payslip
+              {row.original?.employee?.salary_type}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('employee.salary', {
         header: 'Salary',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              10,000,000
+              {formatPrice(row.original?.employee?.salary || '')}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('net_salary', {
         header: 'Net Salary',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              9,764,780
+              {formatPrice(row.original?.net_salary || '')}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('payment_status', {
         header: 'Status',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
@@ -243,7 +254,7 @@ const PayslipListTable = ({ tableData }: { tableData?: UsersType[] }) => {
               {/* <Typography color='text.primary' className='font-medium'>
               Medicle Leave
               </Typography> */}
-              <Chip label='Paid' color='success'/>
+              <Chip label={row.original?.payment_status} color={row.original?.payment_status == 'paid' ? 'success' : 'secondary' }/>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
@@ -254,42 +265,18 @@ const PayslipListTable = ({ tableData }: { tableData?: UsersType[] }) => {
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-             <IconButton title='Payslip'>
+            <IconButton title='View Payslip' onClick={() => handleViewClick(row.original)}>
               <i className='tabler-script text-textSecondary' />
             </IconButton>
-            {/* <IconButton >
-            <Link href={'/salary/detail/1'} className='flex'>
-              <i className='tabler-eye text-textSecondary' />
-            </Link>
-            </IconButton> */}
-            {/* <IconButton title='Edit'>
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton> */}
-            <IconButton title='Delete' onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
+            {
+              row.original.payment_status == 'unpaid' && 
+              <IconButton title='Click to paid' onClick={() => handlePaymentClick(row.original)}>
+                <i className='tabler-currency-dollar text-textSecondary' />
+              </IconButton> 
+            } 
+            <IconButton title='Delete' onClick={() => handleDeleteClick(row.original)}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
-           
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-textSecondary' />
-              </Link>
-            </IconButton> */}
-            {/* <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'tabler-download',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
           </div>
         ),
         enableSorting: false
@@ -300,7 +287,7 @@ const PayslipListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as Payslip[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -328,21 +315,86 @@ const PayslipListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
+  const handleViewClick = (payslip: Payslip) => {
+    setSelectedViewPayslip(payslip)
+    setViewDialogOpen(true)
+  }
 
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
+  const handlePaymentClick = (payslip: Payslip) => {
+    setSelectedPayslip(payslip)
+    setPaymentDialogOpen(true)
+  }
+  
+  // Add this function to handle payment confirmation
+  const handlePaymentConfirm = async () => {
+    if (!selectedPayslip) return
+    
+    try {
+      setIsProcessingPayment(true)
+      
+      // Call your API service to update the payment status
+      const response = await updatePayslipPaymentStatus(selectedPayslip.id, {
+        payment_status: 'paid'
+      })
+      
+      if (response.status) {
+        swrMutate('/web/payslips');
+        // Show success message
+        // toast.success(response.message || dictionary['content'].paymentSuccessful)
+        toast.success(response.message)
+      }
+    } catch (error: any) {
+      // Handle error
+      // toast.error(error?.response?.data?.message || dictionary['content'].errorProcessingPayment)
+      toast.error(error?.response?.data?.message)
+    } finally {
+      setIsProcessingPayment(false)
+      setPaymentDialogOpen(false)
+      setSelectedPayslip(null)
     }
   }
 
+  // Handle delete dialog
+  const handleDeleteClick = (obj: Payslip) => {
+    setObjectToDelete(obj)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+        if (!objectToDelete) return
+        
+        try {
+          setIsDeleting(true)
+          
+          const response = await deletePayslips(objectToDelete.id)
+          
+          if (response.status) {
+            // Remove the deleted leave from the table data
+            setData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
+            setFilteredData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
+            
+            // Show success message
+            toast.success(response.message || dictionary['content'].leaveDeletedSuccessfully)
+          }
+        } catch (error: any) {
+          // Handle error
+          toast.error(error?.response?.data?.message || dictionary['content'].errorDeletingLeave)
+        } finally {
+          setIsDeleting(false)
+          handleDeleteCancel()
+        }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false)
+    setObjectToDelete(null)
+  }
+    
   return (
     <>
     <Card className='mb-6'>
       <CardHeader title='Generate Payslip' className='pbe-4' />
-      <GeneratePayslip setData={setFilteredData} tableData={data} />
+      <GeneratePayslip  />
     </Card>
       <Card>
         <CardHeader title='Find Employee Payslip' className='pbe-4' />
@@ -448,11 +500,29 @@ const PayslipListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           }}
         />
       </Card>
-      <AddUserDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        userData={data}
-        setData={setData}
+
+      <PaymentConfirmationDialog
+        open={paymentDialogOpen}
+        setOpen={setPaymentDialogOpen}
+        onConfirm={handlePaymentConfirm}
+        isLoading={isProcessingPayment}
+        type="payment-confirmation"
+        selectedPayslip={selectedPayslip}
+      />
+     
+     {/* Delete Confirmation Dialog */}
+     <ConfirmationDialog
+        open={deleteDialogOpen} 
+        setOpen={setDeleteDialogOpen}
+        type='delete-payslip'
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeleting}
+      />
+
+      <PayslipViewDialog
+        open={viewDialogOpen} 
+        setOpen={setViewDialogOpen} 
+        payslip={selectedViewPayslip} 
       />
     </>
   )

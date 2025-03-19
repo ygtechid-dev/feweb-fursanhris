@@ -1,5 +1,4 @@
 'use client'
-
 import { Controller, Control, FieldValues, Path, ValidationRule } from 'react-hook-form'
 import CustomTextField from '@core/components/mui/TextField'
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
@@ -15,6 +14,13 @@ interface QReactDatepickerProps<TFieldValues extends FieldValues> {
   placeholderText?: string
   showYearDropdown?: boolean
   showMonthDropdown?: boolean
+  showTimeSelect?: boolean
+  showTimeSelectOnly?: boolean
+  timeFormat?: string
+  timeIntervals?: number
+  dateFormat?: string
+  showMonthYearPicker?: boolean
+  onChangeCustom?: (date:Date|null) => void
 }
 
 function QReactDatepicker<TFieldValues extends FieldValues>({
@@ -28,17 +34,34 @@ function QReactDatepicker<TFieldValues extends FieldValues>({
   placeholderText = 'MM/DD/YYYY',
   showYearDropdown = true,
   showMonthDropdown = true,
+  showTimeSelect = false,
+  showTimeSelectOnly = false,
+  timeFormat = "HH:mm",
+  timeIntervals = 15,
+  dateFormat = "MM/dd/yyyy",
+  showMonthYearPicker = false,
+  onChangeCustom,
   ...props
 }: QReactDatepickerProps<TFieldValues>) {
   const combinedRules = {
     ...rules,
     ...(required && { required: 'This field is required' })
   }
-
-  const labelWithRequiredIndicator = required 
-  ? `${label} *` 
-  : label
-
+  
+  const labelWithRequiredIndicator = required
+    ? `${label} *`
+    : label
+    
+  // Adjust placeholder text based on whether it's time only or date
+  const adjustedPlaceholderText = showTimeSelectOnly 
+    ? 'HH:MM' 
+    : placeholderText
+    
+  // Adjust date format based on whether it's time only or date
+  const adjustedDateFormat = showTimeSelectOnly 
+    ? timeFormat 
+    : dateFormat
+  
   if (control) {
     return (
       <Controller
@@ -48,10 +71,23 @@ function QReactDatepicker<TFieldValues extends FieldValues>({
         render={({ field: { value, onChange }, fieldState: { error } }) => (
           <AppReactDatepicker
             selected={value}
-            onChange={onChange}
+            onChange={(date, event) => {
+              onChange(date, event)
+
+              if (onChangeCustom) {
+                onChangeCustom(date)
+              }
+            }}
             showYearDropdown={showYearDropdown}
             showMonthDropdown={showMonthDropdown}
-            placeholderText={placeholderText}
+            placeholderText={adjustedPlaceholderText}
+            showTimeSelect={showTimeSelect}
+            showTimeSelectOnly={showTimeSelectOnly}
+            timeFormat={timeFormat}
+            timeIntervals={timeIntervals}
+            dateFormat={adjustedDateFormat}
+            showMonthYearPicker={showMonthYearPicker}
+            disabled={disabled}
             customInput={
               <CustomTextField
                 value={value}
@@ -68,13 +104,18 @@ function QReactDatepicker<TFieldValues extends FieldValues>({
       />
     )
   }
-
+  
   return (
     <AppReactDatepicker
       name={name}
       showYearDropdown={showYearDropdown}
       showMonthDropdown={showMonthDropdown}
-      placeholderText={placeholderText}
+      placeholderText={adjustedPlaceholderText}
+      showTimeSelect={showTimeSelect}
+      showTimeSelectOnly={showTimeSelectOnly}
+      timeFormat={timeFormat}
+      timeIntervals={timeIntervals}
+      dateFormat={adjustedDateFormat}
       customInput={
         <CustomTextField
           name={name}

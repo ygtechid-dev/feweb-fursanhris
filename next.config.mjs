@@ -4,6 +4,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  images: {
+    domains: ['127.0.0.1', 'localhost'],
+  },
   basePath: process.env.BASEPATH,
   redirects: async () => {
     return [

@@ -40,7 +40,6 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -58,6 +57,8 @@ import { getLocalizedUrl } from '@/utils/i18n'
 import tableStyles from '@core/styles/table.module.css'
 import AddDrawer from './AddDrawer'
 import { Avatar, AvatarGroup, LinearProgress } from '@mui/material'
+import { Project } from '@/types/projectTypes'
+import { snakeCaseToTitleCase } from '@/utils/snakeCaseToTitleCase'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -68,7 +69,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type ProjectWithAction = Project & {
   action?: string
 }
 
@@ -141,9 +142,9 @@ const userStatusObj: UserStatusType = {
 }
 
 // Column Definitions
-const columnHelper = createColumnHelper<UsersTypeWithAction>()
+const columnHelper = createColumnHelper<ProjectWithAction>()
 
-const ProjectListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -154,7 +155,7 @@ const ProjectListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   // Hooks
   const { lang: locale } = useParams()
 
-  const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
+  const columns = useMemo<ColumnDef<ProjectWithAction, any>[]>(
     () => [
       {
         id: 'select',
@@ -178,47 +179,47 @@ const ProjectListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           />
         )
       },
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('name', {
         header: 'Project Name',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.fullName}
+              {row.original.name}
               </Typography>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('members', {
         header: 'Users',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
-            <AvatarGroup max={4}>
-              <Avatar src='/images/avatars/1.png' alt='Olivia Sparks' />
-              <Avatar src='/images/avatars/1.png' alt='Howard Lloyd' />
-              <Avatar src='/images/avatars/1.png' alt='Hallie Richards' />
-              <Avatar src='/images/avatars/1.png' alt='Alice Cobb' />
-              <Avatar src='/images/avatars/1.png' alt='Jeffery Warner' />
+            <AvatarGroup max={row.original?.members_count}>
+            {
+              row.original?.members.map((val,idx) => {
+                return  <Avatar src={val.avatar ||'/images/avatars/1.png'} alt={val.name} />
+              })
+            }
             </AvatarGroup>
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('progress', {
         header: 'Completion',
         cell: ({ row }) => (
             <div className="flex items-center gap-5">
-              <LinearProgress variant='determinate' value={40} className='w-full'/>
-              <Typography color='text.primary' className='font-medium'>40%</Typography>
+              <LinearProgress variant='determinate' value={row.original.progress} className='w-full'/>
+              <Typography color='text.primary' className='font-medium'>{row.original.progress}%</Typography>
             </div>
         )
       }),
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('status', {
         header: 'Status',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
@@ -227,7 +228,7 @@ const ProjectListTable = ({ tableData }: { tableData?: UsersType[] }) => {
               {/* <Typography color='text.primary' className='font-medium'>
               Medicle Leave
               </Typography> */}
-              <Chip label='Complete' color='success'/>
+              <Chip label={snakeCaseToTitleCase(row.original.status)} color={row.original.status == 'active' ? 'primary' : (row.original.status == 'completed' ? 'success' : 'secondary')}/>
               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
@@ -282,7 +283,7 @@ const ProjectListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as UsersType[],
+    data: filteredData as Project[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -310,15 +311,7 @@ const ProjectListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
-
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-    }
-  }
+ 
 
   return (
     <>
@@ -426,12 +419,12 @@ const ProjectListTable = ({ tableData }: { tableData?: UsersType[] }) => {
           }}
         />
       </Card>
-      <AddDrawer
+      {/* <AddDrawer
         open={addUserOpen}
         handleClose={() => setAddUserOpen(!addUserOpen)}
         userData={data}
         setData={setData}
-      />
+      /> */}
     </>
   )
 }

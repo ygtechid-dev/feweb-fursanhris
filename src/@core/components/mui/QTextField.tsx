@@ -17,7 +17,7 @@ interface QTextFieldProps<TFieldValues extends FieldValues> {
   InputProps?: InputProps
   select?: boolean
   children?: React.ReactNode
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'file'
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'file' | 'date'
   multiline?: boolean
   rows?:number
   placeholder?: string

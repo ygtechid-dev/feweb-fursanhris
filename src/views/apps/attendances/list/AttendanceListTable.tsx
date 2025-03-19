@@ -54,6 +54,7 @@ import { TextFieldProps } from '@mui/material'
 import { KeyedMutator } from 'swr'
 import { AttendanceEmployee } from '@/types/attendanceEmployeeTypes'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import AttendanceDetailDialog from './AttendanceDetailDialog'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -146,6 +147,18 @@ const AttendanceListTable = ({ tableData, mutate }: { tableData?: AttendanceEmpl
   const [data, setData] = useState(...[tableData])
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
+
+  const [selectedAttendanceId, setSelectedAttendanceId] = useState<number | null>(null);
+  const [openDetailDialog, setOpenDetailDialog] = useState(false);
+
+  const handleViewClick = (id: number) => {
+    setSelectedAttendanceId(id);
+    setOpenDetailDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDetailDialog(false);
+  };
 
   // Hooks
   // const { lang: locale } = useParams()
@@ -283,33 +296,16 @@ const AttendanceListTable = ({ tableData, mutate }: { tableData?: AttendanceEmpl
             {/* <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton> */}
-            <IconButton title='View'>
+            <IconButton 
+              title='View' 
+              onClick={() => handleViewClick(row.original.id)}
+            >
               <i className='tabler-eye text-textSecondary' />
             </IconButton>
-            <IconButton  title='Manual Clock Out'>
+            {/* <IconButton  title='Manual Clock Out'>
               <i className='tabler-logout text-textSecondary' />
-            </IconButton>
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-textSecondary' />
-              </Link>
             </IconButton> */}
-            {/* <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'tabler-download',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
+           
           </div>
         ),
         enableSorting: false
@@ -463,13 +459,14 @@ const AttendanceListTable = ({ tableData, mutate }: { tableData?: AttendanceEmpl
             table.setPageIndex(page)
           }}
         />
+         <AttendanceDetailDialog
+        open={openDetailDialog}
+        onClose={handleCloseDialog}
+        attendanceId={selectedAttendanceId}
+        dictionary={dictionary}
+      />
       </Card>
-      {/* <AddUserDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        userData={data}
-        setData={setData}
-      /> */}
+     
     </>
   )
 }

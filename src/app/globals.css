@@ -131,3 +131,8 @@ code {
   background-color: rgb(var(--mui-palette-info-mainChannel) / 0.08);
   border: 0;
 }
+
+.MuiPaper-root {
+  overflow: visible;
+}
+

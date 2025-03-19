@@ -39,17 +39,10 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
-import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
-import type { Locale } from '@configs/i18n'
+import type { Employee, UsersType } from '@/types/apps/userTypes'
 
 // Component Imports
-import TableFilters from './TableFilters'
-import AddDrawer from './AddDrawer'
-import OptionMenu from '@core/components/option-menu'
-import TablePaginationComponent from '@components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
-import CustomAvatar from '@core/components/mui/Avatar'
 
 // Util Imports
 import { getInitials } from '@/utils/getInitials'
@@ -57,6 +50,13 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+import { Grid } from '@mui/material'
+import Allowances from './Allowances'
+import Deductions from './Deductions'
+import Overtimes from './Overtimes'
+import EmployeeSalary from './EmployeeSalary'
+import axiosInstance from '@/libs/axios'
+import { snakeCaseToTitleCase } from '@/utils/snakeCaseToTitleCase'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -69,14 +69,6 @@ declare module '@tanstack/table-core' {
 
 type UsersTypeWithAction = UsersType & {
   action?: string
-}
-
-type UserRoleType = {
-  [key: string]: { icon: string; color: string }
-}
-
-type UserStatusType = {
-  [key: string]: ThemeColor
 }
 
 // Styled Components
@@ -124,21 +116,6 @@ const DebouncedInput = ({
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
 }
 
-// Vars
-const userRoleObj: UserRoleType = {
-  admin: { icon: 'tabler-crown', color: 'error' },
-  author: { icon: 'tabler-device-desktop', color: 'warning' },
-  editor: { icon: 'tabler-edit', color: 'info' },
-  maintainer: { icon: 'tabler-chart-pie', color: 'success' },
-  subscriber: { icon: 'tabler-user', color: 'primary' }
-}
-
-const userStatusObj: UserStatusType = {
-  active: 'success',
-  pending: 'warning',
-  inactive: 'secondary'
-}
-
 // Column Definitions
 const columnHelper = createColumnHelper<UsersTypeWithAction>()
 
@@ -149,6 +126,8 @@ const SalaryDetailTable = ({ tableData }: { tableData?: UsersType[] }) => {
   const [data, setData] = useState(...[tableData])
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
+  const [employee, setEmployee] = useState<Employee | null>(null)
+  const params = useParams()
 
   // Hooks
   const { lang: locale } = useParams()
@@ -313,143 +292,66 @@ const SalaryDetailTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
+  // Extract employee ID from the URL params
+  const employeeId = params.id || params.detail
 
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-    }
+  const fetchEmployee = async () => {
+    if (!employeeId) return
+    
+    
+    try {
+      const response = await axiosInstance.get(`/web/employees/${employeeId}`)
+      setEmployee(response.data?.data?.employee)
+      console.log(response.data?.data?.employee)
+    } catch (err) {
+      console.error('Failed to fetch allowances:', err)
+    } 
   }
+  
+  useEffect(() => {
+    fetchEmployee()
+  }, [employeeId])
+  
+
 
   const router = useRouter()
   return (
     <>
-      <Card>
-        {/* <CardHeader title='Galen Slixby Salary Components' className='pbe-4'/> */}
-        <div className="flex justify-between px-5 pt-4">
-        <Typography variant='h4' className='pbe-1 '>
-       <b>Galen Slixby</b> Salary Components
-        </Typography>
-        <Button
-              variant='contained'
-              // startIcon={<i className='tabler-plus' />}
-              onClick={() => router.push('/salary')}
-              
-              className='max-sm:is-full bg-secondary'
-            >
-              Back
-            </Button>
-        </div>
-        <TableFilters setData={setFilteredData} tableData={data} />
-        <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
-          <CustomTextField
-            select
-            value={table.getState().pagination.pageSize}
-            onChange={e => table.setPageSize(Number(e.target.value))}
-            className='max-sm:is-full sm:is-[70px]'
-          >
-            <MenuItem value='10'>10</MenuItem>
-            <MenuItem value='25'>25</MenuItem>
-            <MenuItem value='50'>50</MenuItem>
-          </CustomTextField>
-          <div className='flex flex-col sm:flex-row max-sm:is-full items-start sm:items-center gap-4'>
-            <DebouncedInput
-              value={globalFilter ?? ''}
-              onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search Here . . .'
-              className='max-sm:is-full'
-            />
-            {/* <Button
-              color='secondary'
-              variant='tonal'
-              startIcon={<i className='tabler-upload' />}
-              className='max-sm:is-full'
-            >
-              Export
-            </Button> */}
-            <Button
-              variant='contained'
-              startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
-              className='max-sm:is-full'
-            >
-              Add Salary Component
-            </Button>
+    <Grid container spacing={6}>
+      <Grid item xs={12}>
+        <Card>
+          {/* <CardHeader title='Galen Slixby Salary Components' className='pbe-4'/> */}
+          <div className="flex justify-between px-5 py-4">
+          <Typography variant='h4' className='pbe-1 '>
+          <b>{snakeCaseToTitleCase(employee?.name || '')}</b> Salary Components
+          </Typography>
+          <Button
+                variant='contained'
+                // startIcon={<i className='tabler-plus' />}
+                onClick={() => router.push(`/${locale}/salary`)}
+                
+                className='max-sm:is-full bg-secondary'
+              >
+                Back
+              </Button>
           </div>
-        </div>
-        <div className='overflow-x-auto'>
-          <table className={tableStyles.table}>
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id}>
-                      {header.isPlaceholder ? null : (
-                        <>
-                          <div
-                            className={classnames({
-                              'flex items-center': header.column.getIsSorted(),
-                              'cursor-pointer select-none': header.column.getCanSort()
-                            })}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {{
-                              asc: <i className='tabler-chevron-up text-xl' />,
-                              desc: <i className='tabler-chevron-down text-xl' />
-                            }[header.column.getIsSorted() as 'asc' | 'desc'] ?? null}
-                          </div>
-                        </>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            {table.getFilteredRowModel().rows.length === 0 ? (
-              <tbody>
-                <tr>
-                  <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                    No data available
-                  </td>
-                </tr>
-              </tbody>
-            ) : (
-              <tbody>
-                {table
-                  .getRowModel()
-                  .rows.slice(0, table.getState().pagination.pageSize)
-                  .map(row => {
-                    return (
-                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                        ))}
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            )}
-          </table>
-        </div>
-        <TablePagination
-          component={() => <TablePaginationComponent table={table} />}
-          count={table.getFilteredRowModel().rows.length}
-          rowsPerPage={table.getState().pagination.pageSize}
-          page={table.getState().pagination.pageIndex}
-          onPageChange={(_, page) => {
-            table.setPageIndex(page)
-          }}
-        />
-      </Card>
-      <AddDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        userData={data}
-        setData={setData}
-      />
+        </Card>
+      </Grid>
+      <Grid item sm={6}>
+       <EmployeeSalary employee={employee || undefined}/>
+      </Grid>
+      <Grid item sm={6}>
+       <Allowances/>
+      </Grid>
+      <Grid item sm={6}>
+       <Deductions/>
+      </Grid>
+      <Grid item sm={6}>
+       <Overtimes/>
+      </Grid>
+    </Grid>
+     
+     
     </>
   )
 }

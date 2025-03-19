@@ -3,12 +3,13 @@ import { Employee, User } from "./apps/userTypes";
 export interface Overtime {
     id: number;
     employee_id: number;
+    title: string;
     overtime_date: string;
     start_time: string;
     end_time: string;
     hours: number;
     remark: string;
-    status: 'approved' | 'rejected' | 'pending';
+    status: 'approved' | 'rejected' | 'pending' | string;
     approved_at: string | null;
     rejected_at: string | null;
     rejection_reason: string | null;
@@ -19,3 +20,16 @@ export interface Overtime {
     approver: User;
     rejecter: User | null;
   }
+
+
+export const defaultFormValuesOvertime =  {
+  employee_id: 0,
+  title: '',
+  overtime_date: '',
+  start_time: '',
+  end_time: '',
+  hours: 0,
+  remark: '',
+  status: 'pending',
+  rejection_reason: '',
+}
