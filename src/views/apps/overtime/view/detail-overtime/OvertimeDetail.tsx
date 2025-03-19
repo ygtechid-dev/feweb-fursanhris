@@ -115,7 +115,7 @@ const OvertimeDetailsDialog = ({ open, setOpen, overtimeData }: OvertimeDetailsD
               <Typography variant="body2" color="text.secondary">
                 {'Total Hours'}
               </Typography>
-              <Typography variant="body1">{overtimeData.hours} {dictionary['content']?.hours || 'hours'}</Typography>
+              <Typography variant="body1">{overtimeData.hours} {'hours'}</Typography>
             </Grid>
             
             <Grid item xs={12} md={6}>
