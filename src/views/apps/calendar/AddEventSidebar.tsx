@@ -1,355 +1,313 @@
 // React Imports
-import { useState, useEffect, forwardRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 
 // MUI Imports
 import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
-import Switch from '@mui/material/Switch'
+import Select from '@mui/material/Select'
 import Button from '@mui/material/Button'
 import MenuItem from '@mui/material/MenuItem'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import useMediaQuery from '@mui/material/useMediaQuery'
+import OutlinedInput from '@mui/material/OutlinedInput'
+import InputLabel from '@mui/material/InputLabel'
 import FormControl from '@mui/material/FormControl'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import type { SelectChangeEvent } from '@mui/material/Select'
-import type { Theme } from '@mui/material/styles'
+import FormHelperText from '@mui/material/FormHelperText'
+import TextField from '@mui/material/TextField'
 
-// Third-party Imports
+// Third Party Imports
 import { useForm, Controller } from 'react-hook-form'
-import PerfectScrollbar from 'react-perfect-scrollbar'
+import { yupResolver } from '@hookform/resolvers/yup'
 
 // Type Imports
-import type { AddEventSidebarType, AddEventType } from '@/types/apps/calendarTypes'
+import type { Dispatch } from '@reduxjs/toolkit'
+import type { CalendarType, CalendarColors } from '@/types/apps/calendarTypes'
 
 // Component Imports
-import CustomTextField from '@core/components/mui/TextField'
-
-// Styled Component Imports
-import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
 
 // Slice Imports
-import { addEvent, deleteEvent, updateEvent, selectedEvent, filterEvents } from '@/redux-store/slices/calendar'
+import { addEvent, deleteEvent, updateEvent } from '@/redux-store/slices/calendar'
+import QSimpleDatePicker from '@/@core/components/mui/QSimpleDatePicker'
 
-interface PickerProps {
-  label?: string
-  error?: boolean
-  registername?: string
+interface AddEventSidebarProps {
+  dispatch: Dispatch
+  calendarApi: any
+  calendarStore: CalendarType
+  addEventSidebarOpen: boolean
+  handleAddEventSidebarToggle: () => void
+  onEventCreate?: (event: any) => void
+  onEventUpdate?: (event: any) => void
+  onEventDelete?: (eventId: string) => void
+  calendarsColor: CalendarColors
 }
 
-interface DefaultStateType {
-  url: string
-  title: string
-  allDay: boolean
-  calendar: string
-  description: string
-  endDate: Date
-  startDate: Date
-  guests: string[] | undefined
-}
 
-// Vars
-const capitalize = (string: string) => string && string[0].toUpperCase() + string.slice(1)
-
-// Vars
-const defaultState: DefaultStateType = {
-  url: '',
+const defaultValues = {
   title: '',
+  calendar: '',
   guests: [],
-  allDay: true,
   description: '',
-  endDate: new Date(),
-  calendar: 'Business',
-  startDate: new Date()
+  start: new Date(),
+  end: new Date(),
+  priority: 'medium'
 }
 
-const AddEventSidebar = (props: AddEventSidebarType) => {
+const AddEventSidebar = (props: AddEventSidebarProps) => {
   // Props
-  const { calendarStore, dispatch, addEventSidebarOpen, handleAddEventSidebarToggle } = props
+  const {
+    dispatch,
+    calendarApi,
+    calendarStore,
+    addEventSidebarOpen,
+    handleAddEventSidebarToggle,
+    onEventCreate,
+    onEventUpdate,
+    onEventDelete,
+    calendarsColor
+  } = props
 
   // States
-  const [values, setValues] = useState<DefaultStateType>(defaultState)
+  const [startDate, setStartDate] = useState<Date | null>(new Date())
+  const [endDate, setEndDate] = useState<Date | null>(new Date())
 
-  // Refs
-  const PickersComponent = forwardRef(({ ...props }: PickerProps, ref) => {
-    return (
-      <CustomTextField
-        inputRef={ref}
-        fullWidth
-        {...props}
-        label={props.label || ''}
-        className='is-full'
-        error={props.error}
-      />
-    )
-  })
-
-  // Hooks
-  const isBelowSmScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'))
-
+  // Form hooks
   const {
     control,
     setValue,
     clearErrors,
     handleSubmit,
-    formState: { errors }
-  } = useForm({ defaultValues: { title: '' } })
+    formState: { errors },
+    reset
+  } = useForm({
+    defaultValues,
+    mode: 'onChange',
+  })
 
-  const resetToStoredValues = useCallback(() => {
+  // Effects
+  useEffect(() => {
     if (calendarStore.selectedEvent !== null) {
       const event = calendarStore.selectedEvent
 
       setValue('title', event.title || '')
-      setValues({
-        url: event.url || '',
-        title: event.title || '',
-        allDay: event.allDay,
-        guests: event.extendedProps.guests || [],
-        description: event.extendedProps.description || '',
-        calendar: event.extendedProps.calendar || 'Business',
-        endDate: event.end !== null ? event.end : event.start,
-        startDate: event.start !== null ? event.start : new Date()
-      })
+      setValue('calendar', event.extendedProps?.calendar || 'Todo')
+      setValue('description', event.extendedProps?.description || '')
+      setValue('priority', event.extendedProps?.priority || 'medium')
+      setValue('guests', event.extendedProps?.guests || [])
+
+      // Set start and end dates
+      let calculatedStartDate: Date | null = null
+      let calculatedEndDate: Date | null = null
+
+      if (event._instance?.range) {
+        calculatedStartDate = event._instance.range.start
+        calculatedEndDate = event._instance.range.end
+      } else {
+        if (event.start) calculatedStartDate = new Date(event.start as string)
+        if (event.end) calculatedEndDate = new Date(event.end as string)
+      }
+
+      if (calculatedStartDate !== null) setStartDate(calculatedStartDate)
+      if (calculatedEndDate !== null) setEndDate(calculatedEndDate)
+
+      setValue('start', calculatedStartDate || new Date())
+      setValue('end', calculatedEndDate || new Date())
+    } else {
+      reset()
     }
-  }, [setValue, calendarStore.selectedEvent])
+  }, [calendarStore.selectedEvent, reset, setValue])
 
-  const resetToEmptyValues = useCallback(() => {
-    setValue('title', '')
-    setValues(defaultState)
-  }, [setValue])
-
-  const handleSidebarClose = () => {
-    setValues(defaultState)
-    clearErrors()
-    dispatch(selectedEvent(null))
-    handleAddEventSidebarToggle()
-  }
-
-  const onSubmit = (data: { title: string }) => {
-    const modifiedEvent: AddEventType = {
-      url: values.url,
-      display: 'block',
+  const onSubmit = (data: any) => {
+    const modifiedEvent = {
+      id: calendarStore.selectedEvent?.id,
       title: data.title,
-      end: values.endDate,
-      allDay: values.allDay,
-      start: values.startDate,
+      start: data.start || new Date(),
+      end: data.end || new Date(),
+      allDay: true,
       extendedProps: {
-        calendar: capitalize(values.calendar),
-        guests: values.guests && values.guests.length ? values.guests : undefined,
-        description: values.description.length ? values.description : undefined
+        calendar: data.calendar,
+        description: data.description,
+        priority: data.priority,
+        guests: data.guests,
+        isTask: true
       }
     }
 
-    if (
-      calendarStore.selectedEvent === null ||
-      (calendarStore.selectedEvent !== null && !calendarStore.selectedEvent.title.length)
-    ) {
-      dispatch(addEvent(modifiedEvent))
+    if (calendarStore.selectedEvent?.id) {
+      // Update existing event
+      if (onEventUpdate) {
+        onEventUpdate(modifiedEvent)
+      } else {
+        // Default Redux action
+        dispatch(updateEvent(modifiedEvent))
+      }
     } else {
-      dispatch(updateEvent({ ...modifiedEvent, id: calendarStore.selectedEvent.id }))
+      // Create new event
+      if (onEventCreate) {
+        onEventCreate(modifiedEvent)
+      } else {
+        // Default Redux action
+        dispatch(addEvent(modifiedEvent))
+      }
     }
 
-    dispatch(filterEvents())
-
-    handleSidebarClose()
+    // Reset form
+    reset()
+    handleAddEventSidebarToggle()
   }
 
-  const handleDeleteButtonClick = () => {
-    if (calendarStore.selectedEvent) {
-      dispatch(deleteEvent(calendarStore.selectedEvent.id))
-      dispatch(filterEvents())
+  const handleDeleteEvent = () => {
+    if (calendarStore.selectedEvent?.id && onEventDelete) {
+      onEventDelete(calendarStore.selectedEvent.id as string)
+    } else if (calendarStore.selectedEvent?.id) {
+      dispatch(deleteEvent(calendarStore.selectedEvent.id as string))
     }
-
-    // calendarApi.getEventById(calendarStore.selectedEvent.id).remove()
-    handleSidebarClose()
+    
+    // Reset form
+    reset()
+    handleAddEventSidebarToggle()
   }
 
-  const handleStartDate = (date: Date | null) => {
-    if (date && date > values.endDate) {
-      setValues({ ...values, startDate: new Date(date), endDate: new Date(date) })
-    }
+  const handleSidebarClose = () => {
+    reset()
+    clearErrors()
+    handleAddEventSidebarToggle()
+    dispatch({ type: 'calendar/selectedEvent', payload: null })
   }
-
-  const RenderSidebarFooter = () => {
-    if (
-      calendarStore.selectedEvent === null ||
-      (calendarStore.selectedEvent && !calendarStore.selectedEvent.title.length)
-    ) {
-      return (
-        <div className='flex gap-4'>
-          <Button type='submit' variant='contained'>
-            Add
-          </Button>
-          <Button variant='outlined' color='secondary' onClick={resetToEmptyValues}>
-            Reset
-          </Button>
-        </div>
-      )
-    } else {
-      return (
-        <div className='flex gap-4'>
-          <Button type='submit' variant='contained'>
-            Update
-          </Button>
-          <Button variant='outlined' color='secondary' onClick={resetToStoredValues}>
-            Reset
-          </Button>
-        </div>
-      )
-    }
-  }
-
-  const ScrollWrapper = isBelowSmScreen ? 'div' : PerfectScrollbar
-
-  useEffect(() => {
-    if (calendarStore.selectedEvent !== null) {
-      resetToStoredValues()
-    } else {
-      resetToEmptyValues()
-    }
-  }, [addEventSidebarOpen, resetToStoredValues, resetToEmptyValues, calendarStore.selectedEvent])
 
   return (
     <Drawer
-      anchor='right'
       open={addEventSidebarOpen}
+      anchor='right'
+      variant='temporary'
       onClose={handleSidebarClose}
       ModalProps={{ keepMounted: true }}
-      sx={{ '& .MuiDrawer-paper': { width: ['100%', 400] } }}
+      sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
     >
-      <Box className='flex justify-between items-center sidebar-header plb-5 pli-6 border-be'>
-        <Typography variant='h5'>
-          {calendarStore.selectedEvent && calendarStore.selectedEvent.title.length ? 'Update Event' : 'Add Event'}
-        </Typography>
-        {calendarStore.selectedEvent && calendarStore.selectedEvent.title.length ? (
-          <Box className='flex items-center' sx={{ gap: calendarStore.selectedEvent !== null ? 1 : 0 }}>
-            <IconButton size='small' onClick={handleDeleteButtonClick}>
-              <i className='tabler-trash text-2xl text-textPrimary' />
-            </IconButton>
-            <IconButton size='small' onClick={handleSidebarClose}>
-              <i className='tabler-x text-2xl text-textPrimary' />
-            </IconButton>
-          </Box>
-        ) : (
-          <IconButton size='small' onClick={handleSidebarClose}>
-            <i className='tabler-x text-2xl text-textPrimary' />
-          </IconButton>
-        )}
-      </Box>
-      <ScrollWrapper
-        {...(isBelowSmScreen
-          ? { className: 'bs-full overflow-y-auto overflow-x-hidden' }
-          : { options: { wheelPropagation: false, suppressScrollX: true } })}
+      <Box
+        sx={{
+          height: '100%',
+          p: theme => theme.spacing(6),
+          display: 'flex',
+          flexDirection: 'column'
+        }}
       >
-        <Box className='sidebar-body plb-5 pli-6'>
-          <form onSubmit={handleSubmit(onSubmit)} autoComplete='off' className='flex flex-col gap-6'>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant='h5'>
+            {calendarStore.selectedEvent?.id ? 'Update Task' : 'Add Task'}
+          </Typography>
+          <IconButton onClick={handleSidebarClose}>
+            <i className='tabler tabler-x' />
+          </IconButton>
+        </Box>
+
+        <Box sx={{ mt: 5 }}>
+          <form onSubmit={handleSubmit(onSubmit)} autoComplete='off'>
             <Controller
               name='title'
               control={control}
               rules={{ required: true }}
-              render={({ field: { value, onChange } }) => (
-                <CustomTextField
+              render={({ field }) => (
+                <TextField
                   fullWidth
                   label='Title'
-                  value={value}
-                  onChange={onChange}
-                  {...(errors.title && { error: true, helperText: 'This field is required' })}
+                  {...field}
+                  sx={{ mb: 4 }}
+                  error={Boolean(errors.title)}
+                  helperText={errors.title?.message}
                 />
               )}
             />
-            <CustomTextField
-              select
-              fullWidth
-              label='Calendar'
-              value={values.calendar}
-              onChange={e => setValues({ ...values, calendar: e.target.value })}
-            >
-              <MenuItem value='Personal'>Personal</MenuItem>
-              <MenuItem value='Business'>Business</MenuItem>
-              <MenuItem value='Family'>Family</MenuItem>
-              <MenuItem value='Holiday'>Holiday</MenuItem>
-              <MenuItem value='ETC'>ETC</MenuItem>
-            </CustomTextField>
 
-            <AppReactDatepicker
-              selectsStart
-              id='event-start-date'
-              endDate={values.endDate}
-              selected={values.startDate}
-              startDate={values.startDate}
-              showTimeSelect={!values.allDay}
-              dateFormat={!values.allDay ? 'yyyy-MM-dd hh:mm' : 'yyyy-MM-dd'}
-              customInput={<PickersComponent label='Start Date' registername='startDate' />}
-              onChange={(date: Date | null) => date !== null && setValues({ ...values, startDate: new Date(date) })}
-              onSelect={handleStartDate}
+            <Controller
+              name='calendar'
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <FormControl fullWidth sx={{ mb: 4 }} error={Boolean(errors.calendar)}>
+                  <InputLabel id='calendar-label'>Status</InputLabel>
+                  <Select {...field} label='Status' labelId='calendar-label'>
+                    <MenuItem value='todo'>Todo</MenuItem>
+                    <MenuItem value='in_progress'>In Progress</MenuItem>
+                    <MenuItem value='in_review'>In Review</MenuItem>
+                    <MenuItem value='done'>Done</MenuItem>
+                  </Select>
+                  {errors.calendar && <FormHelperText>{errors.calendar.message}</FormHelperText>}
+                </FormControl>
+              )}
             />
-            <AppReactDatepicker
-              selectsEnd
-              id='event-end-date'
-              endDate={values.endDate}
-              selected={values.endDate}
-              minDate={values.startDate}
-              startDate={values.startDate}
-              showTimeSelect={!values.allDay}
-              dateFormat={!values.allDay ? 'yyyy-MM-dd hh:mm' : 'yyyy-MM-dd'}
-              customInput={<PickersComponent label='End Date' registername='endDate' />}
-              onChange={(date: Date | null) => date !== null && setValues({ ...values, endDate: new Date(date) })}
+
+            <Controller
+              name='priority'
+              control={control}
+              render={({ field }) => (
+                <FormControl fullWidth sx={{ mb: 4 }}>
+                  <InputLabel id='priority-label'>Priority</InputLabel>
+                  <Select {...field} label='Priority' labelId='priority-label'>
+                    <MenuItem value='low'>Low</MenuItem>
+                    <MenuItem value='medium'>Medium</MenuItem>
+                    <MenuItem value='high'>High</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
             />
-            <FormControl>
-              <FormControlLabel
-                label='All Day'
-                control={
-                  <Switch checked={values.allDay} onChange={e => setValues({ ...values, allDay: e.target.checked })} />
-                }
+
+            <Box sx={{ mb: 4 }}>
+              <Controller
+                name='start'
+                control={control}
+                render={({ field }) => (
+                  <QSimpleDatePicker
+                    name='start-date'
+                    label='Due Date'
+                    value={startDate}
+                    onChange={(date: Date | null) => {
+                      setStartDate(date);
+                      setEndDate(date);
+                      setValue('start', date || new Date());
+                      setValue('end', date || new Date());
+                    }}
+                    error={Boolean(errors.start)}
+                    helperText={errors.start?.message?.toString()}
+                    dateFormat="MM/dd/yyyy"
+                    showYearDropdown
+                    showMonthDropdown
+                    fullWidth
+                  />
+                )}
               />
-            </FormControl>
-            <CustomTextField
-              fullWidth
-              type='url'
-              id='event-url'
-              label='Event URL'
-              value={values.url}
-              onChange={e => setValues({ ...values, url: e.target.value })}
+            </Box>
+
+            <Controller
+              name='description'
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  rows={4}
+                  multiline
+                  fullWidth
+                  label='Description'
+                  {...field}
+                  sx={{ mb: 6 }}
+                />
+              )}
             />
-            <CustomTextField
-              fullWidth
-              select
-              label='Guests'
-              value={values.guests}
-              id='event-guests-select'
-              // eslint-disable-next-line lines-around-comment
-              // @ts-ignore
-              onChange={(e: SelectChangeEvent<(typeof values)['guests']>) => {
-                setValues({
-                  ...values,
-                  guests: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value
-                })
-              }}
-              SelectProps={{
-                multiple: true
-              }}
-            >
-              <MenuItem value='bruce'>Bruce</MenuItem>
-              <MenuItem value='clark'>Clark</MenuItem>
-              <MenuItem value='diana'>Diana</MenuItem>
-              <MenuItem value='john'>John</MenuItem>
-              <MenuItem value='barry'>Barry</MenuItem>
-            </CustomTextField>
-            <CustomTextField
-              rows={4}
-              multiline
-              fullWidth
-              label='Description'
-              id='event-description'
-              value={values.description}
-              onChange={e => setValues({ ...values, description: e.target.value })}
-            />
-            <div className='flex items-center'>
-              <RenderSidebarFooter />
-            </div>
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button variant='contained' type='submit'>
+                {calendarStore.selectedEvent?.id ? 'Update' : 'Add'}
+              </Button>
+              <Button variant='outlined' color='secondary' onClick={handleSidebarClose}>
+                Cancel
+              </Button>
+              {calendarStore.selectedEvent?.id && (
+                <Button variant='outlined' color='error' onClick={handleDeleteEvent}>
+                  Delete
+                </Button>
+              )}
+            </Box>
           </form>
         </Box>
-      </ScrollWrapper>
+      </Box>
     </Drawer>
   )
 }

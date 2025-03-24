@@ -13,7 +13,8 @@ const initialState: CalendarType = {
   events: events,
   filteredEvents: events,
   selectedEvent: null,
-  selectedCalendars: ['Personal', 'Business', 'Family', 'Holiday', 'ETC']
+  // selectedCalendars: ['Personal', 'Business', 'Family', 'Holiday', 'ETC']
+  selectedCalendars: []
 }
 
 const filterEventsUsingCheckbox = (events: EventInput[], selectedCalendars: CalendarFiltersType[]) => {
@@ -75,7 +76,7 @@ export const calendarSlice = createSlice({
     },
 
     filterAllCalendarLabels: (state, action) => {
-      state.selectedCalendars = action.payload ? ['Personal', 'Business', 'Family', 'Holiday', 'ETC'] : []
+      state.selectedCalendars = action.payload ? [] : []
       state.events = filterEventsUsingCheckbox(state.filteredEvents, state.selectedCalendars)
     }
   }

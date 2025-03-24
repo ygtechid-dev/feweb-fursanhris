@@ -7,6 +7,9 @@ export interface Termination {
     department: string;
     designation: string;
   };
+  employee_id: number;
+  termination_type_id: number;
+  terminated_by_id: number;
   termination_type: string;
   termination_date: string;
   notice_date: string;
@@ -24,7 +27,6 @@ export interface Termination {
 }
 
 export const defaultFormValuesTermination = {
-  id: 0,
   employee: {
     id: 0,
     name: '',
@@ -32,12 +34,15 @@ export const defaultFormValuesTermination = {
     department: '',
     designation: ''
   },
+  employee_id: 0,
+  termination_type_id: 0,
+  terminated_by_id: 0,
   termination_type: '',
   termination_date: '',
   notice_date: '',
   reason: '',
   description: '',
-  status: '',
+  status: '0',
   is_mobile_access_allowed: false,
   terminated_by: {
     id: 0,

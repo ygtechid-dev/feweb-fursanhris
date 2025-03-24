@@ -24,6 +24,14 @@ type ConfirmationType = 'delete-account'
 | 'delete-payslip'
 | 'delete-allowance'
 | 'delete-deduction'
+| 'delete-reward'
+| 'delete-resignation'
+| 'delete-trip'
+| 'delete-promotion'
+| 'delete-complaint'
+| 'delete-warning'
+| 'delete-termination'
+| 'delete-project'
 
 type ConfirmationDialogProps = {
   open: boolean
@@ -82,6 +90,14 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, isLoading }: Confi
               {type === 'delete-payslip' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['navigation'].payslip.toLowerCase()}?`}
               {type === 'delete-allowance' && `${dictionary['content'].areYouSureWantToDelete} Allowance?`}
               {type === 'delete-deduction' && `${dictionary['content'].areYouSureWantToDelete} Deduction?`}
+              {type === 'delete-reward' && `${dictionary['content'].areYouSureWantToDelete} Reward?`}
+              {type === 'delete-resignation' && `${dictionary['content'].areYouSureWantToDelete} Resignation?`}
+              {type === 'delete-trip' && `${dictionary['content'].areYouSureWantToDelete} Trip?`}
+              {type === 'delete-promotion' && `${dictionary['content'].areYouSureWantToDelete} Promotion?`}
+              {type === 'delete-complaint' && `${dictionary['content'].areYouSureWantToDelete} Complaint?`}
+              {type === 'delete-warning' && `${dictionary['content'].areYouSureWantToDelete} Warning?`}
+              {type === 'delete-termination' && `${dictionary['content'].areYouSureWantToDelete} Termination?`}
+              {type === 'delete-project' && `${dictionary['content'].areYouSureWantToDelete} Project?`}
             </Typography>
             {type === 'suspend-account' && (
               <Typography color='text.primary'>You won&#39;t be able to revert user!</Typography>
@@ -155,6 +171,14 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, isLoading }: Confi
                 {type === 'delete-payslip' && 'Payslip removed successfully'}
                 {type === 'delete-allowance' && 'Allowance removed successfully'}
                 {type === 'delete-deduction' && 'Deduction removed successfully'}
+                {type === 'delete-reward' && 'Reward removed successfully'}
+                {type === 'delete-resignation' && 'Resignation removed successfully'}
+                {type === 'delete-trip' && 'Trip removed successfully'}
+                {type === 'delete-promotion' && 'Trip removed successfully'}
+                {type === 'delete-complaint' && 'Complaint removed successfully'}
+                {type === 'delete-warning' && 'Warning removed successfully'}
+                {type === 'delete-termination' && 'Termination removed successfully'}
+                {type === 'delete-project' && 'Project removed successfully'}
               </>
             ) : (
               <>
@@ -173,6 +197,11 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, isLoading }: Confi
                 {type === 'delete-payslip' && 'Payslip Deletion Cancelled'}
                 {type === 'delete-allowance' && 'Allowance Deletion Cancelled'}
                 {type === 'delete-deduction' && 'Deduction Deletion Cancelled'}
+                {type === 'delete-reward' && 'Reward Deletion Cancelled'}
+                {type === 'delete-resignation' && 'Resignation Deletion Cancelled'}
+                {type === 'delete-trip' && 'Trip Deletion Cancelled'}
+                {type === 'delete-complaint' && 'Complaint Deletion Cancelled'}
+                {type === 'delete-project' && 'Project Deletion Cancelled'}
               </>
             )}
           </Typography>

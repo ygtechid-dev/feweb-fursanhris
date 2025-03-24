@@ -26,6 +26,7 @@ import NewTask from './NewTask'
 
 // Styles Imports
 import styles from './styles.module.css'
+import { updateTaskOrder, updateTaskStatus, createTask } from '@/services/taskService'
 
 type KanbanListProps = {
   column: ColumnType
@@ -36,15 +37,18 @@ type KanbanListProps = {
   columns: ColumnType[]
   setColumns: (value: ColumnType[]) => void
   currentTask: TaskType | undefined
+  projectId: number  // Added projectId prop
+  openTaskDetails?: (taskId: number) => void 
 }
 
 const KanbanList = (props: KanbanListProps) => {
   // Props
-  const { column, tasks, dispatch, store, setDrawerOpen, columns, setColumns, currentTask } = props
+  const { column, tasks, dispatch, store, setDrawerOpen, columns, setColumns, currentTask, projectId, openTaskDetails } = props
 
   // States
   const [editDisplay, setEditDisplay] = useState(false)
   const [title, setTitle] = useState(column.title)
+  const [isAddingTask, setIsAddingTask] = useState(false)  // Track loading state
 
   // Hooks
   const [tasksListRef, tasksList, setTasksList] = useDragAndDrop(tasks, {
@@ -54,20 +58,50 @@ const KanbanList = (props: KanbanListProps) => {
   })
 
   // Add New Task
-  const addNewTask = (title: string) => {
-    dispatch(addTask({ columnId: column.id, title: title }))
+  const addNewTask = async (taskTitle: string) => {
+    setIsAddingTask(true)
+    try {
+      // First, update Redux state for immediate UI feedback
+      dispatch(addTask({ columnId: column.id, title: taskTitle }))
 
-    setTasksList([...tasksList, { id: store.tasks[store.tasks.length - 1].id + 1, title }])
-
-    const newColumns = columns.map(col => {
-      if (col.id === column.id) {
-        return { ...col, taskIds: [...col.taskIds, store.tasks[store.tasks.length - 1].id + 1] }
+      // Determine status based on column ID
+      const statusMap: Record<number, string> = {
+        1: 'todo',
+        2: 'in_progress',
+        3: 'in_review',
+        4: 'done',
       }
 
-      return col
-    })
+      // Call the API to create the task on the server
+      const response = await createTask({
+        title: taskTitle,
+        project_id: projectId,
+        status: statusMap[column.id] || 'todo',
+        priority: 'medium'
+      })
 
-    setColumns(newColumns)
+      if (response && response.data) {
+        const newTask = response.data
+
+        // Update local taskList with the server-returned task (which has the actual ID)
+        setTasksList([...tasksList, newTask])
+
+        // Update columns state
+        const newColumns = columns.map(col => {
+          if (col.id === column.id) {
+            return { ...col, taskIds: [...col.taskIds, newTask.id] }
+          }
+          return col
+        })
+
+        setColumns(newColumns)
+      }
+    } catch (error) {
+      console.error('Failed to create task:', error)
+      // You might want to add error handling here (e.g., show a notification)
+    } finally {
+      setIsAddingTask(false)
+    }
   }
 
   // Handle Submit Edit
@@ -102,10 +136,26 @@ const KanbanList = (props: KanbanListProps) => {
   // Update column taskIds on drag and drop
   useEffect(() => {
     if (tasksList !== tasks) {
-      dispatch(updateColumnTaskIds({ id: column.id, tasksList }))
+      // Extract taskIds from tasksList
+      const taskIds = tasksList.filter(task => task !== undefined).map(task => task!.id);
+      
+      // Deteksi task yang baru ditambahkan ke kolom ini (perpindahan dari kolom lain)
+      const originalTaskIds = tasks.filter(task => task !== undefined).map(task => task!.id);
+      const newTasksInColumn = taskIds.filter(id => !originalTaskIds.includes(id));
+      
+      // Update status untuk task yang baru dipindahkan
+      newTasksInColumn.forEach(taskId => {
+        updateTaskStatus(taskId, column.id);
+      });
+      
+      // Update Redux state
+      dispatch(updateColumnTaskIds({ id: column.id, tasksList }));
+      
+      // Update backend untuk reordering
+      if(taskIds && taskIds.length) updateTaskOrder(column.id, taskIds);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasksList])
+  }, [tasksList]);
 
   // To update the tasksList when a task is edited
   useEffect(() => {
@@ -168,7 +218,7 @@ const KanbanList = (props: KanbanListProps) => {
           <Typography variant='h5' noWrap className='max-is-[80%]'>
             {column.title}
           </Typography>
-          <div className='flex items-center'>
+          {/* <div className='flex items-center'>
             <i className={classnames('tabler-arrows-move text-textSecondary list-handle', styles.drag)} />
             <OptionMenu
               iconClassName='text-xl text-textPrimary'
@@ -188,7 +238,7 @@ const KanbanList = (props: KanbanListProps) => {
                 }
               ]}
             />
-          </div>
+          </div> */}
         </div>
       )}
       {tasksList.map(
@@ -204,10 +254,14 @@ const KanbanList = (props: KanbanListProps) => {
               setDrawerOpen={setDrawerOpen}
               tasksList={tasksList}
               setTasksList={setTasksList}
+              openTaskDetails={openTaskDetails} // Add this prop
             />
           )
       )}
-      <NewTask addTask={addNewTask} />
+      <NewTask 
+        addTask={addNewTask} 
+        isLoading={isAddingTask} 
+      />
     </div>
   )
 }

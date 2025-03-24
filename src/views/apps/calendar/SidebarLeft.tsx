@@ -110,7 +110,7 @@ const SidebarLeft = (props: SidebarLeftProps) => {
         />
         <Divider className='is-full' />
 
-        <div className='flex flex-col p-6 is-full'>
+        {/* <div className='flex flex-col p-6 is-full'>
           <Typography variant='h5' className='mbe-4'>
             Event Filters
           </Typography>
@@ -126,7 +126,7 @@ const SidebarLeft = (props: SidebarLeftProps) => {
             }
           />
           {renderFilters}
-        </div>
+        </div> */}
       </Drawer>
     )
   } else {

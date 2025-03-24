@@ -42,7 +42,7 @@ const Deductions = () => {
   const [dialogMode, setDialogMode] = useState<DialogMode>(null)
   const [selectedDeduction, setSelectedDeduction] = useState<Deduction | null>(null)
   
-    const [isDeleting, setIsDeleting] = useState<boolean>(false)
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
 
    // Extract employee ID from the URL params
    const employeeId = typeof params.id === 'string' 

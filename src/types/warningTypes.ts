@@ -2,6 +2,9 @@ export interface Warning {
   id: number;
   subject: string;
   description: string;
+  warning_to_id: number;
+  warning_by_id: number;
+  warning_date_raw: string;
   warning_date: {
     raw: string;
     formatted: string;
@@ -36,13 +39,15 @@ export interface Warning {
 }
 
 export const defaultFormValuesWarning = {
-  id: 0,
   subject: '',
   description: '',
   warning_date: {
     raw: '',
     formatted: ''
   },
+  warning_to_id: 0,
+  warning_by_id: 0,
+  warning_date_raw: '',
   warning_to: {
     id: 0,
     name: '',

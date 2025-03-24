@@ -4,6 +4,8 @@ export interface Complaint {
   complaint_date: string;
   formatted_date: string;
   description: string;
+  complaint_from_id: number;
+  complaint_against_id: number;
   complaint_from: {
     id: number;
     name: string;
@@ -23,11 +25,12 @@ export interface Complaint {
 }
 
 export const defaultFormValuesComplaint = {
-  id: 0,
   title: '',
   complaint_date: '',
   formatted_date: '',
   description: '',
+  complaint_from_id: 0,
+  complaint_against_id: 0,
   complaint_from: {
     id: 0,
     name: '',

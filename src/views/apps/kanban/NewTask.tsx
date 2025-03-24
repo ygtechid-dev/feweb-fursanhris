@@ -5,6 +5,7 @@ import { useState } from 'react'
 import Button from '@mui/material/Button'
 import { styled } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
+import CircularProgress from '@mui/material/CircularProgress'
 
 // Third-party Imports
 import { useForm, Controller } from 'react-hook-form'
@@ -22,13 +23,19 @@ const CustomTextFieldStyled = styled(CustomTextField)({
   }
 })
 
-type FormData = InferInput<typeof schema>
-
+// Schema definition
 const schema = object({
   content: pipe(string(), nonEmpty('Content is required'), minLength(1))
 })
 
-const NewTask = ({ addTask }: { addTask: (content: string) => void }) => {
+type FormData = InferInput<typeof schema>
+
+type NewTaskProps = {
+  addTask: (content: string) => void
+  isLoading?: boolean
+}
+
+const NewTask = ({ addTask, isLoading = false }: NewTaskProps) => {
   // States
   const [displayNewItem, setDisplayNewItem] = useState(false)
 
@@ -53,8 +60,11 @@ const NewTask = ({ addTask }: { addTask: (content: string) => void }) => {
   // Handle the Add New Task form
   const onSubmit = (data: FormData) => {
     addTask(data.content)
-    setDisplayNewItem(false)
-    reset({ content: '' })
+    // Don't reset the form immediately, wait for the task to be added
+    if (!isLoading) {
+      setDisplayNewItem(false)
+      reset({ content: '' })
+    }
   }
 
   // Handle reset
@@ -85,7 +95,6 @@ const NewTask = ({ addTask }: { addTask: (content: string) => void }) => {
                     e.preventDefault()
                     handleSubmit(onSubmit)(e)
                   }
-
                   if (e.key === 'Escape') {
                     handleReset()
                   }
@@ -95,12 +104,20 @@ const NewTask = ({ addTask }: { addTask: (content: string) => void }) => {
                 {...field}
                 error={Boolean(errors.content)}
                 helperText={errors.content ? errors.content.message : null}
+                disabled={isLoading}
               />
             )}
           />
           <div className='flex gap-3'>
-            <Button variant='contained' size='small' color='primary' type='submit'>
-              Add
+            <Button 
+              variant='contained' 
+              size='small' 
+              color='primary' 
+              type='submit'
+              disabled={isLoading}
+              startIcon={isLoading ? <CircularProgress size={16} color='inherit' /> : null}
+            >
+              {isLoading ? 'Adding...' : 'Add'}
             </Button>
             <Button
               variant='tonal'
@@ -109,6 +126,7 @@ const NewTask = ({ addTask }: { addTask: (content: string) => void }) => {
               onClick={() => {
                 handleReset()
               }}
+              disabled={isLoading}
             >
               Cancel
             </Button>

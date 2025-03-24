@@ -7,7 +7,8 @@ export interface Overtime {
     overtime_date: string;
     start_time: string;
     end_time: string;
-    hours: number;
+    hours: number | string;
+    rate: number | string;
     remark: string;
     status: 'approved' | 'rejected' | 'pending' | string;
     approved_at: string | null;
@@ -28,7 +29,8 @@ export const defaultFormValuesOvertime =  {
   overtime_date: '',
   start_time: '',
   end_time: '',
-  hours: 0,
+  hours: '',
+  rate: '',
   remark: '',
   status: 'pending',
   rejection_reason: '',

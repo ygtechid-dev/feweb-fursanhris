@@ -43,15 +43,6 @@ const FormDialog = ({
     setOpen(false)
   }
 
-  // const onSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault()
-  //   // let isValid = true;
-  //   // if (onSubmit) {
-  //   //   isValid = await onSubmit(formData);
-  //   // }
-  //   // if(isValid) handleClose()
-  // }
-
   return (
     <Dialog 
       open={open} 

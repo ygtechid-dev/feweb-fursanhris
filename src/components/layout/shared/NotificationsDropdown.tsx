@@ -19,6 +19,7 @@ import Avatar from '@mui/material/Avatar'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import Button from '@mui/material/Button'
 import type { Theme } from '@mui/material/styles'
+import Box from '@mui/material/Box'
 
 // Third Party Components
 import classnames from 'classnames'
@@ -121,7 +122,7 @@ const NotificationDropdown = ({ notifications }: { notifications: NotificationsT
   const hidden = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'))
   const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'))
   const { settings } = useSettings()
-   const { dictionary } = useDictionary()
+  const { dictionary } = useDictionary()
 
   const handleClose = () => {
     setOpen(false)
@@ -247,63 +248,79 @@ const NotificationDropdown = ({ notifications }: { notifications: NotificationsT
                   </div>
                   <Divider />
                   <ScrollWrapper hidden={hidden}>
-                    {notificationsState.map((notification, index) => {
-                      const {
-                        title,
-                        subtitle,
-                        time,
-                        read,
-                        avatarImage,
-                        avatarIcon,
-                        avatarText,
-                        avatarColor,
-                        avatarSkin
-                      } = notification
+                    {notificationsState.length > 0 ? (
+                      notificationsState.map((notification, index) => {
+                        const {
+                          title,
+                          subtitle,
+                          time,
+                          read,
+                          avatarImage,
+                          avatarIcon,
+                          avatarText,
+                          avatarColor,
+                          avatarSkin
+                        } = notification
 
-                      return (
-                        <div
-                          key={index}
-                          className={classnames('flex plb-3 pli-4 gap-3 cursor-pointer hover:bg-actionHover group', {
-                            'border-be': index !== notificationsState.length - 1
-                          })}
-                          onClick={e => handleReadNotification(e, true, index)}
-                        >
-                          {getAvatar({ avatarImage, avatarIcon, title, avatarText, avatarColor, avatarSkin })}
-                          <div className='flex flex-col flex-auto'>
-                            <Typography variant='body2' className='font-medium mbe-1' color='text.primary'>
-                              {title}
-                            </Typography>
-                            <Typography variant='caption' color='text.secondary' className='mbe-2'>
-                              {subtitle}
-                            </Typography>
-                            <Typography variant='caption' color='text.disabled'>
-                              {time}
-                            </Typography>
+                        return (
+                          <div
+                            key={index}
+                            className={classnames('flex plb-3 pli-4 gap-3 cursor-pointer hover:bg-actionHover group', {
+                              'border-be': index !== notificationsState.length - 1
+                            })}
+                            onClick={e => handleReadNotification(e, true, index)}
+                          >
+                            {getAvatar({ avatarImage, avatarIcon, title, avatarText, avatarColor, avatarSkin })}
+                            <div className='flex flex-col flex-auto'>
+                              <Typography variant='body2' className='font-medium mbe-1' color='text.primary'>
+                                {title}
+                              </Typography>
+                              <Typography variant='caption' color='text.secondary' className='mbe-2'>
+                                {subtitle}
+                              </Typography>
+                              <Typography variant='caption' color='text.disabled'>
+                                {time}
+                              </Typography>
+                            </div>
+                            <div className='flex flex-col items-end gap-2'>
+                              <Badge
+                                variant='dot'
+                                color={read ? 'secondary' : 'primary'}
+                                onClick={e => handleReadNotification(e, !read, index)}
+                                className={classnames('mbs-1 mie-1', {
+                                  'invisible group-hover:visible': read
+                                })}
+                              />
+                              <i
+                                className='tabler-x text-xl invisible group-hover:visible'
+                                onClick={e => handleRemoveNotification(e, index)}
+                              />
+                            </div>
                           </div>
-                          <div className='flex flex-col items-end gap-2'>
-                            <Badge
-                              variant='dot'
-                              color={read ? 'secondary' : 'primary'}
-                              onClick={e => handleReadNotification(e, !read, index)}
-                              className={classnames('mbs-1 mie-1', {
-                                'invisible group-hover:visible': read
-                              })}
-                            />
-                            <i
-                              className='tabler-x text-xl invisible group-hover:visible'
-                              onClick={e => handleRemoveNotification(e, index)}
-                            />
-                          </div>
-                        </div>
-                      )
-                    })}
+                        )
+                      })
+                    ) : (
+                      <Box className='flex flex-col items-center justify-center p-8 min-h-48'>
+                        <CustomAvatar skin='light' color='secondary' className='mb-4'>
+                          <i className='tabler-bell-off text-2xl' />
+                        </CustomAvatar>
+                        <Typography variant='h6' className='mb-1'>
+                          {/* {dictionary['content']?.noNotifications || 'No Notifications'} */}
+                          {'No Notifications'}
+                        </Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          {/* {dictionary['content']?.noNotificationsMessage || 'You have no unread notifications'} */}
+                          { 'You have no unread notifications'}
+                        </Typography>
+                      </Box>
+                    )}
                   </ScrollWrapper>
-                  <Divider />
+                  {/* <Divider />
                   <div className='p-4'>
                     <Button fullWidth variant='contained' size='small'>
                       View All Notifications
                     </Button>
-                  </div>
+                  </div> */}
                 </div>
               </ClickAwayListener>
             </Paper>

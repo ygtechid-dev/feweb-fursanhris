@@ -29,6 +29,9 @@ type CalenderProps = {
   dispatch: Dispatch
   handleLeftSidebarToggle: () => void
   handleAddEventSidebarToggle: () => void
+  onEventCreate?: (event: any) => void
+  onEventUpdate?: (event: any) => void
+  onEventDelete?: (eventId: string) => void
 }
 
 const blankEvent: AddEventType = {
@@ -53,7 +56,10 @@ const Calendar = (props: CalenderProps) => {
     calendarsColor,
     dispatch,
     handleAddEventSidebarToggle,
-    handleLeftSidebarToggle
+    handleLeftSidebarToggle,
+    onEventCreate,
+    onEventUpdate,
+    onEventDelete
   } = props
 
   // Refs
@@ -117,7 +123,7 @@ const Calendar = (props: CalenderProps) => {
 
     eventClassNames({ event: calendarEvent }: any) {
       // @ts-ignore
-      const colorName = calendarsColor[calendarEvent._def.extendedProps.calendar]
+      const colorName = calendarsColor[calendarEvent._def.extendedProps.calendar] || 'primary'
 
       return [
         // Background Color
@@ -135,11 +141,6 @@ const Calendar = (props: CalenderProps) => {
         // Open the URL in a new tab
         window.open(clickedEvent.url, '_blank')
       }
-
-      //* Only grab required field otherwise it goes in infinity loop
-      //! Always grab all fields rendered by form (even if it get `undefined`)
-      // event.value = grabEventDataFromEventApi(clickedEvent)
-      // isAddNewEventSidebarActive.value = true
     },
 
     customButtons: {
@@ -152,12 +153,18 @@ const Calendar = (props: CalenderProps) => {
     },
 
     dateClick(info: any) {
-      const ev = { ...blankEvent }
-
-      ev.start = info.date
-      ev.end = info.date
-      ev.allDay = true
-
+      const ev = {
+        ...blankEvent,
+        start: info.date,
+        end: info.date,
+        allDay: true,
+        extendedProps: {
+          ...blankEvent.extendedProps,
+          calendar: 'todo',
+          isTask: true
+        }
+      }
+      
       dispatch(selectedEvent(ev))
       handleAddEventSidebarToggle()
     },
@@ -168,8 +175,13 @@ const Calendar = (props: CalenderProps) => {
       ? We can use `eventDragStop` but it doesn't return updated event so we have to use `eventDrop` which returns updated event
     */
     eventDrop({ event: droppedEvent }: any) {
-      dispatch(updateEvent(droppedEvent))
-      dispatch(filterEvents())
+      // Call the custom event update handler if provided
+      if (onEventUpdate) {
+        onEventUpdate(droppedEvent)
+      } else {
+        dispatch(updateEvent(droppedEvent))
+        dispatch(filterEvents())
+      }
     },
 
     /*
@@ -177,8 +189,13 @@ const Calendar = (props: CalenderProps) => {
       ? Docs: https://fullcalendar.io/docs/eventResize
     */
     eventResize({ event: resizedEvent }: any) {
-      dispatch(updateEvent(resizedEvent))
-      dispatch(filterEvents())
+      // Call the custom event update handler if provided
+      if (onEventUpdate) {
+        onEventUpdate(resizedEvent)
+      } else {
+        dispatch(updateEvent(resizedEvent))
+        dispatch(filterEvents())
+      }
     },
 
     // @ts-ignore

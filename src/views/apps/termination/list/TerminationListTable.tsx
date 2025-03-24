@@ -56,7 +56,20 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import AddDrawer from './AddDrawer'
-import { Termination } from '@/types/terminationTypes'
+import { defaultFormValuesTermination, Termination } from '@/types/terminationTypes'
+import { Employee } from '@/types/apps/userTypes'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import { useForm } from 'react-hook-form'
+import { useSWRConfig } from 'swr'
+import { getEmployees } from '@/services/employeeService'
+import moment from 'moment'
+import { deleteTermination, getTerminationType, postTermination, updateTermination } from '@/services/terminationService'
+import { toast } from 'react-toastify'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
+import QTextField from '@/@core/components/mui/QTextField'
+import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
+import { TerminationType } from '@/types/terminationTypeTypes'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -71,13 +84,6 @@ type TerminationWithAction = Termination & {
   action?: string
 }
 
-type UserRoleType = {
-  [key: string]: { icon: string; color: string }
-}
-
-type UserStatusType = {
-  [key: string]: ThemeColor
-}
 
 // Styled Components
 const Icon = styled('i')({})
@@ -124,23 +130,10 @@ const DebouncedInput = ({
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
 }
 
-// Vars
-const userRoleObj: UserRoleType = {
-  admin: { icon: 'tabler-crown', color: 'error' },
-  author: { icon: 'tabler-device-desktop', color: 'warning' },
-  editor: { icon: 'tabler-edit', color: 'info' },
-  maintainer: { icon: 'tabler-chart-pie', color: 'success' },
-  subscriber: { icon: 'tabler-user', color: 'primary' }
-}
-
-const userStatusObj: UserStatusType = {
-  active: 'success',
-  pending: 'warning',
-  inactive: 'secondary'
-}
-
 // Column Definitions
 const columnHelper = createColumnHelper<TerminationWithAction>()
+
+type DialogMode = 'add' | 'edit' | 'delete' | null
 
 const TerminationListTable = ({ tableData }: { tableData?: Termination[] }) => {
   // States
@@ -150,8 +143,97 @@ const TerminationListTable = ({ tableData }: { tableData?: Termination[] }) => {
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
 
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [terminationTypes, setTerminationTypes] = useState<TerminationType[]>([])
+        
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogMode, setDialogMode] = useState<DialogMode>(null)
+  const [selectedTermination, setSelectedTermination] = useState<Termination | null>(null)
+      
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
   // Hooks
+  const {dictionary} = useDictionary();
   const { lang: locale } = useParams()
+
+  const methods = useForm<Termination>({
+    defaultValues: defaultFormValuesTermination
+  })
+
+  const { cache, mutate: swrMutate } = useSWRConfig();
+  useEffect(() => {
+    setData(tableData)
+    setFilteredData(tableData)
+  }, [tableData])
+
+  const handleOpenDialog = async  (mode: DialogMode, obj?: Termination) => {
+        setDialogMode(mode)
+        if(obj) setSelectedTermination(obj)
+  
+        try {
+            // Load both employees and leaves in parallel
+            const [responses1, response2] = await Promise.all([
+              getEmployees(),
+              getTerminationType(),
+            ])
+            
+            setEmployees(responses1?.data || [])
+            setTerminationTypes(response2?.data?.termination_types || [])
+          } catch (error) {
+            console.error('Error loading dialog data:', error)
+          } 
+    
+        if (mode == 'edit') {
+          const formattedData = {
+            ...obj,
+            }
+            // Reset form 
+            methods.reset(formattedData)
+          
+        }else{
+          methods.reset(defaultFormValuesTermination)
+        }
+    
+        setDialogOpen(true)
+      }
+        
+        const handleCloseDialog = () => {
+          setDialogOpen(false)
+          setDialogMode(null)
+          setSelectedTermination(null)
+        }
+        
+        const handleDialogSuccess = async () => {
+          swrMutate('/web/terminations')
+          handleCloseDialog()
+        }
+      
+        const handleDeleteCancel = () => {
+          setDialogOpen(false)
+          setSelectedTermination(null)
+        }
+      
+        const handleDeleteConfirm = async () => {
+          if (!selectedTermination) return
+          
+          try {
+            setIsDeleting(true)
+            
+            const response = await deleteTermination(selectedTermination!.id)
+            
+            if (response.status) {
+              // Show success message
+              toast.success(response.message )
+              handleDialogSuccess()
+            }
+          } catch (error: any) {
+            // Handle error
+            toast.error(error?.response?.data?.message )
+          } finally {
+            setIsDeleting(false)
+            handleDeleteCancel()
+          }
+      }
 
   const columns = useMemo<ColumnDef<TerminationWithAction, any>[]>(
     () => [
@@ -233,6 +315,14 @@ const TerminationListTable = ({ tableData }: { tableData?: Termination[] }) => {
           </div>
         )
       }),
+      columnHelper.accessor('status', {
+        header: 'Status',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+              <Chip label={row.original.status} color={row.original.status == 'active' ? 'success' : 'secondary'} size='small' variant='tonal' />
+          </div>
+        )
+      }),
       columnHelper.accessor('description', {
         header: 'Description',
         cell: ({ row }) => (
@@ -252,14 +342,12 @@ const TerminationListTable = ({ tableData }: { tableData?: Termination[] }) => {
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton title='Edit'>
+          <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
               <i className='tabler-edit text-textSecondary' />
             </IconButton>
-            <IconButton title='Delete' onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
+            <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
-           
-           
           </div>
         ),
         enableSorting: false
@@ -332,7 +420,7 @@ const TerminationListTable = ({ tableData }: { tableData?: Termination[] }) => {
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
+              onClick={() => handleOpenDialog('add' )}
               className='max-sm:is-full'
             >
               Add Termination
@@ -404,7 +492,229 @@ const TerminationListTable = ({ tableData }: { tableData?: Termination[] }) => {
           }}
         />
       </Card>
-     
+
+      {dialogOpen && dialogMode == 'add' && (
+        <FormDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+        title={'Add new Termination'}
+        onSubmit={async (data:Termination) => {
+          try {
+            const res = await postTermination({
+              ...data,
+              termination_date: data.termination_date ? moment(data.termination_date).format('YYYY-MM-DD') : '',
+            });
+            
+            if (res.status) {
+              handleDialogSuccess()
+              toast.success(res.message)
+            }
+          } catch (error) {
+            console.log('Error post termination', error)
+          } finally{
+            methods.reset();
+            setDialogOpen(false)
+          }
+         
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+       <>
+        <QTextField
+            name='employee_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Employee`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+        </QTextField>
+        <QTextField
+            name='termination_type_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Termination Type`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {terminationTypes.map((type) => (
+              <MenuItem key={type.id} value={type.id}>
+                {type.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+           <QReactDatepicker
+            name="notice_date"
+            control={methods.control}
+            label={'Notice Date'}
+            required
+          />
+           <QReactDatepicker
+            name="termination_date"
+            control={methods.control}
+            label={'Termination Date'}
+            required
+          />
+           <QTextField
+            name='status'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Statu`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an status'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Status</MenuItem>
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="inactive">Inactive</MenuItem>
+           
+        </QTextField>
+          <QTextField
+            name='description'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Description`}
+            label={`Description`}
+            multiline={true}
+          />
+       </>
+        </FormDialog>
+      )}
+
+      {dialogOpen && dialogMode == 'edit' && (
+        <FormDialog
+          open={dialogOpen}
+          setOpen={setDialogOpen}
+          title={`Edit Termination`}
+          onSubmit={async (data:Termination) => {
+            try {
+              if (!selectedTermination) return
+              
+              const formattedData = {
+                ...data,
+                termination_date: data.termination_date ? moment(data.termination_date).format('YYYY-MM-DD') : '',
+              }
+              
+              const response = await updateTermination(selectedTermination.id, formattedData);
+              
+              if (response.status) {
+                handleDialogSuccess()
+                toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
+              }
+            } catch (error) {
+              console.log('Error updating termination', error)
+              toast.error('Error updating termination')
+            } finally {
+              methods.reset()
+              // setEditDialogOpen(false)
+              // setOvertimeToEdit(null)
+            }
+          }}
+          handleSubmit={methods.handleSubmit}
+        >
+          <>
+        <QTextField
+            name='employee_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Employee`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+        <QTextField
+            name='termination_type_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Termination Type`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {terminationTypes.map((type) => (
+              <MenuItem key={type.id} value={type.id}>
+                {type.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+           <QReactDatepicker
+            name="notice_date"
+            control={methods.control}
+            label={'Notice Date'}
+            required
+          />
+           <QReactDatepicker
+            name="termination_date"
+            control={methods.control}
+            label={'Termination Date'}
+            required
+          />
+          <QTextField
+            name='status'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Statu`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an status'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Status</MenuItem>
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="inactive">Inactive</MenuItem>
+           
+        </QTextField>
+          <QTextField
+            name='description'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Description`}
+            label={`Description`}
+            multiline={true}
+          />
+       </>
+        </FormDialog>
+      )}
+
+      {dialogOpen && dialogMode == 'delete' && (
+        <ConfirmationDialog
+          open={dialogOpen}
+          setOpen={setDialogOpen}
+          type='delete-termination'
+          onConfirm={handleDeleteConfirm}
+          isLoading={isDeleting}
+        />
+      )}
     </>
   )
 }

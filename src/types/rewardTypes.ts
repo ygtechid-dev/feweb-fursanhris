@@ -9,8 +9,8 @@ export interface RewardType {
 // Main Reward interface
 export interface Reward {
   id: number;
-  employee_id: number;
-  reward_type_id: number;
+  employee_id: number | string;
+  reward_type_id: number | string;
   date: string; // ISO date string format
   gift?: string | null;
   description?: string | null;
@@ -22,10 +22,15 @@ export interface Reward {
   reward_type?: RewardType;
 }
 
-
-export const defaultFormValuesBranch=  {
-  name: '',
-  created_by: 0,
-  created_at: '', 
+export const defaultFormValuesReward = {
+  employee_id: 0,
+  reward_type_id: 0,
+  date: '', // ISO date string format
+  gift: '',
+  description: '',
+  created_at: '',
   updated_at: '',
-}
+  // Relations are optional and typically not included in default form values
+  // employee: undefined,
+  // reward_type: undefined
+};

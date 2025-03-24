@@ -329,29 +329,26 @@ const SalaryDetailTable = ({ tableData }: { tableData?: UsersType[] }) => {
                 variant='contained'
                 // startIcon={<i className='tabler-plus' />}
                 onClick={() => router.push(`/${locale}/salary`)}
-                
-                className='max-sm:is-full bg-secondary'
+                className='bg-secondary '
               >
                 Back
               </Button>
           </div>
         </Card>
       </Grid>
-      <Grid item sm={6}>
+      <Grid item xs={12} sm={6}>
        <EmployeeSalary employee={employee || undefined}/>
       </Grid>
-      <Grid item sm={6}>
+      <Grid item xs={12} sm={6}>
        <Allowances/>
       </Grid>
-      <Grid item sm={6}>
+      <Grid item xs={12} sm={6}>
        <Deductions/>
       </Grid>
-      <Grid item sm={6}>
+      <Grid item xs={12} sm={6}>
        <Overtimes/>
       </Grid>
     </Grid>
-     
-     
     </>
   )
 }

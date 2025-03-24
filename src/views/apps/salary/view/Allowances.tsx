@@ -226,7 +226,6 @@ const Allowances = () => {
   )
   
   return (
-    <>
       <Card>
         <CardHeader 
           title='Allowance' 
@@ -255,9 +254,7 @@ const Allowances = () => {
           // loading={isLoading}
           // emptyMessage={error || "No allowances found"}
         />
-      </Card>
-      
-      {/* Allowance Dialog */}
+          {/* Allowance Dialog */}
       {dialogOpen && dialogMode == 'add' && (
         <FormDialog
         open={dialogOpen}
@@ -447,7 +444,7 @@ const Allowances = () => {
         isLoading={isDeleting}
       />
       )}
-    </>
+      </Card>
   )
 }
 

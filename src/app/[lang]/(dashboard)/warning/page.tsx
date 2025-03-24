@@ -5,7 +5,7 @@ import { fetcher } from "@/configs/config";
 import WarningList from "@/views/apps/warning/list"
 import useSWR from "swr";
 
-const WarningListApp = async () => {
+const WarningListApp = () => {
   const {dictionary} = useDictionary();
   const { data, error, isLoading, mutate } = useSWR('/web/warnings', fetcher,{
     // Enable auto refresh every 5 seconds

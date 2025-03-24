@@ -56,7 +56,19 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import AddDrawer from './AddDrawer'
-import { Complaint } from '@/types/complaintTypes'
+import { Complaint, defaultFormValuesComplaint } from '@/types/complaintTypes'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import { useForm } from 'react-hook-form'
+import { useSWRConfig } from 'swr'
+import { Employee } from '@/types/apps/userTypes'
+import { getEmployees } from '@/services/employeeService'
+import { deleteComplaint, postComplaint, updateComplaint } from '@/services/complaintService'
+import { toast } from 'react-toastify'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
+import moment from 'moment'
+import QTextField from '@/@core/components/mui/QTextField'
+import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -69,14 +81,6 @@ declare module '@tanstack/table-core' {
 
 type ComplaintWithAction = Complaint & {
   action?: string
-}
-
-type UserRoleType = {
-  [key: string]: { icon: string; color: string }
-}
-
-type UserStatusType = {
-  [key: string]: ThemeColor
 }
 
 // Styled Components
@@ -128,6 +132,8 @@ const DebouncedInput = ({
 // Column Definitions
 const columnHelper = createColumnHelper<ComplaintWithAction>()
 
+type DialogMode = 'add' | 'edit' | 'delete' | null
+
 const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
@@ -136,8 +142,95 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
 
+  const [employees, setEmployees] = useState<Employee[]>([])
+    
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogMode, setDialogMode] = useState<DialogMode>(null)
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null)
+      
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
   // Hooks
+  const {dictionary} = useDictionary();
   const { lang: locale } = useParams()
+  const methods = useForm<Complaint>({
+    defaultValues: defaultFormValuesComplaint
+  })
+
+  const { cache, mutate: swrMutate } = useSWRConfig();
+  useEffect(() => {
+    setData(tableData)
+    setFilteredData(tableData)
+  }, [tableData])
+
+  const handleOpenDialog = async  (mode: DialogMode, obj?: Complaint) => {
+      setDialogMode(mode)
+      if(obj) setSelectedComplaint(obj)
+
+      try {
+          // Load both employees and leaves in parallel
+          const [responses1] = await Promise.all([
+            getEmployees(),
+          ])
+          
+          setEmployees(responses1?.data || [])
+        } catch (error) {
+          console.error('Error loading dialog data:', error)
+        } 
+  
+      if (mode == 'edit') {
+        const formattedData = {
+          ...obj,
+          complaint_from_id: obj?.complaint_from.id,
+          complaint_against_id: obj?.complaint_against.id,
+          }
+          // Reset form 
+          methods.reset(formattedData)
+        
+      }else{
+        methods.reset(defaultFormValuesComplaint)
+      }
+  
+      setDialogOpen(true)
+    }
+      
+      const handleCloseDialog = () => {
+        setDialogOpen(false)
+        setDialogMode(null)
+        setSelectedComplaint(null)
+      }
+      
+      const handleDialogSuccess = async () => {
+        swrMutate('/web/complaints')
+        handleCloseDialog()
+      }
+    
+      const handleDeleteCancel = () => {
+        setDialogOpen(false)
+        setSelectedComplaint(null)
+      }
+    
+      const handleDeleteConfirm = async () => {
+        if (!selectedComplaint) return
+        
+        try {
+          setIsDeleting(true)
+          
+          const response = await deleteComplaint(selectedComplaint!.id)
+          
+          if (response.status) {
+            // Show success message
+            toast.success(response.message )
+            handleDialogSuccess()
+          }
+        } catch (error: any) {
+          // Handle error
+          toast.error(error?.response?.data?.message )
+        } finally {
+          setIsDeleting(false)
+          handleDeleteCancel()
+        }
+    }
 
   const columns = useMemo<ColumnDef<ComplaintWithAction, any>[]>(
     () => [
@@ -239,10 +332,10 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton title='Edit'>
+             <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
               <i className='tabler-edit text-textSecondary' />
             </IconButton>
-            <IconButton title='Delete' onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
+            <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
           </div>
@@ -318,7 +411,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
+              onClick={() => handleOpenDialog('add' )}
               className='max-sm:is-full'
             >
               Add Complaint
@@ -390,7 +483,201 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
           }}
         />
       </Card>
-      
+      {dialogOpen && dialogMode == 'add' && (
+        <FormDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+        title={'Add new Complaint'}
+        onSubmit={async (data:Complaint) => {
+          try {
+            const res = await postComplaint({
+              ...data,
+              complaint_date: data.complaint_date ? moment(data.complaint_date).format('YYYY-MM-DD') : '',
+            });
+            
+            if (res.status) {
+              handleDialogSuccess()
+              toast.success(res.message)
+            }
+          } catch (error) {
+            console.log('Error post complaint', error)
+          } finally{
+            methods.reset();
+            setDialogOpen(false)
+          }
+         
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+       <>
+        <QTextField
+            name='complaint_from_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Complaint From`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+        <QTextField
+            name='complaint_against_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Complaint Against`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+          <QTextField
+            name='title'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Title`}
+            label={`Title`}
+          />
+           <QReactDatepicker
+            name="complaint_date"
+            control={methods.control}
+            label={'Complaint Date'}
+            required
+          />
+          <QTextField
+            name='description'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Description`}
+            label={`Description`}
+            multiline={true}
+          />
+       </>
+        </FormDialog>
+      )}
+
+      {dialogOpen && dialogMode == 'edit' && (
+        <FormDialog
+          open={dialogOpen}
+          setOpen={setDialogOpen}
+          title={`Edit Complaint`}
+          onSubmit={async (data:Complaint) => {
+            try {
+              if (!selectedComplaint) return
+              
+              const formattedData = {
+                ...data,
+                complaint_date: data.complaint_date ? moment(data.complaint_date).format('YYYY-MM-DD') : '',
+
+              }
+              
+              const response = await updateComplaint(selectedComplaint.id, formattedData);
+              
+              if (response.status) {
+                handleDialogSuccess()
+                toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
+              }
+            } catch (error) {
+              console.log('Error updating complaint', error)
+              toast.error('Error updating complaint')
+            } finally {
+              methods.reset()
+              // setEditDialogOpen(false)
+              // setOvertimeToEdit(null)
+            }
+          }}
+          handleSubmit={methods.handleSubmit}
+        >
+         <>
+        <QTextField
+            name='complaint_from_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Complaint From`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+        <QTextField
+            name='complaint_against_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Complaint Against`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+          <QTextField
+            name='title'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Title`}
+            label={`Title`}
+          />
+           <QReactDatepicker
+            name="complaint_date"
+            control={methods.control}
+            label={'Complaint Date'}
+            required
+          />
+          <QTextField
+            name='description'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Description`}
+            label={`Description`}
+            multiline={true}
+          />
+       </>
+        </FormDialog>
+      )}
+
+      {dialogOpen && dialogMode == 'delete' && (
+        <ConfirmationDialog
+          open={dialogOpen}
+          setOpen={setDialogOpen}
+          type='delete-complaint'
+          onConfirm={handleDeleteConfirm}
+          isLoading={isDeleting}
+        />
+      )}
     </>
   )
 }

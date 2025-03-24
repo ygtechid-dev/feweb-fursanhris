@@ -1,38 +1,51 @@
-// React Imports
 import { useState } from 'react'
-
-// MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
+import Chip from '@mui/material/Chip'
 import AvatarGroup from '@mui/material/AvatarGroup'
-import Tooltip from '@mui/material/Tooltip'
-import IconButton from '@mui/material/IconButton'
-import Menu from '@mui/material/Menu'
-import MenuItem from '@mui/material/MenuItem'
-
-// Third-Party Imports
+import Avatar from '@mui/material/Avatar'
+import Badge from '@mui/material/Badge'
 import classnames from 'classnames'
 
 // Type Imports
-import type { ColumnType, TaskType } from '@/types/apps/kanbanTypes'
+import type { TaskType, ColumnType } from '@/types/apps/kanbanTypes'
 import type { AppDispatch } from '@/redux-store'
-import type { ThemeColor } from '@core/types'
 
 // Slice Imports
-import { getCurrentTask, deleteTask } from '@/redux-store/slices/kanban'
+import { getCurrentTask } from '@/redux-store/slices/kanban'
 
 // Component Imports
-import CustomAvatar from '@core/components/mui/Avatar'
+import OptionMenu from '@core/components/option-menu'
+import DeleteConfirmation from './DeleteConfirmation'
 
 // Styles Imports
 import styles from './styles.module.css'
 
-type chipColorType = {
-  color: ThemeColor
+// Helper function to format date
+const formatDate = (date: Date) => {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(date)
 }
 
+// Helper function to get priority color
+const getPriorityColor = (priority: string) => {
+  switch (priority.toLowerCase()) {
+    case 'high':
+      return 'error'
+    case 'medium':
+      return 'warning'
+    case 'low':
+      return 'success'
+    default:
+      return 'primary'
+  }
+}
+
+// Add openTaskDetails to the props interface
 type TaskCardProps = {
   task: TaskType
   dispatch: AppDispatch
@@ -42,159 +55,162 @@ type TaskCardProps = {
   setDrawerOpen: (value: boolean) => void
   tasksList: (TaskType | undefined)[]
   setTasksList: (value: (TaskType | undefined)[]) => void
+  openTaskDetails?: (taskId: number) => void // New prop
 }
 
-export const chipColor: { [key: string]: chipColorType } = {
-  UX: { color: 'success' },
-  'Code Review': { color: 'error' },
-  Dashboard: { color: 'info' },
-  Images: { color: 'warning' },
-  App: { color: 'secondary' },
-  'Charts & Map': { color: 'primary' }
-}
-
+// Modify the function signature to include the new prop
 const TaskCard = (props: TaskCardProps) => {
   // Props
-  const { task, dispatch, column, setColumns, columns, setDrawerOpen, tasksList, setTasksList } = props
+  const { 
+    task, 
+    dispatch, 
+    column, 
+    setColumns, 
+    columns, 
+    setDrawerOpen, 
+    tasksList, 
+    setTasksList,
+    openTaskDetails 
+  } = props
 
-  // States
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
-  const [menuOpen, setMenuOpen] = useState(false)
-
-  // Handle menu click
-  const handleClick = (e: any) => {
-    setMenuOpen(true)
-    setAnchorEl(e.currentTarget)
+  // State for delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  
+  // Open delete confirmation dialog
+  const openDeleteDialog = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setDeleteDialogOpen(true)
+  }
+  
+  // Close delete confirmation dialog
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false)
   }
 
-  // Handle menu close
-  const handleClose = () => {
-    setAnchorEl(null)
-    setMenuOpen(false)
-  }
-
-  // Handle Task Click
+  // Open drawer to view task details
   const handleTaskClick = () => {
-    setDrawerOpen(true)
     dispatch(getCurrentTask(task.id))
+    setDrawerOpen(true)
   }
 
-  // Delete Task
-  const handleDeleteTask = () => {
-    dispatch(deleteTask(task.id))
-    setTasksList(tasksList.filter(taskItem => taskItem?.id !== task.id))
-
-    const newTaskIds = column.taskIds.filter(taskId => taskId !== task.id)
-    const newColumn = { ...column, taskIds: newTaskIds }
-    const newColumns = columns.map(col => (col.id === column.id ? newColumn : col))
-
-    setColumns(newColumns)
-  }
-
-  // Handle Delete
-  const handleDelete = () => {
-    handleClose()
-    handleDeleteTask()
+  // Handle view details button click
+  const handleViewDetails = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent the card click event
+    if (openTaskDetails) {
+      openTaskDetails(task.id)
+    }
   }
 
   return (
     <>
       <Card
-        className={classnames(
-          'item-draggable is-[16.5rem] cursor-grab active:cursor-grabbing overflow-visible mbe-4',
-          styles.card
-        )}
-        onClick={() => handleTaskClick()}
+        onClick={handleTaskClick}
+        className={classnames('item-draggable mb-4 cursor-pointer', styles.kanbanCard)}
       >
-        <CardContent className='flex flex-col gap-y-2 items-start relative overflow-hidden'>
-          {task.badgeText && task.badgeText.length > 0 && (
-            <div className='flex flex-wrap items-center justify-start gap-2 is-full max-is-[85%]'>
-              {task.badgeText.map(
-                (badge, index) =>
-                  chipColor[badge]?.color && (
-                    <Chip variant='tonal' key={index} label={badge} size='small' color={chipColor[badge].color} />
-                  )
-              )}
+        <CardContent className='relative p-4'>
+          {/* Priority Badge */}
+          {task.priority && (
+            <div className='absolute top-4 right-4'>
+              <Chip 
+                size="small" 
+                label={task.priority.toUpperCase()} 
+                color={getPriorityColor(task.priority) as any}
+              />
             </div>
           )}
-          <div className='absolute block-start-4 inline-end-3' onClick={e => e.stopPropagation()}>
-            <IconButton
-              aria-label='more'
-              size='small'
-              className={classnames(styles.menu, {
-                [styles.menuOpen]: menuOpen
-              })}
-              aria-controls='long-menu'
-              aria-haspopup='true'
-              onClick={handleClick}
-            >
-              <i className='tabler-dots-vertical' />
-            </IconButton>
-            <Menu
-              id='long-menu'
-              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              anchorEl={anchorEl}
-              keepMounted
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-            >
-              <MenuItem onClick={handleClose}>Duplicate Task</MenuItem>
-              <MenuItem onClick={handleClose}>Copy Task Link</MenuItem>
-              <MenuItem
-                onClick={() => {
-                  handleDelete()
-                }}
-              >
-                Delete
-              </MenuItem>
-            </Menu>
-          </div>
-
-          {task.image && <img src={task.image} alt='task Image' className='is-full rounded' />}
-          <Typography color='text.primary' className='max-is-[85%] break-words'>
+          
+          <Typography 
+            variant='h6' 
+            className='mb-2'
+            sx={{ 
+              whiteSpace: 'nowrap', 
+              overflow: 'hidden', 
+              textOverflow: 'ellipsis', 
+              maxWidth: 'calc(100% - 80px)'
+            }}
+          >
             {task.title}
           </Typography>
-          {(task.attachments !== undefined && task.attachments > 0) ||
-          (task.comments !== undefined && task.comments > 0) ||
-          (task.assigned !== undefined && task.assigned.length > 0) ? (
-            <div className='flex justify-between items-center gap-4 is-full'>
-              {(task.attachments !== undefined && task.attachments > 0) ||
-              (task.comments !== undefined && task.comments > 0) ? (
-                <div className='flex gap-4'>
-                  {task.attachments !== undefined && task.attachments > 0 && (
-                    <div className='flex items-center gap-1'>
-                      <i className='tabler-paperclip text-xl text-textSecondary' />
-                      <Typography color='text.secondary'>{task.attachments}</Typography>
-                    </div>
-                  )}
-                  {task.comments !== undefined && task.comments > 0 && (
-                    <div className='flex items-center gap-1'>
-                      <i className='tabler-message-2 text-xl text-textSecondary' />
-                      <Typography color='text.secondary'>{task.comments}</Typography>
-                    </div>
-                  )}
-                </div>
-              ) : null}
-              {task.assigned !== undefined && task.assigned.length > 0 && (
-                <AvatarGroup max={4} className='pull-up'>
-                  {task.assigned?.map((avatar, index) => (
-                    <Tooltip title={avatar.name} key={index}>
-                      <CustomAvatar
-                        key={index}
-                        src={avatar.src}
-                        alt={avatar.name}
-                        size={26}
-                        className='cursor-pointer'
-                      />
-                    </Tooltip>
-                  ))}
-                </AvatarGroup>
-              )}
+          
+          {task.description && (
+            <Typography variant='body2' className='mb-4 line-clamp-2 text-textSecondary'>
+              {task.description}
+            </Typography>
+          )}
+          
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            {task.dueDate && (
+              <div className='flex items-center gap-1'>
+                <i className='tabler-calendar-event text-textSecondary' />
+                <Typography variant='caption'>
+                  {task.dueDate ? formatDate(new Date(task.dueDate)) : ''}
+                </Typography>
+              </div>
+            )}
+            
+            <div className='flex items-center gap-2 ms-auto'>
+              <div className='flex items-center'>
+                <Badge badgeContent={task.attachments || null} color='primary'>
+                  <i className='tabler-paperclip text-textSecondary' />
+                </Badge>
+              </div>
+              
+              <div className='flex items-center'>
+                <Badge badgeContent={task.comments|| null} color='primary'>
+                  <i className='tabler-message-circle text-textSecondary' />
+                </Badge>
+              </div>
+              
+              <div onClick={(e) => e.stopPropagation()}>
+                <OptionMenu
+                  iconButtonProps={{ className: 'text-textSecondary' }}
+                  iconClassName='text-xl'
+                  options={[
+                    {
+                      text: 'View Details',
+                      icon: 'tabler-eye',
+                      menuItemProps: { 
+                        className: 'flex items-center gap-2',
+                        onClick: handleViewDetails // Add view details option
+                      }
+                    },
+                    {
+                      text: 'Delete Task',
+                      icon: 'tabler-trash',
+                      menuItemProps: { 
+                        className: 'flex items-center gap-2',
+                        onClick: openDeleteDialog
+                      }
+                    }
+                  ]}
+                />
+              </div>
             </div>
-          ) : null}
+          </div>
+          
+          {task.assigned && task.assigned.length > 0 && (
+            <AvatarGroup max={4} className='mt-4'>
+              {task.assigned.map((user, index) => 
+                <Avatar key={index} alt={user.name} src={user.src || '/images/avatars/1.png'} />
+              )}
+            </AvatarGroup>
+          )}
         </CardContent>
       </Card>
+      
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmation
+        open={deleteDialogOpen}
+        onClose={closeDeleteDialog}
+        taskId={task.id}
+        taskTitle={task.title}
+        dispatch={dispatch}
+        column={column}
+        columns={columns}
+        setColumns={setColumns}
+        tasksList={tasksList}
+        setTasksList={setTasksList}
+      />
     </>
   )
 }

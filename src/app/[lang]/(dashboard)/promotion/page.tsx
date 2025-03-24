@@ -1,12 +1,9 @@
 'use client'
 
-
 import { useDictionary } from "@/components/dictionary-provider/DictionaryContext";
 import { fetcher } from "@/configs/config";
 import PromotionList from "@/views/apps/promotion/list"
 import useSWR from "swr";
-
-
 
 const PromotionListApp =  () => {
   const {dictionary} = useDictionary();

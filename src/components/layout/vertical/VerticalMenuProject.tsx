@@ -40,7 +40,7 @@ const VerticalMenuProject = ({ scrollMenu }: Props) => {
   // Hooks
   const theme = useTheme()
   const verticalNavOptions = useVerticalNav()
-  const { lang: locale } = useParams()
+  const { lang: locale, projectId } = useParams()
 
   // Vars
   const { isBreakpointReached, transitionDuration } = verticalNavOptions
@@ -70,16 +70,16 @@ const VerticalMenuProject = ({ scrollMenu }: Props) => {
         renderExpandedMenuItemIcon={{ icon: <i className='tabler-circle text-xs' /> }}
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
-        <MenuItem href={`/${locale}/1/project-dashboard`} icon={<i className='tabler-smart-home' />}>
+        <MenuItem href={`/${locale}/${projectId}/project-dashboard`} icon={<i className='tabler-smart-home' />}>
           Dashboard
         </MenuItem>
-        {/* <MenuItem href={`/${locale}/1/timesheet`} icon={<i className='tabler-smart-home' />}>
+        {/* <MenuItem href={`/${locale}/${projectId}/timesheet`} icon={<i className='tabler-smart-home' />}>
           Timesheet
         </MenuItem> */}
-        <MenuItem href={`/${locale}/1/calendar`} icon={<i className='tabler-smart-home' />}>
+        <MenuItem href={`/${locale}/${projectId}/calendar`} icon={<i className='tabler-smart-home' />}>
           Calendar
         </MenuItem>
-        <MenuItem href={`/${locale}/1/kanban`} icon={<i className='tabler-smart-home' />}>
+        <MenuItem href={`/${locale}/${projectId}/kanban`} icon={<i className='tabler-smart-home' />}>
           Kanban Board
         </MenuItem>
       </Menu>

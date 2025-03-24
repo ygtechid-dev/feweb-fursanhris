@@ -56,7 +56,19 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import AddDrawer from './AddDrawer'
-import { Warning } from '@/types/warningTypes'
+import { defaultFormValuesWarning, Warning } from '@/types/warningTypes'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import { useForm } from 'react-hook-form'
+import { useSWRConfig } from 'swr'
+import { Employee } from '@/types/apps/userTypes'
+import { getEmployees } from '@/services/employeeService'
+import { toast } from 'react-toastify'
+import { deleteWarning, postWarning, updateWarning } from '@/services/warningService'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
+import moment from 'moment'
+import QTextField from '@/@core/components/mui/QTextField'
+import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -69,14 +81,6 @@ declare module '@tanstack/table-core' {
 
 type WarningWithAction = Warning & {
   action?: string
-}
-
-type UserRoleType = {
-  [key: string]: { icon: string; color: string }
-}
-
-type UserStatusType = {
-  [key: string]: ThemeColor
 }
 
 // Styled Components
@@ -128,6 +132,8 @@ const DebouncedInput = ({
 // Column Definitions
 const columnHelper = createColumnHelper<WarningWithAction>()
 
+type DialogMode = 'add' | 'edit' | 'delete' | null
+
 const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
@@ -136,8 +142,97 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
 
+  const [employees, setEmployees] = useState<Employee[]>([])
+      
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogMode, setDialogMode] = useState<DialogMode>(null)
+  const [selectedWarning, setSelectedWarning] = useState<Warning | null>(null)
+      
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
   // Hooks
+  const {dictionary} = useDictionary();
   const { lang: locale } = useParams()
+
+  const methods = useForm<Warning>({
+    defaultValues: defaultFormValuesWarning
+  })
+
+  const { cache, mutate: swrMutate } = useSWRConfig();
+  useEffect(() => {
+    setData(tableData)
+    setFilteredData(tableData)
+  }, [tableData])
+
+  const handleOpenDialog = async  (mode: DialogMode, obj?: Warning) => {
+      setDialogMode(mode)
+      if(obj) setSelectedWarning(obj)
+
+      try {
+          // Load both employees and leaves in parallel
+          const [responses1] = await Promise.all([
+            getEmployees(),
+          ])
+          
+          setEmployees(responses1?.data || [])
+        } catch (error) {
+          console.error('Error loading dialog data:', error)
+        } 
+  
+      if (mode == 'edit') {
+        const formattedData = {
+          ...obj,
+          warning_by_id: obj?.warning_by.id,
+          warning_to_id: obj?.warning_to.id,
+          warning_date_raw: moment(obj?.warning_date.raw).toString()
+          }
+          // Reset form 
+          methods.reset(formattedData)
+        
+      }else{
+        methods.reset(defaultFormValuesWarning)
+      }
+  
+      setDialogOpen(true)
+    }
+      
+      const handleCloseDialog = () => {
+        setDialogOpen(false)
+        setDialogMode(null)
+        setSelectedWarning(null)
+      }
+      
+      const handleDialogSuccess = async () => {
+        swrMutate('/web/warnings')
+        handleCloseDialog()
+      }
+    
+      const handleDeleteCancel = () => {
+        setDialogOpen(false)
+        setSelectedWarning(null)
+      }
+    
+      const handleDeleteConfirm = async () => {
+        if (!selectedWarning) return
+        
+        try {
+          setIsDeleting(true)
+          
+          const response = await deleteWarning(selectedWarning!.id)
+          
+          if (response.status) {
+            // Show success message
+            toast.success(response.message )
+            handleDialogSuccess()
+          }
+        } catch (error: any) {
+          // Handle error
+          toast.error(error?.response?.data?.message )
+        } finally {
+          setIsDeleting(false)
+          handleDeleteCancel()
+        }
+    }
 
   const columns = useMemo<ColumnDef<WarningWithAction, any>[]>(
     () => [
@@ -237,10 +332,10 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton title='Edit'>
+            <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
               <i className='tabler-edit text-textSecondary' />
             </IconButton>
-            <IconButton title='Delete' onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
+            <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
           </div>
@@ -315,7 +410,7 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
+              onClick={() => handleOpenDialog('add' )}
               className='max-sm:is-full'
             >
               Add Warning
@@ -387,7 +482,205 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
           }}
         />
       </Card>
-     
+
+      {dialogOpen && dialogMode == 'add' && (
+        <FormDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+        title={'Add new Warning'}
+        onSubmit={async (data:Warning) => {
+          try {
+            const res = await postWarning({
+              ...data,
+              warning_date: data.warning_date_raw ? moment(data.warning_date_raw).format('YYYY-MM-DD') : '',
+              warning_by: data.warning_by_id ? data.warning_by_id : '',
+              warning_to: data.warning_to_id ? data.warning_to_id : '',
+            });
+            
+            if (res.status) {
+              handleDialogSuccess()
+              toast.success(res.message)
+            }
+          } catch (error) {
+            console.log('Error post complaint', error)
+          } finally{
+            methods.reset();
+            setDialogOpen(false)
+          }
+         
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+       <>
+        <QTextField
+            name='warning_by_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Complaint From`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+        <QTextField
+            name='warning_to_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Complaint Against`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+          <QTextField
+            name='subject'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Title`}
+            label={`Title`}
+          />
+           <QReactDatepicker
+            name="warning_date_raw"
+            control={methods.control}
+            label={'Complaint Date'}
+            required
+          />
+          <QTextField
+            name='description'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Description`}
+            label={`Description`}
+            multiline={true}
+          />
+       </>
+        </FormDialog>
+      )}
+
+      {dialogOpen && dialogMode == 'edit' && (
+        <FormDialog
+          open={dialogOpen}
+          setOpen={setDialogOpen}
+          title={`Edit Warning`}
+          onSubmit={async (data:Warning) => {
+            try {
+              if (!selectedWarning) return
+              
+              const formattedData = {
+                ...data,
+                warning_date: data.warning_date_raw ? moment(data.warning_date_raw).format('YYYY-MM-DD') : '',
+                warning_by: data.warning_by_id ? data.warning_by_id : '',
+                warning_to: data.warning_to_id ? data.warning_to_id : '',
+              }
+              
+              const response = await updateWarning(selectedWarning.id, formattedData);
+              
+              if (response.status) {
+                handleDialogSuccess()
+                toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
+              }
+            } catch (error) {
+              console.log('Error updating warning', error)
+              toast.error('Error updating warning')
+            } finally {
+              methods.reset()
+              // setEditDialogOpen(false)
+              // setOvertimeToEdit(null)
+            }
+          }}
+          handleSubmit={methods.handleSubmit}
+        >
+          <>
+        <QTextField
+            name='warning_by_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Complaint From`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+        <QTextField
+            name='warning_to_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Complaint Against`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+          <QTextField
+            name='subject'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Title`}
+            label={`Title`}
+          />
+           <QReactDatepicker
+            name="warning_date_raw"
+            control={methods.control}
+            label={'Warning Date'}
+            required
+          />
+          <QTextField
+            name='description'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Description`}
+            label={`Description`}
+            multiline={true}
+          />
+       </>
+        </FormDialog>
+      )}
+
+      {dialogOpen && dialogMode == 'delete' && (
+        <ConfirmationDialog
+          open={dialogOpen}
+          setOpen={setDialogOpen}
+          type='delete-warning'
+          onConfirm={handleDeleteConfirm}
+          isLoading={isDeleting}
+        />
+      )}
     </>
   )
 }

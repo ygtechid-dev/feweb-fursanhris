@@ -1,15 +1,12 @@
 
 'use client'
 
-
-import { getUserData } from "@/app/server/actions"
 import { useDictionary } from "@/components/dictionary-provider/DictionaryContext";
 import { fetcher } from "@/configs/config";
 import ProjectList from "@/views/apps/projects/list"
 import useSWR from "swr";
 
-
-const ProjectListApp = async () => {
+const ProjectListApp = () => {
   const {dictionary} = useDictionary();
   const { data, error, isLoading, mutate } = useSWR('/web/projects', fetcher,{
     // Enable auto refresh every 5 seconds

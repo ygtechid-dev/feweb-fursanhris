@@ -56,8 +56,20 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import AddDrawer from './AddDrawer'
-import { Reward } from '@/types/rewardTypes'
+import { defaultFormValuesReward, Reward, RewardType } from '@/types/rewardTypes'
 import moment from 'moment'
+import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
+import { useForm } from 'react-hook-form'
+import { useSWRConfig } from 'swr'
+import { toast } from 'react-toastify'
+import { deleteReward, getRewardType, postReward, updateReward } from '@/services/rewardService'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import QTextField from '@/@core/components/mui/QTextField'
+import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
+import { Employee } from '@/types/apps/userTypes'
+import { getEmployees } from '@/services/employeeService'
+import { format } from 'path'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -125,23 +137,10 @@ const DebouncedInput = ({
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
 }
 
-// Vars
-const userRoleObj: UserRoleType = {
-  admin: { icon: 'tabler-crown', color: 'error' },
-  author: { icon: 'tabler-device-desktop', color: 'warning' },
-  editor: { icon: 'tabler-edit', color: 'info' },
-  maintainer: { icon: 'tabler-chart-pie', color: 'success' },
-  subscriber: { icon: 'tabler-user', color: 'primary' }
-}
-
-const userStatusObj: UserStatusType = {
-  active: 'success',
-  pending: 'warning',
-  inactive: 'secondary'
-}
-
 // Column Definitions
 const columnHelper = createColumnHelper<RewardWithAction>()
+
+type DialogMode = 'add' | 'edit' | 'delete' | null
 
 const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
   // States
@@ -151,8 +150,98 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
 
+  const [rewardTypes, setRewardTypes] = useState<RewardType[]>([])
+  const [employees, setEmployees] = useState<Employee[]>([])
+
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogMode, setDialogMode] = useState<DialogMode>(null)
+  const [selectedReward, setSelectedReward] = useState<Reward | null>(null)
+  
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
   // Hooks
+  const {dictionary} = useDictionary();
   const { lang: locale } = useParams()
+  const methods = useForm<Reward>({
+    defaultValues: defaultFormValuesReward
+  })
+
+  const { cache, mutate: swrMutate } = useSWRConfig();
+
+  useEffect(() => {
+    setData(tableData)
+    setFilteredData(tableData)
+  }, [tableData])
+
+   const handleOpenDialog = async  (mode: DialogMode, obj?: Reward) => {
+      setDialogMode(mode)
+      if(obj) setSelectedReward(obj)
+
+      try {
+          // Load both employees and leaves in parallel
+          const [responses1, responses2] = await Promise.all([
+            getRewardType(),
+            getEmployees(),
+          ])
+          
+          setRewardTypes(responses1?.data?.reward_types || [])
+          setEmployees(responses2?.data || [])
+        } catch (error) {
+          console.error('Error loading dialog data:', error)
+        } 
+  
+      if (mode == 'edit') {
+        const formattedData = {
+          ...obj,
+          }
+          // Reset form 
+          methods.reset(formattedData)
+        
+      }else{
+        methods.reset(defaultFormValuesReward)
+      }
+  
+      setDialogOpen(true)
+    }
+
+    const handleCloseDialog = () => {
+      setDialogOpen(false)
+      setDialogMode(null)
+      setSelectedReward(null)
+    }
+    
+    const handleDialogSuccess = async () => {
+      swrMutate('/web/rewards')
+      handleCloseDialog()
+    }
+  
+    const handleDeleteCancel = () => {
+      setDialogOpen(false)
+      setSelectedReward(null)
+    }
+  
+    const handleDeleteConfirm = async () => {
+        if (!selectedReward) return
+        
+        try {
+          setIsDeleting(true)
+          
+          const response = await deleteReward(selectedReward!.id)
+          
+          if (response.status) {
+            // Show success message
+            toast.success(response.message )
+            handleDialogSuccess()
+          }
+        } catch (error: any) {
+          // Handle error
+          toast.error(error?.response?.data?.message )
+        } finally {
+          setIsDeleting(false)
+          handleDeleteCancel()
+        }
+    }
+  
 
   const columns = useMemo<ColumnDef<RewardWithAction, any>[]>(
     () => [
@@ -231,15 +320,13 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
         )
       }),
       columnHelper.accessor('description', {
-        header: 'Gift',
+        header: 'Description',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
               {row.original?.description || ''}
               </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
@@ -249,10 +336,10 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton title='Edit'>
+            <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
               <i className='tabler-edit text-textSecondary' />
             </IconButton>
-            <IconButton title='Delete' onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
+            <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
           </div>
@@ -328,7 +415,7 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
+              onClick={() => handleOpenDialog('add' )}
               className='max-sm:is-full'
             >
               Add Reward
@@ -400,12 +487,201 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
           }}
         />
       </Card>
-      {/* <AddDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        userData={data}
-        setData={setData}
-      /> */}
+
+      {dialogOpen && dialogMode == 'add' && (
+        <FormDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+        title={'Add new Reward'}
+        onSubmit={async (data:Reward) => {
+          try {
+            const res = await postReward({
+              ...data,
+              date: data.date ? moment(data.date).format('YYYY-MM-DD') : ''
+            });
+            
+            if (res.status) {
+              swrMutate('/web/rewards')
+              toast.success(res.message)
+            }
+          } catch (error) {
+            console.log('Error post branch', error)
+          } finally{
+            methods.reset();
+            setDialogOpen(false)
+          }
+         
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+       <>
+        <QTextField
+            name='employee_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Employee`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+        <QTextField
+            name='reward_type_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Reward Type`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an reward type'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {rewardTypes.map((type) => (
+              <MenuItem key={type.id} value={type.id}>
+                {type.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+          <QReactDatepicker
+            name="date"
+            control={methods.control}
+            label={'Date'}
+            required
+          />
+          <QTextField
+            name='gift'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Gift`}
+            label={`Gift`}
+          />
+          <QTextField
+            name='description'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Description`}
+            label={`Description`}
+            multiline={true}
+          />
+       </>
+      </FormDialog>
+      )}
+
+      {dialogOpen && dialogMode == 'edit' && (
+        <FormDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+          title={`Edit Overtime`}
+          onSubmit={async (data:any) => {
+            try {
+              if (!selectedReward) return
+              
+              const formattedData = {
+                ...data,
+                date: data.date ? moment(data.date).format('YYYY-MM-DD') : ''
+              }
+              
+              const response = await updateReward(selectedReward.id,formattedData);
+              
+              if (response.status) {
+                handleDialogSuccess()
+                toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
+              }
+            } catch (error) {
+              console.log('Error updating overtime', error)
+              toast.error(dictionary['content'].errorUpdatingLeave)
+            } finally {
+              methods.reset()
+              // setEditDialogOpen(false)
+              // setOvertimeToEdit(null)
+            }
+          }}
+          handleSubmit={methods.handleSubmit}
+        >
+            <>
+        <QTextField
+            name='employee_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Employee`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+        <QTextField
+            name='reward_type_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Reward Type`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an reward type'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {rewardTypes.map((type) => (
+              <MenuItem key={type.id} value={type.id}>
+                {type.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+          <QReactDatepicker
+            name="date"
+            control={methods.control}
+            label={'Date'}
+            required
+          />
+          <QTextField
+            name='gift'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Gift`}
+            label={`Gift`}
+          />
+          <QTextField
+            name='description'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Description`}
+            label={`Description`}
+            multiline={true}
+          />
+       </>
+        </FormDialog>
+      )}
+      
+      {dialogOpen && dialogMode == 'delete' && (
+        <ConfirmationDialog
+          open={dialogOpen}
+          setOpen={setDialogOpen}
+          type='delete-reward'
+          onConfirm={handleDeleteConfirm}
+          isLoading={isDeleting}
+        />
+      )}
     </>
   )
 }

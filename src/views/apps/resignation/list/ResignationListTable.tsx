@@ -56,7 +56,19 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import AddDrawer from './AddDrawer'
-import { Resignation } from '@/types/resignationTypes'
+import { defaultFormValuesResignation, Resignation } from '@/types/resignationTypes'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import { useForm } from 'react-hook-form'
+import { useSWRConfig } from 'swr'
+import { getEmployees } from '@/services/employeeService'
+import { Employee } from '@/types/apps/userTypes'
+import { deleteResignation, postResignation, updateResignation } from '@/services/resignationService'
+import { toast } from 'react-toastify'
+import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
+import moment from 'moment'
+import QTextField from '@/@core/components/mui/QTextField'
+import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -69,14 +81,6 @@ declare module '@tanstack/table-core' {
 
 type ResignationWithAction = Resignation & {
   action?: string
-}
-
-type UserRoleType = {
-  [key: string]: { icon: string; color: string }
-}
-
-type UserStatusType = {
-  [key: string]: ThemeColor
 }
 
 // Styled Components
@@ -124,23 +128,10 @@ const DebouncedInput = ({
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
 }
 
-// Vars
-const userRoleObj: UserRoleType = {
-  admin: { icon: 'tabler-crown', color: 'error' },
-  author: { icon: 'tabler-device-desktop', color: 'warning' },
-  editor: { icon: 'tabler-edit', color: 'info' },
-  maintainer: { icon: 'tabler-chart-pie', color: 'success' },
-  subscriber: { icon: 'tabler-user', color: 'primary' }
-}
-
-const userStatusObj: UserStatusType = {
-  active: 'success',
-  pending: 'warning',
-  inactive: 'secondary'
-}
-
 // Column Definitions
 const columnHelper = createColumnHelper<ResignationWithAction>()
+
+type DialogMode = 'add' | 'edit' | 'delete' | null
 
 const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
   // States
@@ -150,8 +141,94 @@ const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
 
+  const [employees, setEmployees] = useState<Employee[]>([])
+
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogMode, setDialogMode] = useState<DialogMode>(null)
+  const [selectedResignation, setSelectedResignation] = useState<Resignation | null>(null)
+  
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
   // Hooks
+  const {dictionary} = useDictionary();
   const { lang: locale } = useParams()
+  const methods = useForm<Resignation>({
+    defaultValues: defaultFormValuesResignation
+  })
+
+  const { cache, mutate: swrMutate } = useSWRConfig();
+  useEffect(() => {
+    setData(tableData)
+    setFilteredData(tableData)
+  }, [tableData])
+
+    const handleOpenDialog = async  (mode: DialogMode, obj?: Resignation) => {
+        setDialogMode(mode)
+        if(obj) setSelectedResignation(obj)
+  
+        try {
+            // Load both employees and leaves in parallel
+            const [responses1] = await Promise.all([
+              getEmployees(),
+              // getRewardType(),
+            ])
+            
+            setEmployees(responses1?.data || [])
+          } catch (error) {
+            console.error('Error loading dialog data:', error)
+          } 
+    
+        if (mode == 'edit') {
+          const formattedData = {
+            ...obj,
+            }
+            // Reset form 
+            methods.reset(formattedData)
+          
+        }else{
+          methods.reset(defaultFormValuesResignation)
+        }
+    
+        setDialogOpen(true)
+      }
+  
+      const handleCloseDialog = () => {
+        setDialogOpen(false)
+        setDialogMode(null)
+        setSelectedResignation(null)
+      }
+      
+      const handleDialogSuccess = async () => {
+        swrMutate('/web/resignations')
+        handleCloseDialog()
+      }
+    
+      const handleDeleteCancel = () => {
+        setDialogOpen(false)
+        setSelectedResignation(null)
+      }
+    
+      const handleDeleteConfirm = async () => {
+        if (!selectedResignation) return
+        
+        try {
+          setIsDeleting(true)
+          
+          const response = await deleteResignation(selectedResignation!.id)
+          
+          if (response.status) {
+            // Show success message
+            toast.success(response.message )
+            handleDialogSuccess()
+          }
+        } catch (error: any) {
+          // Handle error
+          toast.error(error?.response?.data?.message )
+        } finally {
+          setIsDeleting(false)
+          handleDeleteCancel()
+        }
+    }
 
   const columns = useMemo<ColumnDef<ResignationWithAction, any>[]>(
     () => [
@@ -239,10 +316,10 @@ const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton title='Edit'>
+              <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
               <i className='tabler-edit text-textSecondary' />
             </IconButton>
-            <IconButton title='Delete' onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
+            <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
           
@@ -318,7 +395,7 @@ const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
+              onClick={() => handleOpenDialog('add' )}
               className='max-sm:is-full'
             >
               Add Resignation
@@ -390,7 +467,162 @@ const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
           }}
         />
       </Card>
-      
+      {dialogOpen && dialogMode == 'add' && (
+        <FormDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+        title={'Add new Resignation'}
+        onSubmit={async (data:Resignation) => {
+          try {
+            const res = await postResignation({
+              ...data,
+              notice_date: data.notice_date ? moment(data.notice_date).format('YYYY-MM-DD') : '',
+              resignation_date: data.resignation_date ? moment(data.resignation_date).format('YYYY-MM-DD') : ''
+            });
+            
+            if (res.status) {
+              swrMutate('/web/resignations')
+              toast.success(res.message)
+            }
+          } catch (error) {
+            console.log('Error post branch', error)
+          } finally{
+            methods.reset();
+            setDialogOpen(false)
+          }
+         
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+       <>
+        <QTextField
+            name='employee_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Employee`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+          <QReactDatepicker
+            name="notice_date"
+            control={methods.control}
+            label={'Resignation Date'}
+            required
+          />
+          <QReactDatepicker
+            name="resignation_date"
+            control={methods.control}
+            label={'Last Working Day'}
+            required
+          />
+          <QTextField
+            name='description'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Reason`}
+            label={`Reason`}
+            multiline={true}
+          />
+       </>
+        </FormDialog>
+      )}
+
+      {dialogOpen && dialogMode == 'edit' && (
+        <FormDialog
+          open={dialogOpen}
+          setOpen={setDialogOpen}
+          title={`Edit Resignation`}
+          onSubmit={async (data:Resignation) => {
+            try {
+              if (!selectedResignation) return
+              
+              const formattedData = {
+                ...data,
+                notice_date: data.notice_date ? moment(data.notice_date).format('YYYY-MM-DD') : '',
+                resignation_date: data.resignation_date ? moment(data.resignation_date).format('YYYY-MM-DD') : ''
+              }
+              
+              const response = await updateResignation(selectedResignation.id,formattedData);
+              
+              if (response.status) {
+                handleDialogSuccess()
+                toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
+              }
+            } catch (error) {
+              console.log('Error updating overtime', error)
+              toast.error(dictionary['content'].errorUpdatingLeave)
+            } finally {
+              methods.reset()
+              // setEditDialogOpen(false)
+              // setOvertimeToEdit(null)
+            }
+          }}
+          handleSubmit={methods.handleSubmit}
+        >
+            <>
+          <QTextField
+            name='employee_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Employee`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+          <QReactDatepicker
+            name="notice_date"
+            control={methods.control}
+            label={'Resignation Date'}
+            required
+          />
+          <QReactDatepicker
+            name="resignation_date"
+            control={methods.control}
+            label={'Last Working Day'}
+            required
+          />
+          <QTextField
+            name='description'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Reason`}
+            label={`Reason`}
+            multiline={true}
+          />
+       </>
+        </FormDialog>
+      )}
+
+      {dialogOpen && dialogMode == 'delete' && (
+        <ConfirmationDialog
+          open={dialogOpen}
+          setOpen={setDialogOpen}
+          type='delete-resignation'
+          onConfirm={handleDeleteConfirm}
+          isLoading={isDeleting}
+        />
+      )}
     </>
   )
 }

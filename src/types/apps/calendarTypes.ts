@@ -8,11 +8,10 @@ import type { ThemeColor } from '@core/types'
 export type CalendarFiltersType = 'Personal' | 'Business' | 'Family' | 'Holiday' | 'ETC'
 
 export type CalendarColors = {
-  ETC: ThemeColor
-  Family: ThemeColor
-  Holiday: ThemeColor
-  Personal: ThemeColor
-  Business: ThemeColor
+  todo: ThemeColor,
+  in_progress: ThemeColor,
+  in_review: ThemeColor,
+  done: ThemeColor
 }
 
 export type CalendarType = {

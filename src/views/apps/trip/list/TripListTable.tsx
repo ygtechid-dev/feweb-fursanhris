@@ -56,7 +56,19 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import AddDrawer from './AddDrawer'
-import { Trip } from '@/types/tripTypes'
+import { defaultFormValuesTrip, Trip } from '@/types/tripTypes'
+import { Employee } from '@/types/apps/userTypes'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import { useForm } from 'react-hook-form'
+import { useSWRConfig } from 'swr'
+import { getEmployees } from '@/services/employeeService'
+import { deleteTrip, postTrip, updateTrip } from '@/services/tripService'
+import { toast } from 'react-toastify'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
+import QTextField from '@/@core/components/mui/QTextField'
+import moment from 'moment'
+import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -71,13 +83,6 @@ type TripWithAction = Trip & {
   action?: string
 }
 
-type UserRoleType = {
-  [key: string]: { icon: string; color: string }
-}
-
-type UserStatusType = {
-  [key: string]: ThemeColor
-}
 
 // Styled Components
 const Icon = styled('i')({})
@@ -127,6 +132,9 @@ const DebouncedInput = ({
 // Column Definitions
 const columnHelper = createColumnHelper<TripWithAction>()
 
+type DialogMode = 'add' | 'edit' | 'delete' | null
+
+
 const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
@@ -135,8 +143,94 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
 
+  const [employees, setEmployees] = useState<Employee[]>([])
+  
+    const [dialogOpen, setDialogOpen] = useState(false)
+    const [dialogMode, setDialogMode] = useState<DialogMode>(null)
+    const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
+    
+    const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
   // Hooks
+  const {dictionary} = useDictionary();
   const { lang: locale } = useParams()
+  const methods = useForm<Trip>({
+    defaultValues: defaultFormValuesTrip
+  })
+
+  const { cache, mutate: swrMutate } = useSWRConfig();
+  useEffect(() => {
+    setData(tableData)
+    setFilteredData(tableData)
+  }, [tableData])
+
+  const handleOpenDialog = async  (mode: DialogMode, obj?: Trip) => {
+        setDialogMode(mode)
+        if(obj) setSelectedTrip(obj)
+  
+        try {
+            // Load both employees and leaves in parallel
+            const [responses1] = await Promise.all([
+              getEmployees(),
+              // getRewardType(),
+            ])
+            
+            setEmployees(responses1?.data || [])
+          } catch (error) {
+            console.error('Error loading dialog data:', error)
+          } 
+    
+        if (mode == 'edit') {
+          const formattedData = {
+            ...obj,
+            }
+            // Reset form 
+            methods.reset(formattedData)
+          
+        }else{
+          methods.reset(defaultFormValuesTrip)
+        }
+    
+        setDialogOpen(true)
+  }
+    
+    const handleCloseDialog = () => {
+      setDialogOpen(false)
+      setDialogMode(null)
+      setSelectedTrip(null)
+    }
+    
+    const handleDialogSuccess = async () => {
+      swrMutate('/web/trips')
+      handleCloseDialog()
+    }
+  
+    const handleDeleteCancel = () => {
+      setDialogOpen(false)
+      setSelectedTrip(null)
+    }
+  
+    const handleDeleteConfirm = async () => {
+      if (!selectedTrip) return
+      
+      try {
+        setIsDeleting(true)
+        
+        const response = await deleteTrip(selectedTrip!.id)
+        
+        if (response.status) {
+          // Show success message
+          toast.success(response.message )
+          handleDialogSuccess()
+        }
+      } catch (error: any) {
+        // Handle error
+        toast.error(error?.response?.data?.message )
+      } finally {
+        setIsDeleting(false)
+        handleDeleteCancel()
+      }
+  }
 
   const columns = useMemo<ColumnDef<TripWithAction, any>[]>(
     () => [
@@ -236,10 +330,10 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton title='Edit'>
+           <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
               <i className='tabler-edit text-textSecondary' />
             </IconButton>
-            <IconButton title='Delete' onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
+            <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
           </div>
@@ -314,7 +408,7 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
+              onClick={() => handleOpenDialog('add' )}
               className='max-sm:is-full'
             >
               Add Trip
@@ -386,7 +480,195 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
           }}
         />
       </Card>
-     
+
+      {dialogOpen && dialogMode == 'add' && (
+        <FormDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+        title={'Add new Trip'}
+        onSubmit={async (data:Trip) => {
+          try {
+            const res = await postTrip({
+              ...data,
+              start_date: data.start_date ? moment(data.start_date).format('YYYY-MM-DD') : '',
+              end_date: data.end_date ? moment(data.end_date).format('YYYY-MM-DD') : '',
+            });
+            
+            if (res.status) {
+              swrMutate('/web/trips')
+              toast.success(res.message)
+            }
+          } catch (error) {
+            console.log('Error post trip', error)
+          } finally{
+            methods.reset();
+            setDialogOpen(false)
+          }
+         
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+       <>
+        <QTextField
+            name='employee_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Employee`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+          <QReactDatepicker
+            name="start_date"
+            control={methods.control}
+            label={'Start Date'}
+            required
+          />
+          <QReactDatepicker
+            name="end_date"
+            control={methods.control}
+            label={'End Date'}
+            required
+          />
+          <QTextField
+            name='purpose_of_visit'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Purpose of Trip`}
+            label={`Purpose of Tri`}
+          />
+          <QTextField
+            name='place_of_visit'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Place to Visit`}
+            label={`Place to Visit`}
+          />
+          <QTextField
+            name='description'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Description`}
+            label={`Description`}
+            multiline={true}
+          />
+       </>
+        </FormDialog>
+      )}
+
+      {dialogOpen && dialogMode == 'edit' && (
+        <FormDialog
+          open={dialogOpen}
+          setOpen={setDialogOpen}
+          title={`Edit Trip`}
+          onSubmit={async (data:Trip) => {
+            try {
+              if (!selectedTrip) return
+              
+              const formattedData = {
+                ...data,
+                start_date: data.start_date ? moment(data.start_date).format('YYYY-MM-DD') : '',
+                end_date: data.end_date ? moment(data.end_date).format('YYYY-MM-DD') : '',
+              }
+              
+              const response = await updateTrip(selectedTrip.id,formattedData);
+              
+              if (response.status) {
+                handleDialogSuccess()
+                toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
+              }
+            } catch (error) {
+              console.log('Error updating trip', error)
+              toast.error(dictionary['content'].errorUpdatingLeave)
+            } finally {
+              methods.reset()
+              // setEditDialogOpen(false)
+              // setOvertimeToEdit(null)
+            }
+          }}
+          handleSubmit={methods.handleSubmit}
+        >
+          <>
+        <QTextField
+            name='employee_id'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={`Employee`}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} Employee</MenuItem>
+            {employees.map((employee) => (
+              <MenuItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </MenuItem>
+            ))}
+          </QTextField>
+          <QReactDatepicker
+            name="start_date"
+            control={methods.control}
+            label={'Start Date'}
+            required
+          />
+          <QReactDatepicker
+            name="end_date"
+            control={methods.control}
+            label={'End Date'}
+            required
+          />
+          <QTextField
+            name='purpose_of_visit'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Purpose of Trip`}
+            label={`Purpose of Tri`}
+          />
+          <QTextField
+            name='place_of_visit'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Place to Visit`}
+            label={`Place to Visit`}
+          />
+          <QTextField
+            name='description'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} Description`}
+            label={`Description`}
+            multiline={true}
+          />
+       </>
+        </FormDialog>
+      )}
+
+      {dialogOpen && dialogMode == 'delete' && (
+        <ConfirmationDialog
+          open={dialogOpen}
+          setOpen={setDialogOpen}
+          type='delete-trip'
+          onConfirm={handleDeleteConfirm}
+          isLoading={isDeleting}
+        />
+      )}
     </>
   )
 }

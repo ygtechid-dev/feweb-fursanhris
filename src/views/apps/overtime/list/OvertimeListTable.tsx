@@ -676,25 +676,15 @@ const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
             
             const formattedData = {
               ...data,
-              start_date: data.start_date ? moment(data.start_date).format('YYYY-MM-DD') : '',
-              end_date: data.end_date ? moment(data.end_date).format('YYYY-MM-DD') : '',
+              overtime_date: data.overtime_date ? moment(data.overtime_date).format('YYYY-MM-DD') : '',
+              start_time: data.start_time ? moment(data.start_time).format('HH:mm') : '',
+              end_time: data.end_time ? moment(data.end_time).format('HH:mm') : '',
             }
             
-            const res = await updateOvertime(formattedData, overtimeToEdit.id);
-            
-            const response = await res.json()
+            const response = await updateOvertime(formattedData, overtimeToEdit.id);
             
             if (response.status) {
-              // Update the local data
-              const updatedData = data?.map((overtime: Overtime) => 
-                overtime.id === overtimeToEdit.id ? { ...overtime, ...formattedData } : overtime
-              )
-              
-              setData(updatedData)
-              setFilteredData(updatedData)
-              
-              // Refresh data with SWR
-              swrMutate('/web/leaves')
+              swrMutate('/web/overtimes')
               toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
             }
           } catch (error) {
