@@ -1,26 +1,25 @@
-// components/AuthProvider.tsx
 'use client'
-
 import { createContext, useContext, useEffect, useState } from 'react'
 import { redirect, useRouter } from 'next/navigation'
 import axiosInstance from '@/libs/axios'
 import { Locale } from '@/configs/i18n'
 import { getLocalizedUrl } from '@/utils/i18n'
+import { User } from '@/types/apps/userTypes'
 
 interface AuthContextType {
-  user: any
-  loading: boolean
-  checkAuth: () => Promise<void>
-  logout: () => Promise<void>
+  user: User | null;
+  loading: boolean;
+  checkAuth: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export const AuthProvider = ({ children, lang }: { children: React.ReactNode, lang:Locale }) => {
-  const [user, setUser] = useState<any>(null)
+export const AuthProvider = ({ children, lang }: { children: React.ReactNode, lang: Locale }) => {
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-   const login = `/${lang}/login`
+  const login = `/${lang}/login`
 
   const checkAuth = async () => {
     try {
@@ -28,9 +27,7 @@ export const AuthProvider = ({ children, lang }: { children: React.ReactNode, la
       if (!token) {
         throw new Error('No token')
       }
-
       const response = await axiosInstance.get('/me')
-      console.log({data:response.data})
       setUser(response.data?.data?.user)
     } catch (error) {
       console.log('masuk sini auth provider')
@@ -45,11 +42,8 @@ export const AuthProvider = ({ children, lang }: { children: React.ReactNode, la
   const logout = async () => {
     try {
       await axiosInstance.post('/logout')
-      
-
       localStorage.removeItem('token')
       localStorage.removeItem('user')
-
       window.location.href = login;
     } catch (error) {
       console.error('Logout error:', error)
@@ -58,7 +52,6 @@ export const AuthProvider = ({ children, lang }: { children: React.ReactNode, la
 
   useEffect(() => {
     checkAuth()
-    console.log("object")
   }, [])
 
   return (

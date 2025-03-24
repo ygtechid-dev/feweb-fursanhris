@@ -9,12 +9,15 @@ import MenuItem from '@mui/material/MenuItem'
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
 import { Promotion } from '@/types/promotionTypes'
+import { useAuth } from '@/components/AuthProvider'
 
 const TableFilters = ({ setData, tableData }: { setData: (data: Promotion[]) => void; tableData?: Promotion[] }) => {
   // States
   // const [role, setRole] = useState<Promotion['role']>('')
   // const [plan, setPlan] = useState<Promotion['currentPlan']>('')
   // const [status, setStatus] = useState<Promotion['status']>('')
+    const { user } = useAuth()
+  
 
   useEffect(() => {
     const filteredData = tableData?.filter(user => {
@@ -64,7 +67,7 @@ const TableFilters = ({ setData, tableData }: { setData: (data: Promotion[]) => 
             <MenuItem value='team'>Team</MenuItem>
           </CustomTextField>
         </Grid> */}
-        <Grid item xs={12} sm={4}>
+        {user?.type == 'super admin' && (<Grid item xs={12} sm={4}>
           <CustomTextField
             select
             fullWidth
@@ -78,7 +81,7 @@ const TableFilters = ({ setData, tableData }: { setData: (data: Promotion[]) => 
             <MenuItem value='active'>ABC</MenuItem>
             <MenuItem value='inactive'>BCA</MenuItem>
           </CustomTextField>
-        </Grid>
+        </Grid>)}
       </Grid>
     </CardContent>
   )

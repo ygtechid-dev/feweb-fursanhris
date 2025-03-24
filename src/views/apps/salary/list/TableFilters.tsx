@@ -11,12 +11,15 @@ import type { UsersType } from '@/types/apps/userTypes'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import { useAuth } from '@/components/AuthProvider'
 
 const TableFilters = ({ setData, tableData }: { setData: (data: UsersType[]) => void; tableData?: UsersType[] }) => {
   // States
   const [role, setRole] = useState<UsersType['role']>('')
   const [plan, setPlan] = useState<UsersType['currentPlan']>('')
   const [status, setStatus] = useState<UsersType['status']>('')
+    const { user } = useAuth()
+  
 
   useEffect(() => {
     const filteredData = tableData?.filter(user => {
@@ -66,7 +69,7 @@ const TableFilters = ({ setData, tableData }: { setData: (data: UsersType[]) => 
             <MenuItem value='team'>Team</MenuItem>
           </CustomTextField>
         </Grid> */}
-        <Grid item xs={12} sm={4}>
+          {user?.type == 'super admin' && (<Grid item xs={12} sm={4}>
           <CustomTextField
             select
             fullWidth
@@ -80,7 +83,7 @@ const TableFilters = ({ setData, tableData }: { setData: (data: UsersType[]) => 
             <MenuItem value='active'>ABC</MenuItem>
             <MenuItem value='inactive'>BCA</MenuItem>
           </CustomTextField>
-        </Grid>
+        </Grid>)}
       </Grid>
     </CardContent>
   )

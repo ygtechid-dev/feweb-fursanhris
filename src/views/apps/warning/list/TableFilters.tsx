@@ -11,12 +11,14 @@ import MenuItem from '@mui/material/MenuItem'
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
 import { Warning } from '@/types/warningTypes'
+import { useAuth } from '@/components/AuthProvider'
 
 const TableFilters = ({ setData, tableData }: { setData: (data: Warning[]) => void; tableData?: Warning[] }) => {
   // States
   // const [role, setRole] = useState<Warning['role']>('')
   // const [plan, setPlan] = useState<Warning['currentPlan']>('')
   // const [status, setStatus] = useState<Warning['status']>('')
+  const { user } = useAuth()
 
   useEffect(() => {
     const filteredData = tableData?.filter(user => {
@@ -66,7 +68,7 @@ const TableFilters = ({ setData, tableData }: { setData: (data: Warning[]) => vo
             <MenuItem value='team'>Team</MenuItem>
           </CustomTextField>
         </Grid> */}
-        <Grid item xs={12} sm={4}>
+       {user?.type == 'super admin' && (<Grid item xs={12} sm={4}>
           <CustomTextField
             select
             fullWidth
@@ -80,7 +82,7 @@ const TableFilters = ({ setData, tableData }: { setData: (data: Warning[]) => vo
             <MenuItem value='active'>ABC</MenuItem>
             <MenuItem value='inactive'>BCA</MenuItem>
           </CustomTextField>
-        </Grid>
+        </Grid>)}
       </Grid>
     </CardContent>
   )

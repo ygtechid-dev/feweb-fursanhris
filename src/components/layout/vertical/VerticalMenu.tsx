@@ -21,6 +21,7 @@ import menuItemStyles from '@core/styles/vertical/menuItemStyles'
 import menuSectionStyles from '@core/styles/vertical/menuSectionStyles'
 import { getDictionary } from '@/utils/getDictionary'
 import { useParams } from 'next/navigation'
+import { useAuth } from '@/components/AuthProvider'
 
 type RenderExpandIconProps = {
   open?: boolean
@@ -43,6 +44,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
   const theme = useTheme()
   const verticalNavOptions = useVerticalNav()
   const params = useParams()
+  const { user } = useAuth()
 
   // Vars
   const { isBreakpointReached, transitionDuration } = verticalNavOptions
@@ -83,9 +85,10 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         {/* </MenuSection> */}
         {/* <MenuSection label={'Super Admin'}> */}
         <SubMenu label={dictionary['navigation'].companies} icon={<i className='tabler-buildings' />}>
-          <MenuItem href={`/${locale}/companies`}>
+        {user?.type == 'super admin' && (<MenuItem href={`/${locale}/companies`}>
           {dictionary['navigation'].companyList}
-          </MenuItem>
+          </MenuItem>)}
+          
         <MenuItem href={`/${locale}/companies/branches`}>
           {dictionary['navigation'].branches}
         </MenuItem>
