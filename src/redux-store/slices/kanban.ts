@@ -62,7 +62,15 @@ export const kanbanSlice = createSlice({
         
       const newTask: TaskType = {
         id: maxId + 1,
-        title
+        title,
+        description: '',
+        status: '',
+        priority: '',
+        badgeText: [],
+        attachments: 0,
+        comments: 0,
+        assigned: [],
+        dueDate: ''
       }
       const column = state.columns.find(column => column.id === columnId)
       if (column) {
