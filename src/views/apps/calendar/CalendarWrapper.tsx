@@ -164,7 +164,6 @@ const AppCalendar = () => {
 
   // Function to handle updating a task/event
   const handleUpdateTask = async (eventData: any) => {
-    console.log({eventData})
     try {
       // Check if this is a task event
       if (!eventData.extendedProps?.isTask) {

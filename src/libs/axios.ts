@@ -23,9 +23,12 @@ const axiosInstance = axios.create({
 // Add a request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Only try to access localStorage on the client side
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -38,11 +41,12 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
+    // Only handle 401s on client side
+    if (typeof window !== 'undefined' && error.response?.status === 401) {
+      // Just clear the token, but DON'T redirect here
+      // Let the auth system handle redirects
       localStorage.removeItem('token');
-      localStorage.removeItem('user')
-      window.location.href = '/';
+      localStorage.removeItem('user');
     }
     return Promise.reject(error);
   }
