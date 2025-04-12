@@ -230,7 +230,7 @@ const AttendanceDetailDialog = ({ open, onClose, attendanceId, dictionary }: Att
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
                   <Typography variant="body2" color="text.secondary">
-                    {dictionary['content']?.clockIn || 'Clock In'}
+                    {dictionary['content']?.clockInAttendance || 'Clock In'}
                   </Typography>
                   <Typography className="font-medium">
                     {attendanceDetail.clock_in_formatted || '-'}
@@ -238,7 +238,7 @@ const AttendanceDetailDialog = ({ open, onClose, attendanceId, dictionary }: Att
                 </div>
                 <div>
                   <Typography variant="body2" color="text.secondary">
-                    {dictionary['content']?.clockOut || 'Clock Out'}
+                    {dictionary['content']?.clockOutAttendance || 'Clock Out'}
                   </Typography>
                   <Typography className="font-medium">
                     {attendanceDetail.clock_out_formatted || '-'}

@@ -58,6 +58,8 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import { formatPrice } from '@/utils/formatPrice'
+import { useAuth } from '@/components/AuthProvider'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -144,6 +146,11 @@ const userStatusObj: UserStatusType = {
 const columnHelper = createColumnHelper<EmployeeWithAction>()
 
 const SalaryListTable = ({ tableData }: { tableData?: Employee[] }) => {
+    const { user } = useAuth()
+
+    const { dictionary } = useDictionary()
+    
+
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -155,107 +162,126 @@ const SalaryListTable = ({ tableData }: { tableData?: Employee[] }) => {
   const { lang: locale } = useParams()
 
   const columns = useMemo<ColumnDef<EmployeeWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      columnHelper.accessor('name', {
-        header: 'Employee',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.name}
-              </Typography>
-              {/* <Typography variant='body2'>Company ABC</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('salary_type', {
-        header: 'Payroll Type',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.salary_type}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('salary', {
-        header: 'Salary',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {formatPrice(row.original.salary || '')}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('net_salary', {
-        header: 'Net Salary',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {formatPrice(row.original.net_salary || '')}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
+    () => {
+      const visibleColumns: ColumnDef<EmployeeWithAction, any>[] = [
+        {
+           id: 'select',
+           header: ({ table }: { table: any }) => (
+             <Checkbox
+               {...{
+                 checked: table.getIsAllRowsSelected(),
+                 indeterminate: table.getIsSomeRowsSelected(),
+                 onChange: table.getToggleAllRowsSelectedHandler()
+               }}
+             />
+           ),
+           cell: ({ row }: { row: any }) => (
+             <Checkbox
+               {...{
+                 checked: row.getIsSelected(),
+                 disabled: !row.getCanSelect(),
+                 indeterminate: row.getIsSomeSelected(),
+                 onChange: row.getToggleSelectedHandler()
+               }}
+             />
+           )
+         },
+       columnHelper.accessor('name', {
+         header: dictionary['content'].employee,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.name}
+               </Typography>
+               {/* <Typography variant='body2'>Company ABC</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('salary_type', {
+        header: dictionary['content'].payrollType,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.salary_type}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('salary', {
+        header: dictionary['content'].salary,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {formatPrice(row.original.salary || '')}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('net_salary', {
+        header: dictionary['content'].netSalary,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {formatPrice(row.original.net_salary || '')}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+      
      
-    
-      columnHelper.accessor('action', {
-        header: 'Action',
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-             {/* <IconButton >
-              <i className='tabler-copy-check text-textSecondary' />
-            </IconButton> */}
-            <IconButton title="View">
-            <Link href={`/${locale}/salary/detail/${row.original.id}`} className='flex'>
-              <i className='tabler-eye text-textSecondary' />
-            </Link>
-            </IconButton>
+       columnHelper.accessor('action', {
+        header: dictionary['content'].action,
+         cell: ({ row }) => (
+           <div className='flex items-center'>
+              {/* <IconButton >
+               <i className='tabler-copy-check text-textSecondary' />
+             </IconButton> */}
+             <IconButton title="View">
+             <Link href={`/${locale}/salary/detail/${row.original.id}`} className='flex'>
+               <i className='tabler-eye text-textSecondary' />
+             </Link>
+             </IconButton>
+            
+           </div>
+         ),
+         enableSorting: false
+       })
+     ];
+     
+           if (user?.type === 'super admin') {
+             visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+              header: dictionary['content'].company,
+               cell: ({ row }) => (
+                 <div className='flex items-center gap-4'>
+                   <div className='flex flex-col'>
+                     <Typography color='text.primary' className='font-medium'>
+                       {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                     </Typography>
+                   </div>
+                 </div>
+               )
+             }) as ColumnDef<EmployeeWithAction, any>)
+           }
            
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+           return visibleColumns
+         },
+         
+         [data, filteredData, user]
   )
 
   const table = useReactTable({
@@ -287,21 +313,11 @@ const SalaryListTable = ({ tableData }: { tableData?: Employee[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  // const getAvatar = (params: Pick<Employee, 'avatar' | 'fullName'>) => {
-  //   const { avatar, fullName } = params
-
-  //   if (avatar) {
-  //     return <CustomAvatar src={avatar} size={34} />
-  //   } else {
-  //     return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-  //   }
-  // }
-
   return (
     <>
       <Card>
-        <CardHeader title='Manage Employee Salary' className='pbe-4' />
-        {/* <TableFilters setData={setFilteredData} tableData={data} /> */}
+        <CardHeader title={`${dictionary['content'].manage} ${dictionary['content'].employee} ${dictionary['content'].salary}`} className='pbe-4' />
+        <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select
@@ -317,7 +333,7 @@ const SalaryListTable = ({ tableData }: { tableData?: Employee[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search User'
+              placeholder={`${dictionary['content'].searchData}`}
               className='max-sm:is-full'
             />
             {/* <Button

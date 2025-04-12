@@ -20,6 +20,7 @@ import { Button } from '@mui/material'
 import useVerticalNav from '@/@menu/hooks/useVerticalNav'
 import CustomIconButton from '@/@core/components/mui/IconButton'
 import { useParams } from 'next/navigation'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 // Vars
 // const shortcuts: ShortcutsType[] = [
@@ -112,6 +113,7 @@ const notifications: NotificationsType[] = [
 const NavbarContentProject = () => {
   const { toggleVerticalNav, isBreakpointReached } = useVerticalNav()
   const { lang: locale } = useParams()
+  const { dictionary } = useDictionary()
   return (
     <div className={classnames(verticalLayoutClasses.navbarContent, 'flex items-center justify-between gap-4 is-full')}>
       <div className='flex items-center gap-4'>
@@ -128,7 +130,7 @@ const NavbarContentProject = () => {
               // onClick={() => setAddUserOpen(!addUserOpen)}
               className='max-sm:is-full'
             >
-              Project List
+              {dictionary['content'].projectList}
             </Button>}
         
       </div>

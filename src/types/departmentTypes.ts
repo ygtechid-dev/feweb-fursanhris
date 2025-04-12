@@ -1,4 +1,5 @@
 import { Branch } from "./branchTypes";
+import { Company } from "./companyTypes";
 
 export interface Department {
     id: number;
@@ -8,6 +9,7 @@ export interface Department {
     created_at: string;
     updated_at: string;
     branch: Branch;
+    company?: Company;
   }
 
 
@@ -17,4 +19,5 @@ export interface Department {
     created_by: 0,
     created_at: '', 
     updated_at: '',
+    company: undefined, 
   }

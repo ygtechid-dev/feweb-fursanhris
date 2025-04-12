@@ -138,7 +138,7 @@ const EditUserDrawer = (props: Props) => {
             control={methods.control}
             fullWidth
             required
-            placeholder='Enter first name'
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].firstName}`}
             rules={{ 
               minLength: {
                 value: 3,
@@ -153,7 +153,7 @@ const EditUserDrawer = (props: Props) => {
             control={methods.control}
             fullWidth
             required
-            placeholder='Enter last name'
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].lastName}`}
             rules={{ 
               minLength: {
                 value: 3,
@@ -168,7 +168,7 @@ const EditUserDrawer = (props: Props) => {
             control={methods.control}
             fullWidth
             required
-            placeholder='Enter email'
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].email}`}
             type='email' 
             rules={{ 
               pattern: {
@@ -204,11 +204,11 @@ const EditUserDrawer = (props: Props) => {
             control={methods.control}
             fullWidth
             required
-            placeholder='Enter Role'
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].role}`}
             label={dictionary['content'].role} 
             select
           >
-            <MenuItem value="">Select role</MenuItem>
+            <MenuItem value="">{dictionary['content'].select} {dictionary['content'].role}</MenuItem>
             {roles.map(role => (
               <MenuItem key={role.id} value={role.id}>
                 {role.name}

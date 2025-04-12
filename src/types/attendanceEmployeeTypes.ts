@@ -1,3 +1,5 @@
+import { Company } from "./companyTypes";
+
 export interface AttendanceEmployee {
     id?: number;
     date: string;
@@ -22,4 +24,6 @@ export interface AttendanceEmployee {
     total_rest: string;
     clock_in_formatted: string | null;
     clock_out_formatted: string | null;
+    created_by: number;
+    company?: Company;
 }

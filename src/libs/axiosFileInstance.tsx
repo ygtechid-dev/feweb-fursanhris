@@ -1,27 +1,17 @@
-// lib/axios.ts
+// lib/axiosFileUpload.ts
 import axios from 'axios';
+import { getBaseURL } from './axios';
 
-export const getBaseURL = () => {
-  switch (process.env.NODE_ENV) {
-    case 'development':
-      return 'http://127.0.0.1:8000/api';
-    case 'test':
-    case 'production':
-      return 'http://103.196.155.202:3333/api';
-    default:
-      return 'http://127.0.0.1:8000/api';
-  }
-};
 
-const axiosInstance = axios.create({
+const axiosFileInstance = axios.create({
   baseURL: getBaseURL(),
   headers: {
-    'Content-Type': 'application/json',
+    'Content-Type': 'multipart/form-data',
   },
 });
 
 // Add a request interceptor
-axiosInstance.interceptors.request.use(
+axiosFileInstance.interceptors.request.use(
   (config) => {
     // Only try to access localStorage on the client side
     if (typeof window !== 'undefined') {
@@ -38,7 +28,7 @@ axiosInstance.interceptors.request.use(
 );
 
 // Add a response interceptor
-axiosInstance.interceptors.response.use(
+axiosFileInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     // Only handle 401s on client side
@@ -52,4 +42,4 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-export default axiosInstance;
+export default axiosFileInstance;

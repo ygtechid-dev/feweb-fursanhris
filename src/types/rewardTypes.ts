@@ -1,4 +1,5 @@
 import { Employee } from "./apps/userTypes";
+import { Company } from "./companyTypes";
 
 export interface RewardType {
   id: number;
@@ -20,6 +21,8 @@ export interface Reward {
   // Relations (optional, present when loaded)
   employee?: Employee;
   reward_type?: RewardType;
+  created_by: number;
+  company?: Company;
 }
 
 export const defaultFormValuesReward = {
@@ -30,6 +33,8 @@ export const defaultFormValuesReward = {
   description: '',
   created_at: '',
   updated_at: '',
+  created_by: 0,
+  company: undefined, 
   // Relations are optional and typically not included in default form values
   // employee: undefined,
   // reward_type: undefined

@@ -1,3 +1,5 @@
+import { Company } from "./companyTypes";
+
 export interface Trip {
   id: number;
   employee_id: number;
@@ -9,6 +11,8 @@ export interface Trip {
   description: string;
   created_at: string;
   updated_at: string;
+  created_by: number;
+  company?: Company;
 }
 
 export const defaultFormValuesTrip = {
@@ -20,5 +24,7 @@ export const defaultFormValuesTrip = {
   place_of_visit: '',
   description: '',
   created_at: '',
-  updated_at: ''
+  updated_at: '',
+  created_by: 0,
+  company: undefined, 
 };

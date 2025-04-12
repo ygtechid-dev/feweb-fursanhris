@@ -1,4 +1,5 @@
 import { Employee } from "./apps/userTypes";
+import { Company } from "./companyTypes";
 
 // Allowance interface
 export interface Allowance {
@@ -78,6 +79,7 @@ export interface Allowance {
     created_at: string;
     updated_at: string;
     employee: Employee;
+    company?: Company;
   }
   
   // Helper functions to parse JSON strings

@@ -88,16 +88,16 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, isLoading }: Confi
               {type === 'delete-designation' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].designation.toLowerCase()}?`}
               {type === 'delete-overtime' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['navigation'].overtimes.toLowerCase()}?`}
               {type === 'delete-payslip' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['navigation'].payslip.toLowerCase()}?`}
-              {type === 'delete-allowance' && `${dictionary['content'].areYouSureWantToDelete} Allowance?`}
-              {type === 'delete-deduction' && `${dictionary['content'].areYouSureWantToDelete} Deduction?`}
-              {type === 'delete-reward' && `${dictionary['content'].areYouSureWantToDelete} Reward?`}
-              {type === 'delete-resignation' && `${dictionary['content'].areYouSureWantToDelete} Resignation?`}
-              {type === 'delete-trip' && `${dictionary['content'].areYouSureWantToDelete} Trip?`}
-              {type === 'delete-promotion' && `${dictionary['content'].areYouSureWantToDelete} Promotion?`}
-              {type === 'delete-complaint' && `${dictionary['content'].areYouSureWantToDelete} Complaint?`}
-              {type === 'delete-warning' && `${dictionary['content'].areYouSureWantToDelete} Warning?`}
-              {type === 'delete-termination' && `${dictionary['content'].areYouSureWantToDelete} Termination?`}
-              {type === 'delete-project' && `${dictionary['content'].areYouSureWantToDelete} Project?`}
+              {type === 'delete-allowance' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].allowance.toLowerCase()}?`}
+              {type === 'delete-deduction' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].deduction.toLowerCase()}?`}
+              {type === 'delete-reward' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].reward.toLowerCase()}?`}
+              {type === 'delete-resignation' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].resignation.toLowerCase()}?`}
+              {type === 'delete-trip' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].trip.toLowerCase()}?`}
+              {type === 'delete-promotion' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].promotion.toLowerCase()}?`}
+              {type === 'delete-complaint' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].complaint.toLowerCase()}?`}
+              {type === 'delete-warning' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].warning.toLowerCase()}?`}
+              {type === 'delete-termination' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].termination.toLowerCase()}?`}
+              {type === 'delete-project' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].project.toLowerCase()}?`}
             </Typography>
             {type === 'suspend-account' && (
               <Typography color='text.primary'>You won&#39;t be able to revert user!</Typography>
@@ -164,21 +164,21 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, isLoading }: Confi
                 {type === 'delete-user' && dictionary['content'].yourUserRemovedSuccessfully}
                 {type === 'delete-employee' && dictionary['content'].yourEmployeeRemovedSuccessfully}
                 {type === 'delete-leave' && dictionary['content'].leaveRemovedSuccessfully}
-                {type === 'delete-branch' && 'Branch removed successfully'}
-                {type === 'delete-department' && 'Department removed successfully'}
-                {type === 'delete-designation' && 'Position removed successfully'}
-                {type === 'delete-overtime' && 'Overtime removed successfully'}
-                {type === 'delete-payslip' && 'Payslip removed successfully'}
-                {type === 'delete-allowance' && 'Allowance removed successfully'}
-                {type === 'delete-deduction' && 'Deduction removed successfully'}
-                {type === 'delete-reward' && 'Reward removed successfully'}
-                {type === 'delete-resignation' && 'Resignation removed successfully'}
-                {type === 'delete-trip' && 'Trip removed successfully'}
-                {type === 'delete-promotion' && 'Trip removed successfully'}
-                {type === 'delete-complaint' && 'Complaint removed successfully'}
-                {type === 'delete-warning' && 'Warning removed successfully'}
-                {type === 'delete-termination' && 'Termination removed successfully'}
-                {type === 'delete-project' && 'Project removed successfully'}
+                {type === 'delete-branch' && `${dictionary['content'].branch} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-department' && `${dictionary['content'].department} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-designation' && `${dictionary['content'].designation} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-overtime' && `${dictionary['content'].overtime} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-payslip' && `${dictionary['content'].payslip} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-allowance' && `${dictionary['content'].allowance} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-deduction' && `${dictionary['content'].deduction} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-reward' && `${dictionary['content'].reward} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-resignation' && `${dictionary['content'].resignation} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-trip' && `${dictionary['content'].trip} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-promotion' && `${dictionary['content'].promotion} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-complaint' && `${dictionary['content'].complaint} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-warning' && `${dictionary['content'].warning} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-termination' && `${dictionary['content'].termination} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-project' && `${dictionary['content'].project} ${dictionary['content'].removedSuccessfully}`}
               </>
             ) : (
               <>
@@ -190,18 +190,18 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, isLoading }: Confi
                 {type === 'delete-user' && dictionary['content'].userDeletionCancelled}
                 {type === 'delete-employee' && dictionary['content'].employeeDeletionCancelled}
                 {type === 'delete-leave' && dictionary['content'].leaveDeletionCancelled}
-                {type === 'delete-branch' && 'Branch Deletion Cancelled'}
-                {type === 'delete-department' && 'Department Deletion Cancelled'}
-                {type === 'delete-designation' && 'Position Deletion Cancelled'}
-                {type === 'delete-overtime' && 'Overtime Deletion Cancelled'}
-                {type === 'delete-payslip' && 'Payslip Deletion Cancelled'}
-                {type === 'delete-allowance' && 'Allowance Deletion Cancelled'}
-                {type === 'delete-deduction' && 'Deduction Deletion Cancelled'}
-                {type === 'delete-reward' && 'Reward Deletion Cancelled'}
-                {type === 'delete-resignation' && 'Resignation Deletion Cancelled'}
-                {type === 'delete-trip' && 'Trip Deletion Cancelled'}
-                {type === 'delete-complaint' && 'Complaint Deletion Cancelled'}
-                {type === 'delete-project' && 'Project Deletion Cancelled'}
+                {type === 'delete-branch' && `${dictionary['content'].branch} ${dictionary['content'].deletionCancelled}`}
+                {type === 'delete-department' && `${dictionary['content'].department} ${dictionary['content'].deletionCancelled}`}
+                {type === 'delete-designation' && `${dictionary['content'].designation} ${dictionary['content'].deletionCancelled}`}
+                {type === 'delete-overtime' && `${dictionary['content'].overtime} ${dictionary['content'].deletionCancelled}`}
+                {type === 'delete-payslip' && `${dictionary['content'].payslip} ${dictionary['content'].deletionCancelled}`}
+                {type === 'delete-allowance' && `${dictionary['content'].allowance} ${dictionary['content'].deletionCancelled}`}
+                {type === 'delete-deduction' && `${dictionary['content'].deduction} ${dictionary['content'].deletionCancelled}`}
+                {type === 'delete-reward' && `${dictionary['content'].reward} ${dictionary['content'].deletionCancelled}`}
+                {type === 'delete-resignation' && `${dictionary['content'].resignation} ${dictionary['content'].deletionCancelled}`}
+                {type === 'delete-trip' && `${dictionary['content'].trip} ${dictionary['content'].deletionCancelled}`}
+                {type === 'delete-complaint' && `${dictionary['content'].complaint} ${dictionary['content'].deletionCancelled}`}
+                {type === 'delete-project' && `${dictionary['content'].project} ${dictionary['content'].deletionCancelled}`}
               </>
             )}
           </Typography>

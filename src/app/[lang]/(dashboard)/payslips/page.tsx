@@ -23,7 +23,7 @@ const PayslipListApp =  () => {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <div>{dictionary['content'].loading}...</div>
   }
 
   return <PayslipList datas={data?.data} />

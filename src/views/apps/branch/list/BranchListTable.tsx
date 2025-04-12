@@ -35,7 +35,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel
 } from '@tanstack/react-table'
-import type { ColumnDef, FilterFn } from '@tanstack/react-table'
+import type { ColumnDef, FilterFn, Table } from '@tanstack/react-table'
 import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
@@ -66,6 +66,8 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { deleteBranch, postBranch, updateBranch } from '@/services/branchService'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import { useAuth } from '@/components/AuthProvider'
+import useCompanies from '@/hooks/useCompanies'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -78,14 +80,6 @@ declare module '@tanstack/table-core' {
 
 type BranchWithAction = Branch & {
   action?: string
-}
-
-type UserRoleType = {
-  [key: string]: { icon: string; color: string }
-}
-
-type UserStatusType = {
-  [key: string]: ThemeColor
 }
 
 // Styled Components
@@ -137,6 +131,9 @@ const DebouncedInput = ({
 const columnHelper = createColumnHelper<BranchWithAction>()
 
 const BranchListTable = ({ tableData }: { tableData?: Branches }) => {
+  const { user } = useAuth()
+  const { companies } = useCompanies()
+
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -156,11 +153,11 @@ const BranchListTable = ({ tableData }: { tableData?: Branches }) => {
 
   // Hooks
   const { lang: locale } = useParams()
-  const {dictionary} = useDictionary();
-    const methods = useForm<Branch>({
-        defaultValues: defaultFormValuesBranch
-    })
-  const { cache, mutate: swrMutate } = useSWRConfig();
+  const { dictionary } = useDictionary()
+  const methods = useForm<Branch>({
+    defaultValues: defaultFormValuesBranch
+  })
+  const { cache, mutate: swrMutate } = useSWRConfig()
 
   useEffect(() => {
     setData(tableData)
@@ -168,89 +165,78 @@ const BranchListTable = ({ tableData }: { tableData?: Branches }) => {
   }, [tableData])
 
   const columns = useMemo<ColumnDef<BranchWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      // columnHelper.accessor('created_by', {
-      //   header: 'Company',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-4'>
-      //       {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-      //       <div className='flex flex-col'>
-      //         <Typography color='text.primary' className='font-medium'>
-      //           ABC
-      //         </Typography>
-      //         {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-      //       </div>
-      //     </div>
-      //   )
-      // }),
-      columnHelper.accessor('name', {
-        header: dictionary['content'].branch,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.name}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+    () => {
+      const visibleColumns: ColumnDef<BranchWithAction, any>[] = [
+        {
+          id: 'select',
+          header: ({ table }: { table: any }) => (
+            <Checkbox
+              {...{
+                checked: table.getIsAllRowsSelected(),
+                indeterminate: table.getIsSomeRowsSelected(),
+                onChange: table.getToggleAllRowsSelectedHandler()
+              }}
+            />
+          ),
+          cell: ({ row }: { row: any }) => (
+            <Checkbox
+              {...{
+                checked: row.getIsSelected(),
+                disabled: !row.getCanSelect(),
+                indeterminate: row.getIsSomeSelected(),
+                onChange: row.getToggleSelectedHandler()
+              }}
+            />
+          )
+        },
+        columnHelper.accessor('name', {
+          header: dictionary['content'].branch,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row.original.name}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-     
-      // columnHelper.accessor('status', {
-      //   header: 'Status',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-3'>
-      //       <Chip
-      //         variant='tonal'
-      //         label={row.original.status}
-      //         size='small'
-      //         color={userStatusObj[row.original.status]}
-      //         className='capitalize'
-      //       />
-      //     </div>
-      //   )
-      // }),
-      columnHelper.accessor('action', {
-        header: dictionary['content'].action,
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-            <IconButton  onClick={() => handleEditClick(row.original)}>
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton onClick={() => handleDeleteClick(row.original)}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+          )
+        }),
+        // Action column
+        columnHelper.accessor('action', {
+          header: dictionary['content'].action,
+          cell: ({ row }) => (
+            <div className='flex items-center'>
+              <IconButton onClick={() => handleEditClick(row.original)}>
+                <i className='tabler-edit text-textSecondary' />
+              </IconButton>
+              <IconButton onClick={() => handleDeleteClick(row.original)}>
+                <i className='tabler-trash text-textSecondary' />
+              </IconButton>
+            </div>
+          ),
+          enableSorting: false
+        })
+      ]
+      
+      if (user?.type === 'super admin') {
+        visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+          header: 'Company',
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                </Typography>
+              </div>
+            </div>
+          )
+        }) as ColumnDef<BranchWithAction, any>)
+      }
+      
+      return visibleColumns
+    },
+    
+    [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -288,28 +274,28 @@ const BranchListTable = ({ tableData }: { tableData?: Branches }) => {
   }
 
   const handleDeleteConfirm = async () => {
-        if (!objectToDelete) return
+    if (!objectToDelete) return
+    
+    try {
+      setIsDeleting(true)
+      
+      const response = await deleteBranch(objectToDelete.id)
+      
+      if (response.status) {
+        // Remove the deleted leave from the table data
+        setData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
+        setFilteredData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
         
-        try {
-          setIsDeleting(true)
-          
-          const response = await deleteBranch(objectToDelete.id)
-          
-          if (response.status) {
-            // Remove the deleted leave from the table data
-            setData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
-            setFilteredData(prevData => prevData?.filter(leave => leave.id !== objectToDelete.id))
-            
-            // Show success message
-            toast.success(response.message || dictionary['content'].leaveDeletedSuccessfully)
-          }
-        } catch (error: any) {
-          // Handle error
-          toast.error(error?.response?.data?.message || dictionary['content'].errorDeletingLeave)
-        } finally {
-          setIsDeleting(false)
-          handleDeleteCancel()
-        }
+        // Show success message
+        toast.success(response.message || dictionary['content'].leaveDeletedSuccessfully)
+      }
+    } catch (error: any) {
+      // Handle error
+      toast.error(error?.response?.data?.message || dictionary['content'].errorDeletingLeave)
+    } finally {
+      setIsDeleting(false)
+      handleDeleteCancel()
+    }
   }
 
   const handleDeleteCancel = () => {
@@ -324,12 +310,12 @@ const BranchListTable = ({ tableData }: { tableData?: Branches }) => {
   }
 
   const handleEditClick = async (object: Branch) => {
-      setObjectToEdit(object)
-      setEditDialogOpen(true)
+    setObjectToEdit(object)
+    setEditDialogOpen(true)
 
-      methods.reset({
-        ...object
-      })
+    methods.reset({
+      ...object
+    })
   }
 
   return (
@@ -355,14 +341,6 @@ const BranchListTable = ({ tableData }: { tableData?: Branches }) => {
               placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
-            {/* <Button
-              color='secondary'
-              variant='tonal'
-              startIcon={<i className='tabler-upload' />}
-              className='max-sm:is-full'
-            >
-              Export
-            </Button> */}
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
@@ -406,7 +384,7 @@ const BranchListTable = ({ tableData }: { tableData?: Branches }) => {
               <tbody>
                 <tr>
                   <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                  {dictionary['content'].noDataAvailable}
+                    {dictionary['content'].noDataAvailable}
                   </td>
                 </tr>
               </tbody>
@@ -429,7 +407,7 @@ const BranchListTable = ({ tableData }: { tableData?: Branches }) => {
           </table>
         </div>
         <TablePagination
-          component={() => <TablePaginationComponent table={table} />}
+          component={() => <TablePaginationComponent table={table as unknown as Table<unknown>} />}
           count={table.getFilteredRowModel().rows.length}
           rowsPerPage={table.getState().pagination.pageSize}
           page={table.getState().pagination.pageIndex}
@@ -443,74 +421,44 @@ const BranchListTable = ({ tableData }: { tableData?: Branches }) => {
         open={dialogOpen}
         setOpen={setDialogOpen}
         title={dictionary['content'].addNewBranch}
-        onSubmit={async (data:any) => {
+        onSubmit={async (data: any) => {
           try {
-            const res = await postBranch(data);
-            console.log({res})
+            const res = await postBranch(data)
             if (res.status) {
               swrMutate('/branches')
               toast.success(res.message)
             }
           } catch (error) {
             console.log('Error post branch', error)
-          } finally{
-            methods.reset();
-            setDialogOpen(false)
-          }
-         
-        }}
-        handleSubmit={methods.handleSubmit}
-      >
-       <>
-       <QTextField
-          name='name'
-          control={methods.control}
-          fullWidth
-          required
-          placeholder={`${dictionary['content'].enter} ${dictionary['content'].branch} ${dictionary['content'].name}`}
-          label={dictionary['content'].name}
-        />
-       </>
-      </FormDialog>
-
-      <FormDialog
-        open={editDialogOpen}
-        setOpen={setEditDialogOpen}
-        title={`${dictionary['content'].edit} ${dictionary['content'].branch}`}
-        onSubmit={async (data:any) => {
-          try {
-            if (!objectToEdit) return
-            
-            
-            const res = await updateBranch(data, objectToEdit.id);
-            
-            const response = await res.json()
-            
-            if (response.status) {
-              // Update the local data
-              const updatedData = data?.map((branch: Branch) => 
-                branch.id === objectToEdit.id ? { ...branch, ...data } : branch
-              )
-              
-              setData(updatedData)
-              setFilteredData(updatedData)
-              
-              // Refresh data with SWR
-              swrMutate('/branches')
-              toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
-            }
-          } catch (error) {
-            console.log('Error updating leave', error)
-            toast.error(dictionary['content'].errorUpdatingLeave)
           } finally {
             methods.reset()
-            setEditDialogOpen(false)
-            setObjectToEdit(null)
+            setDialogOpen(false)
           }
         }}
         handleSubmit={methods.handleSubmit}
       >
         <>
+          {
+            user && user?.type == 'super admin' && 
+            <QTextField
+            name='created_by'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={dictionary['content'].company}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+            }}
+          >
+            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+            {companies.map(company => (
+                <MenuItem key={company.id} value={company.id}>
+                  {company.first_name} {company.last_name}
+                </MenuItem>
+              ))}
+          </QTextField>
+          }
           <QTextField
             name='name'
             control={methods.control}
@@ -522,8 +470,72 @@ const BranchListTable = ({ tableData }: { tableData?: Branches }) => {
         </>
       </FormDialog>
 
-       {/* Delete Confirmation Dialog */}
-       <ConfirmationDialog
+      <FormDialog
+        open={editDialogOpen}
+        setOpen={setEditDialogOpen}
+        title={`${dictionary['content'].edit} ${dictionary['content'].branch}`}
+        onSubmit={async (data: any) => {
+          try {
+            if (!objectToEdit) return
+            
+            const res = await updateBranch(data, objectToEdit.id)
+            if (res.status) {
+              // Update the local data
+              // const updatedData = data?.map((branch: Branch) => 
+              //   branch.id === objectToEdit.id ? { ...branch, ...data } : branch
+              // )
+              
+              
+              // Refresh data with SWR
+              swrMutate('/branches')
+              toast.success(res.message || dictionary['content'].leaveUpdatedSuccessfully)
+            }
+          } catch (error) {
+            console.log('Error updating branch', error)
+            toast.error(dictionary['content'].errorUpdatingLeave)
+          } finally {
+            methods.reset()
+            setEditDialogOpen(false)
+            setObjectToEdit(null)
+          }
+        }}
+        handleSubmit={methods.handleSubmit}
+      >
+        <>
+          {
+            user && user?.type == 'super admin' && 
+            <QTextField
+            name='created_by'
+            control={methods.control}
+            fullWidth
+            required
+            select
+            label={dictionary['content'].company}
+            rules={{
+              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+            }}
+            >
+            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+            {companies.map(company => (
+                <MenuItem key={company.id} value={company.id}>
+                  {company.first_name} {company.last_name}
+                </MenuItem>
+              ))}
+            </QTextField>
+          }
+          <QTextField
+            name='name'
+            control={methods.control}
+            fullWidth
+            required
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].branch} ${dictionary['content'].name}`}
+            label={dictionary['content'].name}
+          />
+        </>
+      </FormDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
         open={deleteDialogOpen} 
         setOpen={setDeleteDialogOpen}
         type='delete-branch'

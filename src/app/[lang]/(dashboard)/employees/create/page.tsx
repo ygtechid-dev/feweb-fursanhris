@@ -8,11 +8,12 @@ import PersonalDetail from '@/views/apps/employee/add/PersonalDetail'
 import CompanyDetail from '@/views/apps/employee/add/CompanyDetail'
 import BankAccount from '@/views/apps/employee/add/BankAccount'
 import Document from '@/views/apps/employee/add/Document'
-import { postEmployees } from '@/services/employeeService'
+import { postEmployees, postEmployeesWithFiles } from '@/services/employeeService'
 import { toast } from 'react-toastify'
 import moment from 'moment'                                               
 import { useParams, useRouter } from 'next/navigation'
 import { useSWRConfig } from 'swr'
+import { toFormData } from '@/utils/toFormData'
 
 
 const EmployeeAdd = () => {
@@ -40,7 +41,7 @@ const EmployeeAdd = () => {
       bank_identifier_code: '',
       branch_location: '', 
       tax_payer_id: '', 
-      document: { certificate: '', photo: '' }
+      documents: { certificate: '', photo: '' }
     }
   })
 
@@ -53,14 +54,13 @@ const EmployeeAdd = () => {
         dob: data.dob ? moment(data.dob).format('YYYY-MM-DD') : '',
         company_doj: data.company_doj ? moment(data.company_doj).format('YYYY-MM-DD') : ''
       }
-      console.log('Form submitted:', formattedData)
-      const res = await postEmployees(formattedData);
-      console.log({res})
+      
+      const res = await postEmployeesWithFiles(toFormData(formattedData));
 
       if (res.status) {
-        await mutate('/web/employees')
+        mutate('/web/employees')
         toast.success(res?.message)
-        router.push(`/${locale}/employees`)
+        router.replace(`/${locale}/employees`)
       }
 
     } catch (error) {

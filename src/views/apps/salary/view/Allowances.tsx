@@ -95,8 +95,6 @@ const Allowances = () => {
     setDialogMode(mode)
     if(allowance) setSelectedAllowance(allowance)
   
-
-
     if (mode == 'edit') {
       const formattedData = {
         ...allowance,
@@ -260,7 +258,7 @@ const Allowances = () => {
         open={dialogOpen}
         setOpen={setDialogOpen}
         // title={dictionary['content'].addNewBranch}
-        title={`Add New Allowance`}
+        title={`${dictionary['content'].add} ${dictionary['content'].new} ${dictionary['content'].allowance}`}
         onSubmit={async (data:any) => {
           try {
             const res = await postAllowance(parseInt(employeeId), {
@@ -289,7 +287,7 @@ const Allowances = () => {
           control={methods.control}
           fullWidth
           required
-          placeholder={`${dictionary['content'].enter} Title ${dictionary['content'].name}`}
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].title} ${dictionary['content'].name}`}
           // label={dictionary['content'].name}
           label={`Title`}
         />
@@ -299,13 +297,13 @@ const Allowances = () => {
             fullWidth
             required
             select
-            label={`Type`}
+            label={`${dictionary['content'].type}`}
             // disabled={dialogFetchLoading}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an type'
             }}
           >
-            <MenuItem value="0">{dictionary['content'].select} Type</MenuItem>
+            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].type}</MenuItem>
             <MenuItem value="permanent">Permanent</MenuItem>
             <MenuItem value="monthly">Monthly</MenuItem>
           </QTextField>
@@ -315,7 +313,7 @@ const Allowances = () => {
               name='month'
               control={methods.control}
               // label={dictionary['content'].companyDateofJoining}
-              label={`Month / Year`}
+              label={`${dictionary['content'].month} / ${dictionary['content'].year} `}
               required
               placeholderText="MM/yyyy"
               dateFormat="MM/yyyy"
@@ -334,7 +332,7 @@ const Allowances = () => {
             type='number'
             placeholder={`${dictionary['content'].enter} Amount`}
             // label={dictionary['content'].name}
-            label={`Amount`}
+            label={`${dictionary['content'].amount} `}
           />
           
        </>
@@ -347,7 +345,7 @@ const Allowances = () => {
         open={dialogOpen}
         setOpen={setDialogOpen}
         // title={dictionary['content'].addNewBranch}
-        title={`Edit Allowance`}
+        title={`${dictionary['content'].edit} ${dictionary['content'].allowance} `}
         onSubmit={async (data:any) => {
           try {
             if (!selectedAllowance) return
@@ -381,9 +379,9 @@ const Allowances = () => {
           control={methods.control}
           fullWidth
           required
-          placeholder={`${dictionary['content'].enter} Title ${dictionary['content'].name}`}
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].title}  ${dictionary['content'].name}`}
           // label={dictionary['content'].name}
-          label={`Title`}
+          label={`${dictionary['content'].title}`}
         />
         <QTextField
             name='type'
@@ -391,13 +389,13 @@ const Allowances = () => {
             fullWidth
             required
             select
-            label={`Type`}
+            label={`${dictionary['content'].type} `}
             // disabled={dialogFetchLoading}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an type'
             }}
           >
-            <MenuItem value="0">{dictionary['content'].select} Type</MenuItem>
+            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].type}</MenuItem>
             <MenuItem value="permanent">Permanent</MenuItem>
             <MenuItem value="monthly">Monthly</MenuItem>
           </QTextField>
@@ -406,7 +404,7 @@ const Allowances = () => {
               name='month'
               control={methods.control}
               // label={dictionary['content'].companyDateofJoining}
-              label={`Month / Year`}
+              label={`${dictionary['content'].month} / ${dictionary['content'].year} `}
               required
               placeholderText="MM/yyyy"
               dateFormat="MM/yyyy"
@@ -427,7 +425,7 @@ const Allowances = () => {
             type='number'
             placeholder={`${dictionary['content'].enter} Amount`}
             // label={dictionary['content'].name}
-            label={`Amount`}
+            label={`${dictionary['content'].amount}`}
           />
          
        </>

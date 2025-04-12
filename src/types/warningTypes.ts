@@ -1,3 +1,5 @@
+import { Company } from "./companyTypes";
+
 export interface Warning {
   id: number;
   subject: string;
@@ -36,6 +38,8 @@ export interface Warning {
     raw: string;
     formatted: string;
   };
+   created_by: number;
+  company?: Company;
 }
 
 export const defaultFormValuesWarning = {
@@ -74,5 +78,7 @@ export const defaultFormValuesWarning = {
   updated_at: {
     raw: '',
     formatted: ''
-  }
+  },
+  created_by: 0,
+  company: undefined, 
 };

@@ -51,7 +51,9 @@ const AddUserDrawer = (props: Props) => {
   // States
   const [formData, setFormData] = useState<any>(initialData)
   
+  
   const [isLoading, setIsLoading] = useState(false)
+
 
   // Hooks
   const { mutate } = useSWRConfig()
@@ -110,8 +112,6 @@ const AddUserDrawer = (props: Props) => {
     });
   }
 
-  
-
   return (
     <Drawer
       open={open}
@@ -135,7 +135,7 @@ const AddUserDrawer = (props: Props) => {
               control={methods.control}
               fullWidth
               required
-              placeholder='Enter first name'
+              placeholder={`${dictionary['content'].enter} ${dictionary['content'].firstName}`}
               rules={{ 
                 minLength: {
                   value: 3,
@@ -150,7 +150,7 @@ const AddUserDrawer = (props: Props) => {
               control={methods.control}
               fullWidth
               required
-              placeholder='Enter last name'
+              placeholder={`${dictionary['content'].enter} ${dictionary['content'].lastName}`}
               rules={{ 
                 minLength: {
                   value: 3,
@@ -165,7 +165,7 @@ const AddUserDrawer = (props: Props) => {
               control={methods.control}
               fullWidth
               required
-              placeholder='Enter email'
+              placeholder={`${dictionary['content'].enter} ${dictionary['content'].email}`}
               type='email' 
               rules={{ 
                 pattern: {
@@ -181,7 +181,7 @@ const AddUserDrawer = (props: Props) => {
               control={methods.control}
               fullWidth
               required
-              placeholder='Enter password'
+              placeholder={`${dictionary['content'].enter} ${dictionary['content'].password}`}
               type='password' 
               rules={{ 
                 minLength: {
@@ -201,11 +201,11 @@ const AddUserDrawer = (props: Props) => {
               control={methods.control}
               fullWidth
               required
-              placeholder='Enter Role'
+              placeholder={`${dictionary['content'].enter} ${dictionary['content'].role}`}
               label={dictionary['content'].role}
               select
             >
-              <MenuItem value="">Select role</MenuItem>
+              <MenuItem value="">{dictionary['content'].select} {dictionary['content'].role}</MenuItem>
               {roles.map(role => (
                 <MenuItem key={role.id} value={role.id}>
                   {role.name}

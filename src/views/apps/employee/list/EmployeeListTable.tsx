@@ -62,6 +62,7 @@ import { deleteEmployee } from '@/services/employeeService'
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import { useAuth } from '@/components/AuthProvider'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -148,6 +149,8 @@ const userStatusObj: UserStatusType = {
 const columnHelper = createColumnHelper<UsersTypeWithAction>()
 
 const EmployeeListTable = ({ tableData }: { tableData?: Employee[] }) => {
+  const { user } = useAuth()
+
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -204,138 +207,135 @@ const EmployeeListTable = ({ tableData }: { tableData?: Employee[] }) => {
    }
 
   const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      columnHelper.accessor('employee_id', {
-        header: dictionary['content'].employeeId,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-               {row.original?.employee_id}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+    () => {
+      const visibleColumns:ColumnDef<UsersTypeWithAction, any>[] = [
+         {
+                 id: 'select',
+                 header: ({ table }: { table: any }) => (
+                   <Checkbox
+                     {...{
+                       checked: table.getIsAllRowsSelected(),
+                       indeterminate: table.getIsSomeRowsSelected(),
+                       onChange: table.getToggleAllRowsSelectedHandler()
+                     }}
+                   />
+                 ),
+                 cell: ({ row }: { row: any }) => (
+                   <Checkbox
+                     {...{
+                       checked: row.getIsSelected(),
+                       disabled: !row.getCanSelect(),
+                       indeterminate: row.getIsSomeSelected(),
+                       onChange: row.getToggleSelectedHandler()
+                     }}
+                   />
+                 )
+          },
+        columnHelper.accessor('employee_id', {
+          header: dictionary['content'].employeeId,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                 {row.original?.employee_id}
+                </Typography>
+                {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('name', {
-        header: dictionary['content'].name,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.name}
-              </Typography>
+          )
+        }),
+        columnHelper.accessor('name', {
+          header: dictionary['content'].name,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row.original.name}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-       columnHelper.accessor('email', {
-        header: dictionary['content'].email,
-        cell: ({ row }) => (
-          <Typography className='' color='text.primary'>
-            {row.original.email}
-          </Typography>
-        )
-      }),
-       columnHelper.accessor('branch', {
-        header: dictionary['content'].branch,
-        cell: ({ row }) => (
-          <Typography className='capitalize' color='text.primary'>
-            {row.original?.branch?.name}
-          </Typography>
-        )
-      }),
-       columnHelper.accessor('department', {
-        header: dictionary['content'].department,
-        cell: ({ row }) => (
-          <Typography className='capitalize' color='text.primary'>
-            {row.original?.department?.name}
-          </Typography>
-        )
-      }),
-       columnHelper.accessor('designation', {
-        header: dictionary['content'].designation,
-        cell: ({ row }) => (
-          <Typography className='capitalize' color='text.primary'>
-           {row.original?.designation?.name}
-          </Typography>
-        )
-      }),
-       columnHelper.accessor('company_doj', {
-        header: dictionary['content'].joiningDate,
-        cell: ({ row }) => (
-          <Typography className='capitalize' color='text.primary'>
-            {row.original?.company_doj}
-          </Typography>
-        )
-      }),
+          )
+        }),
+         columnHelper.accessor('email', {
+          header: dictionary['content'].email,
+          cell: ({ row }) => (
+            <Typography className='' color='text.primary'>
+              {row.original.email}
+            </Typography>
+          )
+        }),
+         columnHelper.accessor('branch', {
+          header: dictionary['content'].branch,
+          cell: ({ row }) => (
+            <Typography className='capitalize' color='text.primary'>
+              {row.original?.branch?.name}
+            </Typography>
+          )
+        }),
+         columnHelper.accessor('department', {
+          header: dictionary['content'].department,
+          cell: ({ row }) => (
+            <Typography className='capitalize' color='text.primary'>
+              {row.original?.department?.name}
+            </Typography>
+          )
+        }),
+         columnHelper.accessor('designation', {
+          header: dictionary['content'].designation,
+          cell: ({ row }) => (
+            <Typography className='capitalize' color='text.primary'>
+             {row.original?.designation?.name}
+            </Typography>
+          )
+        }),
+         columnHelper.accessor('company_doj', {
+          header: dictionary['content'].joiningDate,
+          cell: ({ row }) => (
+            <Typography className='capitalize' color='text.primary'>
+              {row.original?.company_doj}
+            </Typography>
+          )
+        }),
+        
+        columnHelper.accessor('action', {
+          header: dictionary['content'].action,
+          cell: ({ row }) => (
+            <div className='flex items-center'>
+              <IconButton onClick={() => router.push(`/${locale}/employees/${row.original?.id}/edit`)}>
+                <i className='tabler-edit text-textSecondary' />
+              </IconButton>
+              <IconButton 
+                onClick={() => handleDeleteDialogOpen(row.original)}
+                disabled={isDeleting}
+              >
+                <i className='tabler-trash text-textSecondary' />
+              </IconButton>
+             
+            </div>
+          ),
+          enableSorting: false
+        })
+      ]; if (user?.type === 'super admin') {
+        visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+          header: 'Company',
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                </Typography>
+              </div>
+            </div>
+          )
+        }) as ColumnDef<UsersTypeWithAction, any>)
+      }
       
-      columnHelper.accessor('action', {
-        header: dictionary['content'].action,
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-            <IconButton onClick={() => router.push(`/${locale}/employees/${row.original?.id}/edit`)}>
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton 
-              onClick={() => handleDeleteDialogOpen(row.original)}
-              disabled={isDeleting}
-            >
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-textSecondary' />
-              </Link>
-            </IconButton> */}
-            {/* <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'tabler-download',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+      return visibleColumns
+    },
+    
+    [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -377,11 +377,15 @@ const EmployeeListTable = ({ tableData }: { tableData?: Employee[] }) => {
     // }
   }
 
+  useEffect(() => {
+    setData(...[tableData])
+  }, [tableData])
+
   return (
     <>
       <Card>
         <CardHeader title={dictionary['content'].employeeList} className='pbe-4' />
-        {/* <TableFilters setData={setFilteredData} tableData={data} /> */}
+        <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select

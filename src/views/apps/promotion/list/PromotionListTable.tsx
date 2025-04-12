@@ -70,6 +70,7 @@ import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
 import moment from 'moment'
 import { Designation } from '@/types/designationTypes'
 import { getDesignations } from '@/services/designationService'
+import { useAuth } from '@/components/AuthProvider'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -135,6 +136,8 @@ const columnHelper = createColumnHelper<PromotionWithAction>()
 type DialogMode = 'add' | 'edit' | 'delete' | null
 
 const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
+  const { user } = useAuth()
+  
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -234,31 +237,32 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
   }
   
   const columns = useMemo<ColumnDef<PromotionWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
+    () => {
+      const visibleColumns: ColumnDef<PromotionWithAction, any>[] = [
+        {
+          id: 'select',
+          header: ({ table }: { table: any }) => (
+            <Checkbox
+              {...{
+                checked: table.getIsAllRowsSelected(),
+                indeterminate: table.getIsSomeRowsSelected(),
+                onChange: table.getToggleAllRowsSelectedHandler()
+              }}
+            />
+          ),
+          cell: ({ row }: { row: any }) => (
+            <Checkbox
+              {...{
+                checked: row.getIsSelected(),
+                disabled: !row.getCanSelect(),
+                indeterminate: row.getIsSomeSelected(),
+                onChange: row.getToggleSelectedHandler()
+              }}
+            />
+          )
+        },
       columnHelper.accessor('employee_name', {
-        header: 'Employee',
+        header: dictionary['content'].employee,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
@@ -272,7 +276,7 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
         )
       }),
       columnHelper.accessor('designation_name', {
-        header: 'Designation',
+        header: dictionary['content'].designation,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
@@ -286,7 +290,7 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
         )
       }),
       columnHelper.accessor('promotion_title', {
-        header: 'Promotion Title',
+        header: dictionary['content'].promotionTitle,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
@@ -300,7 +304,7 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
         )
       }),
       columnHelper.accessor('promotion_date', {
-        header: 'Promotion Date',
+        header:  dictionary['content'].promotionDate,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
@@ -314,7 +318,7 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
         )
       }),
       columnHelper.accessor('description', {
-        header: 'Description',
+        header:  dictionary['content'].description,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
@@ -328,7 +332,7 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
         )
       }),
       columnHelper.accessor('action', {
-        header: 'Action',
+        header:  dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
              <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
@@ -341,9 +345,27 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
         ),
         enableSorting: false
       })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+    ];
+   
+         if (user?.type === 'super admin') {
+           visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+             header:  dictionary['content'].company,
+             cell: ({ row }) => (
+               <div className='flex items-center gap-4'>
+                 <div className='flex flex-col'>
+                   <Typography color='text.primary' className='font-medium'>
+                     {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                   </Typography>
+                 </div>
+               </div>
+             )
+           }) as ColumnDef<PromotionWithAction, any>)
+         }
+         
+         return visibleColumns
+       },
+       
+       [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -379,7 +401,7 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
   return (
     <>
       <Card>
-        <CardHeader title='Promotion List' className='pbe-4' />
+        <CardHeader title={dictionary['content'].promotionList} className='pbe-4' />
         <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -396,7 +418,7 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search Here ...'
+              placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
             {/* <Button
@@ -413,7 +435,7 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
               onClick={() => handleOpenDialog('add' )}
               className='max-sm:is-full'
             >
-              Add Promotion
+              {dictionary['content'].addPromotion}
             </Button>
           </div>
         </div>
@@ -516,7 +538,7 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
             fullWidth
             required
             select
-            label={`Employee`}
+            label={dictionary['content'].employee}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
             }}
@@ -534,7 +556,7 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
             fullWidth
             required
             select
-            label={`Position`}
+            label={dictionary['content'].designation}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an position'
             }}
@@ -552,12 +574,12 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
             fullWidth
             required
             placeholder={`${dictionary['content'].enter} Promotion Title`}
-            label={`Promotion Title`}
+            label={dictionary['content'].promotionTitle}
           />
            <QReactDatepicker
             name="promotion_date"
             control={methods.control}
-            label={'Promotion Date'}
+            label={dictionary['content'].promotionDate}
             required
           />
           <QTextField
@@ -566,7 +588,7 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
             fullWidth
             required
             placeholder={`${dictionary['content'].enter} Description`}
-            label={`Description`}
+            label={dictionary['content'].description}
             multiline={true}
           />
        </>
@@ -577,7 +599,7 @@ const PromotionListTable = ({ tableData }: { tableData?: Promotion[] }) => {
         <FormDialog
           open={dialogOpen}
           setOpen={setDialogOpen}
-          title={`Edit Promotion`}
+          title={dictionary['content'].editPromotion}
           onSubmit={async (data:Promotion) => {
             try {
               if (!selectedPromotion) return

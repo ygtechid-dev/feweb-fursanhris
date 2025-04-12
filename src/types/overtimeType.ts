@@ -1,4 +1,5 @@
 import { Employee, User } from "./apps/userTypes";
+import { Company } from "./companyTypes";
 
 export interface Overtime {
     id: number;
@@ -20,6 +21,7 @@ export interface Overtime {
     employee: Employee;
     approver: User;
     rejecter: User | null;
+    company?: Company;
   }
 
 
@@ -34,4 +36,6 @@ export const defaultFormValuesOvertime =  {
   remark: '',
   status: 'pending',
   rejection_reason: '',
+  created_by: 0, 
+  company: undefined, 
 }

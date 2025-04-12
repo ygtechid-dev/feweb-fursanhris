@@ -1,3 +1,5 @@
+import { Company } from "./companyTypes";
+
 export interface Promotion {
   id: number;
   employee_id: number;
@@ -10,6 +12,8 @@ export interface Promotion {
   description: string;
   created_at: string;
   updated_at: string;
+  created_by: number;
+    company?: Company;
 }
 
 export const defaultFormValuesPromotion = {
@@ -22,5 +26,7 @@ export const defaultFormValuesPromotion = {
   promotion_date: '',
   description: '',
   created_at: '',
-  updated_at: ''
+  updated_at: '',
+  created_by: 0,
+  company: undefined, 
 };

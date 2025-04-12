@@ -1,5 +1,6 @@
 // services/employeeService.ts
 import axiosInstance from '@/libs/axios';
+import axiosFileInstance from '@/libs/axiosFileInstance';
 import { Branch, Department, Designation, Employee, EmployeeFormData } from '@/types/apps/userTypes';
 
 
@@ -31,10 +32,21 @@ export const getEmployees = async (params?: {
 
 export const postEmployees = async (datas:any): Promise<any> => {
   try {
-    const response = await axiosInstance.post('/web/employees', { ...datas });
+    const response = await axiosInstance.post('/web/employees', datas);
     return response?.data;
   } catch (error) {
     console.error('Error fetching employees:', error);
+    throw error;
+  }
+};
+
+// For file uploads
+export const postEmployeesWithFiles = async (formData: FormData): Promise<any> => {
+  try {
+    const response = await axiosFileInstance.post('/web/employees', formData);
+    return response?.data;
+  } catch (error) {
+    console.error('Error creating employee with files:', error);
     throw error;
   }
 };
@@ -47,6 +59,11 @@ export const getEmployeeById = async (id: string) => {
 
 export const updateEmployee = async (id: string, data: EmployeeFormData) => {
   const response = await axiosInstance.put(`/web/employees/${id}`, data)
+  return response?.data
+}
+
+export const updateEmployeeSalary = async (id: number, data: any) => {
+  const response = await axiosInstance.put(`/web/employees/${id}/update-employee-salary`, data)
   return response?.data
 }
 

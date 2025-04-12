@@ -57,6 +57,7 @@ import Overtimes from './Overtimes'
 import EmployeeSalary from './EmployeeSalary'
 import axiosInstance from '@/libs/axios'
 import { snakeCaseToTitleCase } from '@/utils/snakeCaseToTitleCase'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -131,6 +132,7 @@ const SalaryDetailTable = ({ tableData }: { tableData?: UsersType[] }) => {
 
   // Hooks
   const { lang: locale } = useParams()
+  const { dictionary } = useDictionary()
 
   const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
     () => [
@@ -298,11 +300,9 @@ const SalaryDetailTable = ({ tableData }: { tableData?: UsersType[] }) => {
   const fetchEmployee = async () => {
     if (!employeeId) return
     
-    
     try {
       const response = await axiosInstance.get(`/web/employees/${employeeId}`)
       setEmployee(response.data?.data?.employee)
-      console.log(response.data?.data?.employee)
     } catch (err) {
       console.error('Failed to fetch allowances:', err)
     } 
@@ -323,7 +323,7 @@ const SalaryDetailTable = ({ tableData }: { tableData?: UsersType[] }) => {
           {/* <CardHeader title='Galen Slixby Salary Components' className='pbe-4'/> */}
           <div className="flex justify-between px-5 py-4">
           <Typography variant='h4' className='pbe-1 '>
-          <b>{snakeCaseToTitleCase(employee?.name || '')}</b> Salary Components
+          <b>{snakeCaseToTitleCase(employee?.name || '')}</b> {dictionary['content'].salaryComponents}
           </Typography>
           <Button
                 variant='contained'
@@ -331,13 +331,13 @@ const SalaryDetailTable = ({ tableData }: { tableData?: UsersType[] }) => {
                 onClick={() => router.push(`/${locale}/salary`)}
                 className='bg-secondary '
               >
-                Back
+                {dictionary['content'].back}
               </Button>
           </div>
         </Card>
       </Grid>
       <Grid item xs={12} sm={6}>
-       <EmployeeSalary employee={employee || undefined}/>
+       <EmployeeSalary employee={employee || undefined} fetchEmployee={fetchEmployee}/>
       </Grid>
       <Grid item xs={12} sm={6}>
        <Allowances/>

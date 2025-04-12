@@ -143,7 +143,7 @@ const Overtimes = () => {
    const columns = useMemo<ColumnDef<TableWithAction, any>[]>(
      () => [
        columnHelper.accessor('overtime_date', {
-         header: 'Overtime Date',
+         header: dictionary['content'].overtimeDate,
          cell: ({ row }) => (
            <div className='flex items-center gap-3'>
              <div className='flex flex-col items-start'>
@@ -155,7 +155,7 @@ const Overtimes = () => {
          )
        }),
        columnHelper.accessor('hours', {
-         header: 'Overtime Hours',
+         header: dictionary['content'].overtimeHours,
          cell: ({ row }) => (
            <div className='flex items-center gap-3'>
              <div className='flex flex-col items-start'>
@@ -167,7 +167,7 @@ const Overtimes = () => {
          )
        }),
        columnHelper.accessor('rate', {
-         header: 'Rate',
+         header: dictionary['content'].rate,
          cell: ({ row }) => (
            <div className='flex items-center gap-3'>
              <div className='flex flex-col items-start'>
@@ -179,7 +179,7 @@ const Overtimes = () => {
          )
        }),
        columnHelper.accessor('start_time', {
-         header: 'Start Time',
+         header: dictionary['content'].clockIn,
          cell: ({ row }) => (
            <div className='flex items-center gap-3'>
              <div className='flex flex-col items-start'>
@@ -191,7 +191,7 @@ const Overtimes = () => {
          )
        }),
        columnHelper.accessor('end_time', {
-         header: 'End Time',
+         header: dictionary['content'].clockOut,
          cell: ({ row }) => (
            <div className='flex items-center gap-3'>
              <div className='flex flex-col items-start'>
@@ -203,7 +203,7 @@ const Overtimes = () => {
          )
        }),
        columnHelper.accessor('action', {
-        header: 'Action',
+        header: dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
             <OptionMenu
@@ -241,7 +241,7 @@ const Overtimes = () => {
 return (
   <Card>
     <CardHeader 
-      title='Overtime' 
+      title={dictionary['content'].overtime}
       action={
         <Button
           variant='contained'
@@ -299,7 +299,7 @@ return (
         <QReactDatepicker
           name="overtime_date"
           control={methods.control}
-          label={'Overtime Date'}
+          label={dictionary['content'].overtimeDate}
           required
         />
         <div className="flex space-x-4">
@@ -307,7 +307,7 @@ return (
                 <QReactDatepicker
                   name="start_time"
                   control={methods.control}
-                  label={'Start Time'}
+                  label={dictionary['content'].clockIn}
                   required
                   showTimeSelectOnly={true}
                   showTimeSelect={true}
@@ -321,7 +321,7 @@ return (
                 <QReactDatepicker
                   name="end_time"
                   control={methods.control}
-                  label={ 'End Time'}
+                  label={dictionary['content'].clockOut}
                   required
                   showTimeSelectOnly={true}
                   showTimeSelect={true}
@@ -339,7 +339,7 @@ return (
           type='number'
           required
           placeholder={`${dictionary['content'].enter} Rate`}
-          label={`Rate`}
+          label={dictionary['content'].rate}
         />
        <QTextField
           name='remark'
@@ -390,7 +390,7 @@ return (
         <QReactDatepicker
           name="overtime_date"
           control={methods.control}
-          label={'Overtime Date'}
+          label={dictionary['content'].overtimeDate}
           required
         />
 
@@ -399,7 +399,7 @@ return (
                 <QReactDatepicker
                   name="start_time"
                   control={methods.control}
-                  label={'Start Time'}
+                  label={dictionary['content'].clockIn}
                   required
                   showTimeSelectOnly={true}
                   showTimeSelect={true}
@@ -413,7 +413,7 @@ return (
                 <QReactDatepicker
                   name="end_time"
                   control={methods.control}
-                  label={ 'End Time'}
+                  label={dictionary['content'].clockOut}
                   required
                   showTimeSelectOnly={true}
                   showTimeSelect={true}

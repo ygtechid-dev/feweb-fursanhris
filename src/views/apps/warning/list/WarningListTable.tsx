@@ -69,6 +69,7 @@ import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
 import moment from 'moment'
 import QTextField from '@/@core/components/mui/QTextField'
 import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
+import { useAuth } from '@/components/AuthProvider'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -135,6 +136,8 @@ const columnHelper = createColumnHelper<WarningWithAction>()
 type DialogMode = 'add' | 'edit' | 'delete' | null
 
 const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
+  const { user } = useAuth()
+  
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -235,116 +238,135 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
     }
 
   const columns = useMemo<ColumnDef<WarningWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      columnHelper.accessor('warning_by.name', {
-        header: 'Warning By',
+    () => {
+      const visibleColumns:ColumnDef<WarningWithAction, any>[] = [
+        {
+         id: 'select',
+         header: ({ table }: { table: any }) => (
+           <Checkbox
+             {...{
+               checked: table.getIsAllRowsSelected(),
+               indeterminate: table.getIsSomeRowsSelected(),
+               onChange: table.getToggleAllRowsSelectedHandler()
+             }}
+           />
+         ),
+         cell: ({ row }: { row: any }) => (
+           <Checkbox
+             {...{
+               checked: row.getIsSelected(),
+               disabled: !row.getCanSelect(),
+               indeterminate: row.getIsSomeSelected(),
+               onChange: row.getToggleSelectedHandler()
+             }}
+           />
+         )
+       },
+       columnHelper.accessor('warning_by.name', {
+         header: dictionary['content'].warningBy,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.warning_by.name}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('warning_to.name', {
+         header: dictionary['content'].warningTo,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.warning_to.name}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('subject', {
+         header:  dictionary['content'].subject,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.subject}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('warning_date.raw', {
+         header:  dictionary['content'].warningDate,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.warning_date.raw}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('description', {
+         header:  dictionary['content'].description,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.description}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('action', {
+         header:  dictionary['content'].action,
+         cell: ({ row }) => (
+           <div className='flex items-center'>
+             <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
+               <i className='tabler-edit text-textSecondary' />
+             </IconButton>
+             <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
+               <i className='tabler-trash text-textSecondary' />
+             </IconButton>
+           </div>
+         ),
+         enableSorting: false
+       })
+     ];
+   
+     if (user?.type === 'super admin') {
+      visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+        header:  dictionary['content'].company,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.warning_by.name}
+                {row?.original?.company?.first_name} {row?.original?.company?.last_name}
               </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
-      }),
-      columnHelper.accessor('warning_to.name', {
-        header: 'Warning To',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.warning_to.name}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('subject', {
-        header: 'Subject',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.subject}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('warning_date.raw', {
-        header: 'Warning Date',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.warning_date.raw}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('description', {
-        header: 'Description',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.description}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('action', {
-        header: 'Action',
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-            <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+      }) as ColumnDef<WarningWithAction, any>)
+    }
+    
+    return visibleColumns
+  },
+  
+  [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -379,7 +401,7 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
   return (
     <>
       <Card>
-        <CardHeader title='Warning List' className='pbe-4' />
+        <CardHeader title={dictionary['content'].warningList} className='pbe-4' />
         <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -396,7 +418,7 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search Here ...'
+              placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
             {/* <Button
@@ -413,7 +435,7 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
               onClick={() => handleOpenDialog('add' )}
               className='max-sm:is-full'
             >
-              Add Warning
+             {dictionary['content'].addWarning}
             </Button>
           </div>
         </div>
@@ -487,7 +509,7 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
         <FormDialog
         open={dialogOpen}
         setOpen={setDialogOpen}
-        title={'Add new Warning'}
+        title= {dictionary['content'].addWarning}
         onSubmit={async (data:Warning) => {
           try {
             const res = await postWarning({
@@ -518,7 +540,7 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
             fullWidth
             required
             select
-            label={`Complaint From`}
+            label={dictionary['content'].warningBy}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
             }}
@@ -536,7 +558,7 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
             fullWidth
             required
             select
-            label={`Complaint Against`}
+            label={dictionary['content'].warningTo}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
             }}
@@ -559,7 +581,7 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
            <QReactDatepicker
             name="warning_date_raw"
             control={methods.control}
-            label={'Complaint Date'}
+            label={dictionary['content'].warningDate}
             required
           />
           <QTextField
@@ -568,7 +590,7 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
             fullWidth
             required
             placeholder={`${dictionary['content'].enter} Description`}
-            label={`Description`}
+            label={dictionary['content'].description}
             multiline={true}
           />
        </>
@@ -579,7 +601,7 @@ const WarningListTable = ({ tableData }: { tableData?: Warning[] }) => {
         <FormDialog
           open={dialogOpen}
           setOpen={setDialogOpen}
-          title={`Edit Warning`}
+          title={dictionary['content'].editWarning}
           onSubmit={async (data:Warning) => {
             try {
               if (!selectedWarning) return

@@ -1,4 +1,5 @@
 import { Employee } from "./apps/userTypes";
+import { Company } from "./companyTypes";
 
 interface Member {
     id: number;
@@ -11,7 +12,6 @@ interface Member {
     assigned_at?: string;
   }
   
-  // In projectTypes.ts
 export interface Project {
   id: number;
   name: string;
@@ -27,6 +27,8 @@ export interface Project {
   created_at: string;
   updated_at: string;
   selected_member?: Member[]; // Add this for form handling
+  created_by: number;
+  company?: Company;
 }
 
 export const defaultFormValuesProject = {
@@ -42,4 +44,6 @@ export const defaultFormValuesProject = {
   completed_tasks: 0,
   created_at: '',
   updated_at: '',
+  created_by: 0,
+  company: undefined, 
 };

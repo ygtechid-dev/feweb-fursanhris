@@ -69,6 +69,8 @@ import { getDepartments } from '@/services/departmentService'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import QTextField from '@/@core/components/mui/QTextField'
 import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
+import { useAuth } from '@/components/AuthProvider'
+import useCompanies from '@/hooks/useCompanies'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -155,6 +157,10 @@ const userStatusObj: UserStatusType = {
 const columnHelper = createColumnHelper<DesignationWithAction>()
 
 const DesignationListTable = ({ tableData }: { tableData?: Designation[] }) => {
+  const { user } = useAuth()
+  const { companies } = useCompanies()
+    
+  
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -191,96 +197,100 @@ useEffect(() => {
 
 
   const columns = useMemo<ColumnDef<DesignationWithAction, any>[]>(
-    () => [
+    () => {
+      const visibleColumns:ColumnDef<DesignationWithAction, any>[] = [
       {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      // columnHelper.accessor('fullName', {
-      //   header: 'Company',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-4'>
-      //       {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-      //       <div className='flex flex-col'>
-      //         <Typography color='text.primary' className='font-medium'>
-      //           ABC
-      //         </Typography>
-      //         {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-      //       </div>
-      //     </div>
-      //   )
-      // }),
-      columnHelper.accessor('department.branch.name', {
-        header: dictionary['content'].branch,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.department.branch.name}
-              </Typography>
+          id: 'select',
+          header: ({ table }: { table: any }) => (
+            <Checkbox
+              {...{
+                checked: table.getIsAllRowsSelected(),
+                indeterminate: table.getIsSomeRowsSelected(),
+                onChange: table.getToggleAllRowsSelectedHandler()
+              }}
+            />
+          ),
+          cell: ({ row }: { row: any }) => (
+            <Checkbox
+              {...{
+                checked: row.getIsSelected(),
+                disabled: !row.getCanSelect(),
+                indeterminate: row.getIsSomeSelected(),
+                onChange: row.getToggleSelectedHandler()
+              }}
+            />
+          )
+        },
+        columnHelper.accessor('department.branch.name', {
+          header: dictionary['content'].branch,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row.original.department.branch.name}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('department.name', {
-        header: dictionary['content'].department,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.department.name}
-              </Typography>
+          )
+        }),
+        columnHelper.accessor('department.name', {
+          header: dictionary['content'].department,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row.original.department.name}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('name', {
-        header: dictionary['content'].designation,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.name}
-              </Typography>
+          )
+        }),
+        columnHelper.accessor('name', {
+          header: dictionary['content'].designation,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row.original.name}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('action', {
-        header: dictionary['content'].action,
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-           <IconButton  onClick={() => handleEditClick(row.original)}>
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton onClick={() => handleDeleteClick(row.original)}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+          )
+        }),
+        columnHelper.accessor('action', {
+          header: dictionary['content'].action,
+          cell: ({ row }) => (
+            <div className='flex items-center'>
+             <IconButton  onClick={() => handleEditClick(row.original)}>
+                <i className='tabler-edit text-textSecondary' />
+              </IconButton>
+              <IconButton onClick={() => handleDeleteClick(row.original)}>
+                <i className='tabler-trash text-textSecondary' />
+              </IconButton>
+            </div>
+          ),
+          enableSorting: false
+        })
+      ];
+    if (user?.type === 'super admin') {
+        visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+          header: 'Company',
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                </Typography>
+              </div>
+            </div>
+          )
+        }) as ColumnDef<DesignationWithAction, any>)
+      }
+      
+      return visibleColumns
+    },
+    
+    [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -401,7 +411,7 @@ useEffect(() => {
     <>
       <Card>
         <CardHeader title={dictionary['content'].designationList} className='pbe-4' />
-        {/* <TableFilters setData={setFilteredData} tableData={data} /> */}
+        <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select
@@ -511,7 +521,7 @@ useEffect(() => {
         onSubmit={async (data:any) => {
           try {
             const res = await postPosition(data);
-            console.log({res})
+
             if (res.status) {
               swrMutate('/designations')
               toast.success(res.message)
@@ -527,6 +537,50 @@ useEffect(() => {
         handleSubmit={methods.handleSubmit}
       >
        <>
+       {
+          user && user?.type == 'super admin' && 
+          <QTextField
+          name='created_by'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].company}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+          }}
+          onChange={async (value) => {
+            let branchess: Branch[] = [];
+            try {
+              setDialogFetchLoading(true)
+              const [branchesResponse] = await Promise.all([
+                getBranches(),
+              ])
+              
+              branchess = branchesResponse?.data || []
+              
+              methods.setValue('branch_id', 0)
+              methods.setValue('department_id', 0)
+              setBranches((prev) => {
+                const filteredBranches = value != "0" ? branchess.filter((p) => p.created_by == value) : branchess;
+                return filteredBranches;
+              })
+            } catch (error) {
+              console.error('Error loading dialog data:', error)
+            } finally {
+              setDialogFetchLoading(false)
+            }
+
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+          {companies.map(company => (
+              <MenuItem key={company.id} value={company.id}>
+                {company.first_name} {company.last_name}
+              </MenuItem>
+            ))}
+        </QTextField>
+        }
        <QTextField
             name='branch_id'
             control={methods.control}
@@ -584,23 +638,12 @@ useEffect(() => {
           try {
             if (!objectToEdit) return
             
-            
             const res = await updatePosition(data, objectToEdit.id);
             
-            const response = await res.json()
-            
-            if (response.status) {
-              // Update the local data
-              const updatedData = data?.map((branch: Designation) => 
-                branch.id === objectToEdit.id ? { ...branch, ...data } : branch
-              )
-              
-              setData(updatedData)
-              setFilteredData(updatedData)
-              
+            if (res.status) {
               // Refresh data with SWR
               swrMutate('/designations')
-              toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
+              toast.success(res.message || dictionary['content'].leaveUpdatedSuccessfully)
             }
           } catch (error) {
             console.log('Error updating leave', error)
@@ -614,6 +657,50 @@ useEffect(() => {
         handleSubmit={methods.handleSubmit}
       >
         <>
+        {
+          user && user?.type == 'super admin' && 
+          <QTextField
+          name='created_by'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].company}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+          }}
+          onChange={async (value) => {
+            let branchess: Branch[] = [];
+            try {
+              setDialogFetchLoading(true)
+              const [branchesResponse] = await Promise.all([
+                getBranches(),
+              ])
+              
+              branchess = branchesResponse?.data || []
+              
+              methods.setValue('branch_id', 0)
+              methods.setValue('department_id', 0)
+              setBranches((prev) => {
+                const filteredBranches = value != "0" ? branchess.filter((p) => p.created_by == value) : branchess;
+                return filteredBranches;
+              })
+            } catch (error) {
+              console.error('Error loading dialog data:', error)
+            } finally {
+              setDialogFetchLoading(false)
+            }
+
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+          {companies.map(company => (
+              <MenuItem key={company.id} value={company.id}>
+                {company.first_name} {company.last_name}
+              </MenuItem>
+            ))}
+        </QTextField>
+        }
         <QTextField
             name='branch_id'
             control={methods.control}
@@ -627,9 +714,15 @@ useEffect(() => {
             }}
           >
             <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].branch}</MenuItem>
-            {branches.map((branch) => (
+            {user && user?.type != 'super admin' && branches.map((branch) => (
               <MenuItem key={branch.id} value={branch.id}>
                 {branch.name}
+              </MenuItem>
+            ))}
+
+            {methods.watch('created_by') && branches.filter((object) => object.created_by == methods.getValues('created_by')).map((obj) => (
+              <MenuItem key={obj.id} value={obj.id}>
+                {obj.name}
               </MenuItem>
             ))}
           </QTextField>
@@ -647,7 +740,7 @@ useEffect(() => {
             }}
           >
             <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].department}</MenuItem>
-            {departments.map((obj) => (
+            {methods.watch('branch_id') && departments.filter((object) => object.branch_id == methods.getValues('branch_id')).map((obj) => (
               <MenuItem key={obj.id} value={obj.id}>
                 {obj.name}
               </MenuItem>

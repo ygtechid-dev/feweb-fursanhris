@@ -99,7 +99,6 @@ return (
                 name='password'
                 control={control}
                 fullWidth
-                required
                 placeholder='Enter password'
                 type='password' 
                 rules={{ 

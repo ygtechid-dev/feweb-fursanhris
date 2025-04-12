@@ -1,3 +1,5 @@
+import { Company } from "./companyTypes";
+
 export interface Resignation {
   id: number;
   employee_id: number;
@@ -10,6 +12,8 @@ export interface Resignation {
   status: string;
   created_at: string;
   created_at_formatted: string;
+  created_by: number;
+  company?: Company;
 }
 
 export const defaultFormValuesResignation = {
@@ -22,5 +26,7 @@ export const defaultFormValuesResignation = {
   description: '',
   status: '',
   created_at: '',
-  created_at_formatted: ''
+  created_at_formatted: '',
+  created_by: 0,
+  company: undefined, 
 }

@@ -1,58 +1,61 @@
 
 'use client'
 import CustomAvatar from "@/@core/components/mui/Avatar"
+import { useDictionary } from "@/components/dictionary-provider/DictionaryContext"
 import { getCardStats } from "@/services/dashboardService"
 import { CardStatsHorizontalWithBorderProps } from "@/types/pages/widgetTypes"
 import { Card, CardContent, Grid, Typography } from "@mui/material"
 import classNames from "classnames"
 import { useEffect, useState } from "react"
 
-let statsHorizontalWithBorderObj: CardStatsHorizontalWithBorderProps[] = [
-  {
-    title: 'Total Employee',
-    stats: 0,
-    trendNumber: 18.2,
-    avatarIcon: 'tabler-users',
-    color: 'primary'
-  },
-  {
-    title: 'Total Branches',
-    stats: 0,
-    trendNumber: -8.7,
-    avatarIcon: 'tabler-map-2',
-    color: 'warning'
-  },
-  {
-    title: 'Today\'s Attendance',
-    stats: 0,
-    trendNumber: 4.3,
-    avatarIcon: 'tabler-user-down',
-    color: 'error'
-  },
-  {
-    title: 'Today\'s Leave',
-    stats: 0,
-    trendNumber: 2.5,
-    avatarIcon: 'tabler-user-up',
-    color: 'info'
-  },
-  {
-    title: 'Not Present Today',
-    stats: 0,
-    trendNumber: 2.5,
-    avatarIcon: 'tabler-clock-x',
-    color: 'success'
-  },
-  {
-    title: 'Overtime Today',
-    stats: 0,
-    trendNumber: 2.5,
-    avatarIcon: 'tabler-clock-check',
-    color: 'primary'
-  },
-]
+
 
 const Page = () => {
+  const{dictionary} = useDictionary()
+  let statsHorizontalWithBorderObj: CardStatsHorizontalWithBorderProps[] = [
+    {
+      title: dictionary['content'].totalEmployee,
+      stats: 0,
+      trendNumber: 18.2,
+      avatarIcon: 'tabler-users',
+      color: 'primary'
+    },
+    {
+      title: dictionary['content'].totalBranches,
+      stats: 0,
+      trendNumber: -8.7,
+      avatarIcon: 'tabler-map-2',
+      color: 'warning'
+    },
+    {
+      title: dictionary['content'].todaysAttendance,
+      stats: 0,
+      trendNumber: 4.3,
+      avatarIcon: 'tabler-user-down',
+      color: 'error'
+    },
+    {
+      title: dictionary['content'].todaysLeave,
+      stats: 0,
+      trendNumber: 2.5,
+      avatarIcon: 'tabler-user-up',
+      color: 'info'
+    },
+    {
+      title: dictionary['content'].notPresentToday,
+      stats: 0,
+      trendNumber: 2.5,
+      avatarIcon: 'tabler-clock-x',
+      color: 'success'
+    },
+    {
+      title: dictionary['content'].overtimeToday,
+      stats: 0,
+      trendNumber: 2.5,
+      avatarIcon: 'tabler-clock-check',
+      color: 'primary'
+    },
+  ]
   const [statsHorizontalWithBorder, setStatsHorizontalWithBorder] = useState<CardStatsHorizontalWithBorderProps[]>(statsHorizontalWithBorderObj);
 
   const fetchCardStats = async () => {

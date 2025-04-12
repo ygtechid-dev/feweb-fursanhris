@@ -12,15 +12,19 @@ import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
 import { fetchBranches, fetchDepartmentsByBranch, fetchDesignationsByDepartment } from '@/services/employeeService'
 import { Branch, Department, Designation } from '@/types/apps/userTypes'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import useCompanies from '@/hooks/useCompanies'
+import { useAuth } from '@/components/AuthProvider'
 
 const CompanyDetail = () => {
-  const { register, formState: { errors }, control, watch, setValue } = useFormContext()
+  const { register, formState: { errors }, control, watch, setValue, getValues } = useFormContext()
   
   const [branches, setBranches] = useState<Branch[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
   const [designations, setDesignations] = useState<Designation[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const {dictionary} = useDictionary();
+  const { companies } = useCompanies()
+  const { user } = useAuth()
 
   const branchId = watch('branch_id')
   const departmentId = watch('department_id')
@@ -105,6 +109,40 @@ const CompanyDetail = () => {
             />
           </Grid>
           <Grid item xs={12} sm={6}>
+          {
+              user && user?.type == 'super admin' && 
+              <QTextField
+              name='created_by'
+              control={control}
+              fullWidth
+              required
+              select
+              label={dictionary['content'].company}
+              rules={{
+                validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+              }}
+               onChange={async (value) => {
+                  try {
+                    setValue('branch_id', '')
+                    setValue('department_id', '')
+                    setValue('designation_id', '')
+                   
+                  } catch (error) {
+                    console.error('Error loading dialog data:', error)
+                  } 
+      
+                }}
+            >
+              <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+              {companies.map(company => (
+                  <MenuItem key={company.id} value={company.id}>
+                    {company.first_name} {company.last_name}
+                  </MenuItem>
+                ))}
+            </QTextField>
+            }
+          </Grid>
+          <Grid item xs={12} sm={6}>
             <QTextField
               name='branch_id'
               control={control}
@@ -115,11 +153,17 @@ const CompanyDetail = () => {
               disabled={isLoading}
             >
               <MenuItem value="">Select Branch</MenuItem>
-              {branches.map(branch => (
-                <MenuItem key={branch.id} value={branch.id}>
-                  {branch.name}
-                </MenuItem>
-              ))}
+              {user && user?.type != 'super admin' && branches.map((branch) => (
+              <MenuItem key={branch.id} value={branch.id}>
+                {branch.name}
+              </MenuItem>
+            ))}
+
+            {watch('created_by') && branches.filter((object) => object.created_by == getValues('created_by')).map((obj) => (
+              <MenuItem key={obj.id} value={obj.id}>
+                {obj.name}
+              </MenuItem>
+            ))}
             </QTextField>
           </Grid>
           <Grid item xs={12} sm={6}>

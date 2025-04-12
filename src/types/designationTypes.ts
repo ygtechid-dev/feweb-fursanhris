@@ -1,3 +1,4 @@
+import { Company } from "./companyTypes";
 import { Department } from "./departmentTypes";
 
 export interface Designation {
@@ -9,6 +10,7 @@ export interface Designation {
     created_at: string;
     updated_at: string;
     department: Department;
+    company?: Company;
   }
 
 export const defaultFormValuesDesignation = {
@@ -18,4 +20,5 @@ export const defaultFormValuesDesignation = {
   created_by: 0,
   created_at: '', 
   updated_at: '',
+  company: undefined, // Menambahkan company sebagai undefined untuk nilai default
 };

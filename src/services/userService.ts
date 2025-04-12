@@ -1,5 +1,6 @@
 import axiosInstance from "@/libs/axios"
 import { User } from "@/types/apps/userTypes";
+import { Company } from "@/types/companyTypes";
 import { Role } from "@/types/userTypes"
 
 export const getUsers = async (params?: {
@@ -49,5 +50,10 @@ export const deleteUser = async (id: number): Promise<any> => {
 
 export const fetchRoles = async (): Promise<Role[]> => {
     const response = await axiosInstance.get('/web/roles')
+    return response.data.data
+  }
+
+export const fetchCompanies = async (): Promise<Company[]> => {
+    const response = await axiosInstance.get('/web/companies')
     return response.data.data
   }

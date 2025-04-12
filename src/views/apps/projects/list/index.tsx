@@ -2,7 +2,6 @@
 import Grid from '@mui/material/Grid'
 
 // Type Imports
-import type { UsersType } from '@/types/apps/userTypes'
 import ProjectListTable from './ProjectListTable'
 import { Project } from '@/types/projectTypes'
 

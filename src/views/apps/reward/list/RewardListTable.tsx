@@ -70,6 +70,7 @@ import { Employee } from '@/types/apps/userTypes'
 import { getEmployees } from '@/services/employeeService'
 import { format } from 'path'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import { useAuth } from '@/components/AuthProvider'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -143,6 +144,8 @@ const columnHelper = createColumnHelper<RewardWithAction>()
 type DialogMode = 'add' | 'edit' | 'delete' | null
 
 const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
+  const { user } = useAuth()
+  
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -244,111 +247,129 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
   
 
   const columns = useMemo<ColumnDef<RewardWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      columnHelper.accessor('employee.name', {
-        header: 'Employee',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original?.employee?.name || ''}
-              </Typography>
+    () => {
+      const visibleColumns:ColumnDef<RewardWithAction, any>[] = [
+        {
+          id: 'select',
+          header: ({ table }: { table: any }) => (
+            <Checkbox
+              {...{
+                checked: table.getIsAllRowsSelected(),
+                indeterminate: table.getIsSomeRowsSelected(),
+                onChange: table.getToggleAllRowsSelectedHandler()
+              }}
+            />
+          ),
+          cell: ({ row }: { row: any }) => (
+            <Checkbox
+              {...{
+                checked: row.getIsSelected(),
+                disabled: !row.getCanSelect(),
+                indeterminate: row.getIsSomeSelected(),
+                onChange: row.getToggleSelectedHandler()
+              }}
+            />
+          )
+        },
+        columnHelper.accessor('employee.name', {
+          header: dictionary['content'].employee,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                {row.original?.employee?.name || ''}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('reward_type.name', {
-        header: 'Reward Type',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original?.reward_type?.name || ''}
-              </Typography>
+          )
+        }),
+        columnHelper.accessor('reward_type.name', {
+          header: dictionary['content'].rewardType,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                {row.original?.reward_type?.name || ''}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('date', {
-        header: 'Date',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {moment(row.original?.date).format("MMM D, YYYY") || ''}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+          )
+        }),
+        columnHelper.accessor('date', {
+          header: dictionary['content'].date,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                {moment(row.original?.date).format("MMM D, YYYY") || ''}
+                </Typography>
+                {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('gift', {
-        header: 'Gift',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original?.gift || ''}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+          )
+        }),
+        columnHelper.accessor('gift', {
+          header: dictionary['content'].gift,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                {row.original?.gift || ''}
+                </Typography>
+                {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('description', {
-        header: 'Description',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original?.description || ''}
-              </Typography>
+          )
+        }),
+        columnHelper.accessor('description', {
+          header: dictionary['content'].description,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                {row.original?.description || ''}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-     
-      columnHelper.accessor('action', {
-        header: 'Action',
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-            <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+          )
+        }),
+       
+        columnHelper.accessor('action', {
+          header: dictionary['content'].action,
+          cell: ({ row }) => (
+            <div className='flex items-center'>
+              <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
+                <i className='tabler-edit text-textSecondary' />
+              </IconButton>
+              <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
+                <i className='tabler-trash text-textSecondary' />
+              </IconButton>
+            </div>
+          ),
+          enableSorting: false
+        })
+      ];
+      if (user?.type === 'super admin') {
+        visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+          header: dictionary['content'].company,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                </Typography>
+              </div>
+            </div>
+          )
+        }) as ColumnDef<RewardWithAction, any>)
+      }
+      
+      return visibleColumns
+    },
+    
+    [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -384,7 +405,7 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
   return (
     <>
       <Card>
-        <CardHeader title='Reward List' className='pbe-4' />
+        <CardHeader title={dictionary['content'].rewardList} className='pbe-4' />
         <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -401,7 +422,7 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search Here ...'
+              placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
             {/* <Button
@@ -492,7 +513,7 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
         <FormDialog
         open={dialogOpen}
         setOpen={setDialogOpen}
-        title={'Add new Reward'}
+        title={dictionary['content'].addNewReward}
         onSubmit={async (data:Reward) => {
           try {
             const res = await postReward({
@@ -521,7 +542,7 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
             fullWidth
             required
             select
-            label={`Employee`}
+            label={dictionary['content'].employee}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
             }}
@@ -539,7 +560,7 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
             fullWidth
             required
             select
-            label={`Reward Type`}
+            label={dictionary['content'].rewardType}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an reward type'
             }}
@@ -554,7 +575,7 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
           <QReactDatepicker
             name="date"
             control={methods.control}
-            label={'Date'}
+            label={dictionary['content'].date}
             required
           />
           <QTextField
@@ -562,16 +583,16 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
             control={methods.control}
             fullWidth
             required
-            placeholder={`${dictionary['content'].enter} Gift`}
-            label={`Gift`}
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].gift}`}
+            label={dictionary['content'].gift}
           />
           <QTextField
             name='description'
             control={methods.control}
             fullWidth
             required
-            placeholder={`${dictionary['content'].enter} Description`}
-            label={`Description`}
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].description}`}
+            label={dictionary['content'].description}
             multiline={true}
           />
        </>
@@ -582,7 +603,7 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
         <FormDialog
         open={dialogOpen}
         setOpen={setDialogOpen}
-          title={`Edit Overtime`}
+          title={dictionary['content'].editReward}
           onSubmit={async (data:any) => {
             try {
               if (!selectedReward) return
@@ -616,7 +637,7 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
             fullWidth
             required
             select
-            label={`Employee`}
+            label={dictionary['content'].employee}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
             }}
@@ -634,7 +655,7 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
             fullWidth
             required
             select
-            label={`Reward Type`}
+            label={dictionary['content'].rewardType}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an reward type'
             }}
@@ -649,7 +670,7 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
           <QReactDatepicker
             name="date"
             control={methods.control}
-            label={'Date'}
+            label={dictionary['content'].date}
             required
           />
           <QTextField
@@ -657,16 +678,16 @@ const RewardListTable = ({ tableData }: { tableData?: Reward[] }) => {
             control={methods.control}
             fullWidth
             required
-            placeholder={`${dictionary['content'].enter} Gift`}
-            label={`Gift`}
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].gift}`}
+            label={dictionary['content'].gift}
           />
           <QTextField
             name='description'
             control={methods.control}
             fullWidth
             required
-            placeholder={`${dictionary['content'].enter} Description`}
-            label={`Description`}
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].description}`}
+            label={dictionary['content'].description}
             multiline={true}
           />
        </>

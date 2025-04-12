@@ -60,6 +60,8 @@ import moment from 'moment'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import LeaveDetailsDialog from '../view/detail-leave/LeaveDetail'
 import LeaveStatusDialog from '../view/leave-update-status/LeaveUpdateStatusDialog'
+import { useAuth } from '@/components/AuthProvider'
+import useCompanies from '@/hooks/useCompanies'
 
 
 declare module '@tanstack/table-core' {
@@ -124,6 +126,9 @@ const DebouncedInput = ({
 const columnHelper = createColumnHelper<LeaveTypeWithAction>()
 
 const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
+  const { user } = useAuth()
+  const { companies } = useCompanies()
+
   // States
   const [dialogOpen, setDialogOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -161,6 +166,7 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
       emergency_contact: '',
       remark: '',
       status: 'pending',
+      created_by: 0,
       }
   })
   const { cache, mutate: swrMutate } = useSWRConfig();
@@ -171,180 +177,185 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
   }, [tableData])
 
   const columns = useMemo<ColumnDef<LeaveTypeWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      columnHelper.accessor('employee.name', {
-        header: dictionary['content'].employee,
+    () => {
+      const visibleColumns:ColumnDef<LeaveTypeWithAction, any>[] = [
+        {
+           id: 'select',
+           header: ({ table }: { table: any }) => (
+             <Checkbox
+               {...{
+                 checked: table.getIsAllRowsSelected(),
+                 indeterminate: table.getIsSomeRowsSelected(),
+                 onChange: table.getToggleAllRowsSelectedHandler()
+               }}
+             />
+           ),
+           cell: ({ row }: { row: any }) => (
+             <Checkbox
+               {...{
+                 checked: row.getIsSelected(),
+                 disabled: !row.getCanSelect(),
+                 indeterminate: row.getIsSomeSelected(),
+                 onChange: row.getToggleSelectedHandler()
+               }}
+             />
+           )
+         },
+       columnHelper.accessor('employee.name', {
+         header: dictionary['content'].employee,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.employee.name}
+               </Typography>
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('leave_type.title', {
+         header: dictionary['content'].leaveType,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+                 {row.original.leave_type.title}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('applied_on', {
+         header: dictionary['content'].appliedOn,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.applied_on}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('start_date', {
+         header: dictionary['content'].startDate,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.start_date}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('end_date', {
+         header: dictionary['content'].endDate,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.end_date}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('total_leave_days', {
+         header: dictionary['content'].totalDays,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.total_leave_days}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('leave_reason', {
+         header: dictionary['content'].leaveReason,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+                 {row.original.leave_reason} 
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('status', {
+         header: dictionary['content'].status,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             <div className='flex flex-col'>
+               <Chip label= {ucfirst(row.original.status)}  color={row.original.status == 'approved' ? 'success' : (row.original.status == 'pending' ? 'secondary' : 'error')}/>
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('action', {
+         header: dictionary['content'].action,
+         cell: ({ row }) => (
+           <div className='flex items-center'>
+             {
+               row.original.status == 'pending' &&  (
+                 <IconButton onClick={() => handleUpdateStatus(row.original)}>
+                   <i className='tabler-copy-check text-textSecondary' />
+                 </IconButton>
+               )
+             }
+             <IconButton onClick={() => handleViewDetails(row.original)}>
+               <i className='tabler-eye text-textSecondary' />
+             </IconButton>
+             {
+               row.original.status == 'pending' &&  (
+                 <IconButton onClick={() => handleEditClick(row.original)}>
+                   <i className='tabler-edit text-textSecondary' />
+                 </IconButton>
+               )
+             }
+             <IconButton onClick={() => handleDeleteClick(row.original)}>
+               <i className='tabler-trash text-textSecondary' />
+             </IconButton>
+           </div>
+         ),
+         enableSorting: false
+       })
+     ];
+      
+     if (user?.type === 'super admin') {
+      visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+        header: 'Company',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.employee.name}
+                {row?.original?.company?.first_name} {row?.original?.company?.last_name}
               </Typography>
             </div>
           </div>
         )
-      }),
-      columnHelper.accessor('leave_type.title', {
-        header: dictionary['content'].leaveType,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.leave_type.title}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('applied_on', {
-        header: dictionary['content'].appliedOn,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.applied_on}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('start_date', {
-        header: dictionary['content'].startDate,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.start_date}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('end_date', {
-        header: dictionary['content'].endDate,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.end_date}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('total_leave_days', {
-        header: dictionary['content'].totalDays,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.total_leave_days}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('leave_reason', {
-        header: dictionary['content'].leaveReason,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.leave_reason} 
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('status', {
-        header: dictionary['content'].status,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Chip label= {ucfirst(row.original.status)}  color={row.original.status == 'approved' ? 'success' : (row.original.status == 'pending' ? 'secondary' : 'error')}/>
-            </div>
-          </div>
-        )
-      }),
-      // columnHelper.accessor('status', {
-      //   header: 'Status',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-3'>
-      //       <Chip
-      //         variant='tonal'
-      //         label={row.original.status}
-      //         size='small'
-      //         color={userStatusObj[row.original.status]}
-      //         className='capitalize'
-      //       />
-      //     </div>
-      //   )
-      // }),
-      columnHelper.accessor('action', {
-        header: dictionary['content'].action,
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-            {
-              row.original.status == 'pending' &&  (
-                <IconButton onClick={() => handleUpdateStatus(row.original)}>
-                  <i className='tabler-copy-check text-textSecondary' />
-                </IconButton>
-              )
-            }
-            <IconButton onClick={() => handleViewDetails(row.original)}>
-              <i className='tabler-eye text-textSecondary' />
-            </IconButton>
-            {
-              row.original.status == 'pending' &&  (
-                <IconButton onClick={() => handleEditClick(row.original)}>
-                  <i className='tabler-edit text-textSecondary' />
-                </IconButton>
-              )
-            }
-            <IconButton onClick={() => handleDeleteClick(row.original)}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+      }) as ColumnDef<LeaveTypeWithAction, any>)
+    }
+    
+    return visibleColumns
+  },
+  
+  [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -476,7 +487,7 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
       setDialogFetchLoading(false)
     }
   }
-
+  
   return (
     <>
       <Card>
@@ -613,6 +624,27 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
         handleSubmit={methods.handleSubmit}
       >
        <>
+       {
+          user && user?.type == 'super admin' && 
+          <QTextField
+          name='created_by'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].company}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+          {companies.map(company => (
+              <MenuItem key={company.id} value={company.id}>
+                {company.first_name} {company.last_name}
+              </MenuItem>
+            ))}
+        </QTextField>
+        }
         <QTextField
           name='employee_id'
           control={methods.control}
@@ -626,11 +658,17 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
           }}
         >
           <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].employee}</MenuItem>
-          {employees.map((employee) => (
-          <MenuItem key={employee.id} value={employee.id}>
-            {employee.name}
-          </MenuItem>
-        ))}
+          { user && user?.type != 'super admin' && employees.map((employee) => (
+            <MenuItem key={employee.id} value={employee.id}>
+              {employee.name}
+            </MenuItem>
+          ))}
+
+          { methods.watch('created_by') && employees.filter((emp) => emp.created_by == methods.getValues('created_by')).map((employee) => (
+            <MenuItem key={employee.id} value={employee.id}>
+              {employee.name}
+            </MenuItem>
+          ))}
         </QTextField>
 
         <QTextField

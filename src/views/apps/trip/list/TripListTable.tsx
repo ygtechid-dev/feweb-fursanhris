@@ -69,6 +69,7 @@ import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
 import QTextField from '@/@core/components/mui/QTextField'
 import moment from 'moment'
 import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
+import { useAuth } from '@/components/AuthProvider'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -136,6 +137,8 @@ type DialogMode = 'add' | 'edit' | 'delete' | null
 
 
 const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
+  const { user } = useAuth()
+  
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -233,116 +236,135 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
   }
 
   const columns = useMemo<ColumnDef<TripWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      columnHelper.accessor('employee_name', {
-        header: 'Employee',
+    () => {
+      const visibleColumns: ColumnDef<TripWithAction, any>[] = [
+        {
+           id: 'select',
+           header: ({ table }: { table: any }) => (
+             <Checkbox
+               {...{
+                 checked: table.getIsAllRowsSelected(),
+                 indeterminate: table.getIsSomeRowsSelected(),
+                 onChange: table.getToggleAllRowsSelectedHandler()
+               }}
+             />
+           ),
+           cell: ({ row }: { row: any }) => (
+             <Checkbox
+               {...{
+                 checked: row.getIsSelected(),
+                 disabled: !row.getCanSelect(),
+                 indeterminate: row.getIsSomeSelected(),
+                 onChange: row.getToggleSelectedHandler()
+               }}
+             />
+           )
+         },
+       columnHelper.accessor('employee_name', {
+         header: dictionary['content'].employee,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.employee_name}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('start_date', {
+         header: dictionary['content'].startDate,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+                 {row.original.start_date}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('end_date', {
+         header: dictionary['content'].endDate,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+                 {row.original.end_date}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('purpose_of_visit', {
+         header: dictionary['content'].purposeOftrip,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.purpose_of_visit}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('description', {
+         header:  dictionary['content'].description,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.description}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('action', {
+         header:  dictionary['content'].action,
+         cell: ({ row }) => (
+           <div className='flex items-center'>
+            <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
+               <i className='tabler-edit text-textSecondary' />
+             </IconButton>
+             <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
+               <i className='tabler-trash text-textSecondary' />
+             </IconButton>
+           </div>
+         ),
+         enableSorting: false
+       })
+     ];
+   
+     if (user?.type === 'super admin') {
+      visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+        header: dictionary['content'].company,
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-              {row.original.employee_name}
+                {row?.original?.company?.first_name} {row?.original?.company?.last_name}
               </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
             </div>
           </div>
         )
-      }),
-      columnHelper.accessor('start_date', {
-        header: 'Start Date',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.start_date}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('end_date', {
-        header: 'End Date',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.end_date}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('purpose_of_visit', {
-        header: 'Purpose of Trip',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.purpose_of_visit}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('description', {
-        header: 'Description',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.description}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('action', {
-        header: 'Action',
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-           <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+      }) as ColumnDef<TripWithAction, any>)
+    }
+    
+    return visibleColumns
+  },
+  
+  [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -377,7 +399,7 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
   return (
     <>
       <Card>
-        <CardHeader title='Trip List' className='pbe-4' />
+        <CardHeader title={dictionary['content'].tripList} className='pbe-4' />
         <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -394,7 +416,7 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search Here ...'
+              placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
             {/* <Button
@@ -411,7 +433,7 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
               onClick={() => handleOpenDialog('add' )}
               className='max-sm:is-full'
             >
-              Add Trip
+              {dictionary['content'].addTrip}
             </Button>
           </div>
         </div>
@@ -485,7 +507,7 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
         <FormDialog
         open={dialogOpen}
         setOpen={setDialogOpen}
-        title={'Add new Trip'}
+        title={dictionary['content'].addTrip}
         onSubmit={async (data:Trip) => {
           try {
             const res = await postTrip({
@@ -515,7 +537,7 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
             fullWidth
             required
             select
-            label={`Employee`}
+            label={dictionary['content'].employee}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
             }}
@@ -530,13 +552,13 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
           <QReactDatepicker
             name="start_date"
             control={methods.control}
-            label={'Start Date'}
+            label={dictionary['content'].startDate}
             required
           />
           <QReactDatepicker
             name="end_date"
             control={methods.control}
-            label={'End Date'}
+            label={dictionary['content'].endDate}
             required
           />
           <QTextField
@@ -545,7 +567,7 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
             fullWidth
             required
             placeholder={`${dictionary['content'].enter} Purpose of Trip`}
-            label={`Purpose of Tri`}
+            label={dictionary['content'].purposeOftrip}
           />
           <QTextField
             name='place_of_visit'
@@ -553,7 +575,7 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
             fullWidth
             required
             placeholder={`${dictionary['content'].enter} Place to Visit`}
-            label={`Place to Visit`}
+            label={dictionary['content'].placeTovisit}
           />
           <QTextField
             name='description'
@@ -561,7 +583,7 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
             fullWidth
             required
             placeholder={`${dictionary['content'].enter} Description`}
-            label={`Description`}
+            label={dictionary['content'].description}
             multiline={true}
           />
        </>
@@ -572,7 +594,7 @@ const TripListTable = ({ tableData }: { tableData?: Trip[] }) => {
         <FormDialog
           open={dialogOpen}
           setOpen={setDialogOpen}
-          title={`Edit Trip`}
+          title={dictionary['content'].editTrip}
           onSubmit={async (data:Trip) => {
             try {
               if (!selectedTrip) return

@@ -28,6 +28,7 @@ import type { CalendarType, CalendarColors } from '@/types/apps/calendarTypes'
 // Slice Imports
 import { addEvent, deleteEvent, updateEvent } from '@/redux-store/slices/calendar'
 import QSimpleDatePicker from '@/@core/components/mui/QSimpleDatePicker'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 interface AddEventSidebarProps {
   dispatch: Dispatch
@@ -69,6 +70,7 @@ const AddEventSidebar = (props: AddEventSidebarProps) => {
   // States
   const [startDate, setStartDate] = useState<Date | null>(new Date())
   const [endDate, setEndDate] = useState<Date | null>(new Date())
+  const {dictionary} = useDictionary();
 
   // Form hooks
   const {
@@ -209,7 +211,7 @@ const AddEventSidebar = (props: AddEventSidebarProps) => {
               render={({ field }) => (
                 <TextField
                   fullWidth
-                  label='Title'
+                  label={dictionary['content'].title}
                   {...field}
                   sx={{ mb: 4 }}
                   error={Boolean(errors.title)}
@@ -224,7 +226,7 @@ const AddEventSidebar = (props: AddEventSidebarProps) => {
               rules={{ required: true }}
               render={({ field }) => (
                 <FormControl fullWidth sx={{ mb: 4 }} error={Boolean(errors.calendar)}>
-                  <InputLabel id='calendar-label'>Status</InputLabel>
+                  <InputLabel id='calendar-label'>{dictionary['content'].status}</InputLabel>
                   <Select {...field} label='Status' labelId='calendar-label'>
                     <MenuItem value='todo'>Todo</MenuItem>
                     <MenuItem value='in_progress'>In Progress</MenuItem>
@@ -241,7 +243,7 @@ const AddEventSidebar = (props: AddEventSidebarProps) => {
               control={control}
               render={({ field }) => (
                 <FormControl fullWidth sx={{ mb: 4 }}>
-                  <InputLabel id='priority-label'>Priority</InputLabel>
+                  <InputLabel id='priority-label'>{dictionary['content'].priority}</InputLabel>
                   <Select {...field} label='Priority' labelId='priority-label'>
                     <MenuItem value='low'>Low</MenuItem>
                     <MenuItem value='medium'>Medium</MenuItem>
@@ -258,7 +260,7 @@ const AddEventSidebar = (props: AddEventSidebarProps) => {
                 render={({ field }) => (
                   <QSimpleDatePicker
                     name='start-date'
-                    label='Due Date'
+                    label={dictionary['content'].dueDate}
                     value={startDate}
                     onChange={(date: Date | null) => {
                       setStartDate(date);
@@ -285,7 +287,7 @@ const AddEventSidebar = (props: AddEventSidebarProps) => {
                   rows={4}
                   multiline
                   fullWidth
-                  label='Description'
+                  label={dictionary['content'].description}
                   {...field}
                   sx={{ mb: 6 }}
                 />
@@ -294,14 +296,14 @@ const AddEventSidebar = (props: AddEventSidebarProps) => {
 
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button variant='contained' type='submit'>
-                {calendarStore.selectedEvent?.id ? 'Update' : 'Add'}
+                {calendarStore.selectedEvent?.id ? dictionary['content'].update : dictionary['content'].add}
               </Button>
               <Button variant='outlined' color='secondary' onClick={handleSidebarClose}>
-                Cancel
+              {dictionary['content'].cancel}
               </Button>
               {calendarStore.selectedEvent?.id && (
                 <Button variant='outlined' color='error' onClick={handleDeleteEvent}>
-                  Delete
+                  {dictionary['content'].delete}
                 </Button>
               )}
             </Box>

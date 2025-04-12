@@ -56,6 +56,16 @@ export interface DashboardQueryParams {
 }
 
 // Dashboard API functions
+export const getProject = async (params?: DashboardQueryParams): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/web/project-dashboard/show', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching dashboard project:', error);
+    throw error;
+  }
+};
+
 export const getDashboardStats = async (params?: DashboardQueryParams): Promise<DashboardStats> => {
   try {
     const response = await axiosInstance.get('/web/project-dashboard/stats', { params });

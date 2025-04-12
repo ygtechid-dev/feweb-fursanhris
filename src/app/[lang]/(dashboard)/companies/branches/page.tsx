@@ -2,10 +2,8 @@
 import { useDictionary } from "@/components/dictionary-provider/DictionaryContext"
 import { fetcher } from "@/configs/config"
 
-
 import BranchList from "@/views/apps/branch/list"
 import useSWR from "swr"
-
 
 const BranchListApp = () => {
   const {dictionary} = useDictionary();

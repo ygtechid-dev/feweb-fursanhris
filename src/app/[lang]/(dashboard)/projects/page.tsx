@@ -22,7 +22,7 @@ const ProjectListApp = () => {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <div>{dictionary['content'].loading}...</div>
   }
 
 

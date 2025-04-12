@@ -62,7 +62,7 @@ const EmployeeEdit = () => {
       bank_identifier_code: '',
       branch_location: '',
       tax_payer_id: '',
-      document: { certificate: '', photo: '' }
+      documents: { certificate: '', photo: '' }
     }
   })
 
@@ -94,13 +94,13 @@ const EmployeeEdit = () => {
             designation_id: employee.designation_id,
             dob: employee.dob ? moment(employee.dob).format('YYYY-MM-DD') : '',
             company_doj: employee.company_doj ? moment(employee.company_doj).format('YYYY-MM-DD') : '',
-            document: employee.documents || { certificate: '', photo: '' }
+            documents: employee.documents
           }
 
           methods.setValue('branch_id', employee.branch_id)
           methods.setValue('department_id', employee.department_id)
           methods.setValue('designation_id', employee.designation_id)
-
+console.log({formattedData})
           // Reset form with formatted data
           methods.reset(formattedData)
         }

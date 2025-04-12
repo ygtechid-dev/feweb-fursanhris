@@ -1,104 +1,58 @@
 // React Imports
 import { useState, useEffect } from 'react'
-
 // MUI Imports
 import CardContent from '@mui/material/CardContent'
 import Grid from '@mui/material/Grid'
 import MenuItem from '@mui/material/MenuItem'
-
 // Type Imports
-
-
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
 import { Branch } from '@/types/branchTypes'
 import { useAuth } from '@/components/AuthProvider'
+import { fetchCompanies } from '@/services/userService'
+import { Company } from '@/types/companyTypes'
+import useCompanies from '@/hooks/useCompanies'
 
 const TableFilters = ({ setData, tableData }: { setData: (data: Branch[]) => void; tableData?: Branch[] }) => {
   // States
-  // const [role, setRole] = useState<Bra['role']>('')
-  // const [plan, setPlan] = useState<Bra['currentPlan']>('')
-  // const [status, setStatus] = useState<Bra['status']>('')
+  const [selectedCompany, setSelectedCompany] = useState<string>('')
   const { user } = useAuth()
+  const { companies } = useCompanies()
 
   useEffect(() => {
-    const filteredData = tableData?.filter(user => {
-      // if (role && user.role !== role) return false
-      // if (plan && user.currentPlan !== plan) return false
-      // if (status && user.status !== status) return false
-
+    const filteredData = tableData?.filter(branch => {
+      // Filter by company if a company is selected
+      if (selectedCompany && branch?.created_by !== Number(selectedCompany)) return false
+      
       return true
     })
-
+    
     setData(filteredData || [])
-  }, [tableData, setData])
+  }, [tableData, selectedCompany, setData])
 
   return (
     <CardContent>
       <Grid container spacing={6}>
-        {/* <Grid item xs={12} sm={4}>
-          <CustomTextField
-            select
-            fullWidth
-            id='select-role'
-            value={role}
-            onChange={e => setRole(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
-          >
-            <MenuItem value=''>Select Role</MenuItem>
-            <MenuItem value='admin'>Admin</MenuItem>
-            <MenuItem value='author'>Author</MenuItem>
-            <MenuItem value='editor'>Editor</MenuItem>
-            <MenuItem value='maintainer'>Maintainer</MenuItem>
-            <MenuItem value='subscriber'>Subscriber</MenuItem>
-          </CustomTextField>
-        </Grid> */}
-        {/* <Grid item xs={12} sm={4}>
-          <CustomTextField
-            select
-            fullWidth
-            id='select-plan'
-            value={plan}
-            onChange={e => setPlan(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
-          >
-            <MenuItem value=''>Select Plan</MenuItem>
-            <MenuItem value='basic'>Basic</MenuItem>
-            <MenuItem value='company'>Company</MenuItem>
-            <MenuItem value='enterprise'>Enterprise</MenuItem>
-            <MenuItem value='team'>Team</MenuItem>
-          </CustomTextField>
-        </Grid> */}
-        {/* <Grid item xs={12} sm={4}>
-          <CustomTextField
-            select
-            fullWidth
-            id='select-status'
-            value={status}
-            onChange={e => setStatus(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
-          >
-            <MenuItem value=''>Select Status</MenuItem>
-            <MenuItem value='pending'>Pending</MenuItem>
-            <MenuItem value='active'>Active</MenuItem>
-            <MenuItem value='inactive'>Inactive</MenuItem>
-          </CustomTextField>
-        </Grid> */}
-        {user?.type == 'super admin' && (<Grid item xs={12} sm={4}>
-          <CustomTextField
-            select
-            fullWidth
-            id='select-status'
-            value={status}
-            // onChange={e => setStatus(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
-          >
-            <MenuItem value=''>Select Company</MenuItem>
-            {/* <MenuItem value='pending'>Pending</MenuItem> */}
-            <MenuItem value='active'>ABC</MenuItem>
-            <MenuItem value='inactive'>BCA</MenuItem>
-          </CustomTextField>
-        </Grid>)}
+        {user?.type === 'super admin' && (
+          <Grid item xs={12} sm={4}>
+            <CustomTextField
+              select
+              fullWidth
+              id='select-company'
+              label="Company"
+              value={selectedCompany}
+              onChange={e => setSelectedCompany(e.target.value)}
+              SelectProps={{ displayEmpty: true }}
+            >
+              <MenuItem value=''>Select Company</MenuItem>
+              {companies.map(company => (
+                <MenuItem key={company.id} value={company.id}>
+                  {company.first_name} {company.last_name}
+                </MenuItem>
+              ))}
+            </CustomTextField>
+          </Grid>
+        )}
       </Grid>
     </CardContent>
   )

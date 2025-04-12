@@ -14,6 +14,7 @@ import axios from 'axios'
 import axiosInstance from '@/libs/axios'
 import { toast } from 'react-toastify'
 import { useSWRConfig } from 'swr'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 const GeneratePayslip = ({  tableData }: {  tableData?: Payslip[] }) => {
   const [month, setMonth] = useState<string>('')
@@ -56,6 +57,7 @@ const GeneratePayslip = ({  tableData }: {  tableData?: Payslip[] }) => {
 
   // Generate payslip function
   const handleGeneratePayslip = async () => {
+
     if (!month || !year) {
       toast.warning('Please select both month and year')
       return
@@ -110,6 +112,7 @@ const GeneratePayslip = ({  tableData }: {  tableData?: Payslip[] }) => {
   // Generate year options (current year and 5 years before and after)
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 11 }, (_, i) => (currentYear - 5 + i).toString())
+  const {dictionary} = useDictionary()
 
   return (
     <CardContent>
@@ -119,7 +122,7 @@ const GeneratePayslip = ({  tableData }: {  tableData?: Payslip[] }) => {
             select
             fullWidth
             id='select-month'
-            label='Month'
+            label={dictionary['content'].month}
             value={month}
             onChange={e => setMonth(e.target.value)}
             SelectProps={{ displayEmpty: true }}
@@ -137,7 +140,7 @@ const GeneratePayslip = ({  tableData }: {  tableData?: Payslip[] }) => {
             select
             fullWidth
             id='select-year'
-            label='Year'
+            label={dictionary['content'].year}
             value={year}
             onChange={e => setYear(e.target.value)}
             SelectProps={{ displayEmpty: true }}
@@ -159,7 +162,7 @@ const GeneratePayslip = ({  tableData }: {  tableData?: Payslip[] }) => {
             onClick={handleGeneratePayslip}
             disabled={loading}
           >
-            {loading ? 'Generating...' : 'Generate Payslip'}
+            {loading ? dictionary['content'].generating + '...' : dictionary['content'].generatePayslip}
           </Button>
         </Grid>
       </Grid>

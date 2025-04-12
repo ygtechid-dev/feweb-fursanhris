@@ -73,6 +73,7 @@ import { Employee, User } from '@/types/apps/userTypes'
 import MemberSelector from '@/components/MemberSelector'
 import moment from 'moment'
 import { getUsers } from '@/services/userService'
+import { useAuth } from '@/components/AuthProvider'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -138,6 +139,8 @@ const columnHelper = createColumnHelper<ProjectWithAction>()
 type DialogMode = 'add' | 'edit' | 'delete' | null
 
 const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
+  const { user } = useAuth()
+  
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -245,108 +248,127 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
     }
 
   const columns = useMemo<ColumnDef<ProjectWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      columnHelper.accessor('name', {
-        header: 'Project Name',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.name}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+    () => {
+      const visibleColumns: ColumnDef<ProjectWithAction, any>[] = [
+        {
+          id: 'select',
+          header: ({ table }: { table: any }) => (
+            <Checkbox
+              {...{
+                checked: table.getIsAllRowsSelected(),
+                indeterminate: table.getIsSomeRowsSelected(),
+                onChange: table.getToggleAllRowsSelectedHandler()
+              }}
+            />
+          ),
+          cell: ({ row }: { row: any }) => (
+            <Checkbox
+              {...{
+                checked: row.getIsSelected(),
+                disabled: !row.getCanSelect(),
+                indeterminate: row.getIsSomeSelected(),
+                onChange: row.getToggleSelectedHandler()
+              }}
+            />
+          )
+        },
+        columnHelper.accessor('name', {
+          header: dictionary['content'].projectName,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                {row.original.name}
+                </Typography>
+                {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('members', {
-        header: 'Users',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-            <AvatarGroup max={row.original?.members_count}>
-            {
-              (row.original?.members || []).map((val,idx) => {
-                return  <Avatar src={val.avatar ||'/images/avatars/1.png'} alt={val.name} />
-              })
+          )
+        }),
+        columnHelper.accessor('members', {
+          header: dictionary['content'].users,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+              <AvatarGroup max={row.original?.members_count}>
+              {
+                (row.original?.members || []).map((val,idx) => {
+                  return  <Avatar src={val.avatar ||'/images/avatars/1.png'} alt={val.name} />
+                })
+              }
+              </AvatarGroup>
+              </div>
+            </div>
+          )
+        }),
+        columnHelper.accessor('progress', {
+          header: dictionary['content'].completion,
+          cell: ({ row }) => (
+              <div className="flex items-center gap-5">
+                <LinearProgress variant='determinate' value={row.original.progress} className='w-full'/>
+                <Typography color='text.primary' className='font-medium'>{row.original.progress}%</Typography>
+              </div>
+          )
+        }),
+        columnHelper.accessor('status', {
+          header: dictionary['content'].status,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+                {/* <Typography color='text.primary' className='font-medium'>
+                Medicle Leave
+                </Typography> */}
+                <Chip label={snakeCaseToTitleCase(row.original.status)} color={row.original.status == 'active' ? 'primary' : (row.original.status == 'completed' ? 'success' : 'secondary')}/>
+                {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+              </div>
+            </div>
+          )
+        }),
+       
+    
+        columnHelper.accessor('action', {
+          header: dictionary['content'].action,
+          cell: ({ row }) => (
+            <div className='flex items-center'>
+              <IconButton title='Go To Workspace'>
+                <Link href={`/${locale}/${row.original.id}/project-dashboard`}>
+                <i className='tabler-folder-symlink text-textSecondary' />
+                </Link>
+              </IconButton>
+              <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
+                <i className='tabler-edit text-textSecondary' />
+              </IconButton>
+              <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
+                <i className='tabler-trash text-textSecondary' />
+              </IconButton>
+            </div>
+          ),
+          enableSorting: false
+        })
+      ];
+       
+            if (user?.type === 'super admin') {
+              visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+                header: dictionary['content'].company,
+                cell: ({ row }) => (
+                  <div className='flex items-center gap-4'>
+                    <div className='flex flex-col'>
+                      <Typography color='text.primary' className='font-medium'>
+                        {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                      </Typography>
+                    </div>
+                  </div>
+                )
+              }) as ColumnDef<ProjectWithAction, any>)
             }
-            </AvatarGroup>
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('progress', {
-        header: 'Completion',
-        cell: ({ row }) => (
-            <div className="flex items-center gap-5">
-              <LinearProgress variant='determinate' value={row.original.progress} className='w-full'/>
-              <Typography color='text.primary' className='font-medium'>{row.original.progress}%</Typography>
-            </div>
-        )
-      }),
-      columnHelper.accessor('status', {
-        header: 'Status',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              {/* <Typography color='text.primary' className='font-medium'>
-              Medicle Leave
-              </Typography> */}
-              <Chip label={snakeCaseToTitleCase(row.original.status)} color={row.original.status == 'active' ? 'primary' : (row.original.status == 'completed' ? 'success' : 'secondary')}/>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-     
-  
-      columnHelper.accessor('action', {
-        header: 'Action',
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-            <IconButton title='Go To Workspace'>
-              <Link href={`/${locale}/${row.original.id}/project-dashboard`}>
-              <i className='tabler-folder-symlink text-textSecondary' />
-              </Link>
-            </IconButton>
-            <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+            
+            return visibleColumns
+          },
+          
+          [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -381,7 +403,7 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
   return (
     <>
       <Card>
-        <CardHeader title='Project List' className='pbe-4' />
+        <CardHeader title={dictionary['content'].projectList} className='pbe-4' />
         <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -488,7 +510,7 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
         <FormDialog
         open={dialogOpen}
         setOpen={setDialogOpen}
-        title={'Add new Project'}
+        title={dictionary['content'].addNewProject}
         onSubmit={async (data:Project) => {
           try {
             const res = await postProject({
@@ -518,14 +540,14 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
             fullWidth
             required
             placeholder={`${dictionary['content'].enter} Name`}
-            label={`Name`}
+            label={dictionary['content'].name}
           />
           <div className="flex space-x-4">
             <div className="flex-1">
               <QReactDatepicker
                 name="start_date"
                 control={methods.control}
-                label={'Start Date'}
+                label={dictionary['content'].startDate}
                 required
               />
             </div>
@@ -533,7 +555,7 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
               <QReactDatepicker
                 name="end_date"
                 control={methods.control}
-                label={'End Date'}
+                label={dictionary['content'].endDate}
                 required
               />
             </div>
@@ -544,12 +566,12 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
             fullWidth
             required
             select
-            label={`Status`}
+            label={dictionary['content'].status}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an status'
             }}
           >
-            <MenuItem value="0">{dictionary['content'].select} Status</MenuItem>
+            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].status}</MenuItem>
             <MenuItem value="active">Active</MenuItem>
             <MenuItem value="on_hold">On Hold</MenuItem>
             <MenuItem value="completed">Completed</MenuItem>
@@ -560,7 +582,7 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
             fullWidth
             required
             placeholder={`${dictionary['content'].enter} Description`}
-            label={`Description`}
+            label={dictionary['content'].description}
             multiline={true}
           />
           <MemberSelector
@@ -568,7 +590,7 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
             control={methods.control}
             employees={users}
             required={false}
-            label="Assign Members"
+            label={dictionary['content'].assignMembers}
             placeholder="Select team members"
             onChange={(selectedMembers) => {
               console.log({selectedMembers});
@@ -618,14 +640,14 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
             fullWidth
             required
             placeholder={`${dictionary['content'].enter} Name`}
-            label={`Name`}
+            label={dictionary['content'].name}
           />
           <div className="flex space-x-4">
             <div className="flex-1">
               <QReactDatepicker
                 name="start_date"
                 control={methods.control}
-                label={'Start Date'}
+                label={dictionary['content'].startDate}
                 required
               />
             </div>
@@ -633,7 +655,7 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
               <QReactDatepicker
                 name="end_date"
                 control={methods.control}
-                label={'End Date'}
+                label={dictionary['content'].endDate}
                 required
               />
             </div>
@@ -644,12 +666,12 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
             fullWidth
             required
             select
-            label={`Status`}
+            label={dictionary['content'].status}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an status'
             }}
           >
-            <MenuItem value="0">{dictionary['content'].select} Status</MenuItem>
+            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].status}</MenuItem>
             <MenuItem value="active">Active</MenuItem>
             <MenuItem value="on_hold">On Hold</MenuItem>
             <MenuItem value="completed">Completed</MenuItem>
@@ -660,7 +682,7 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
             fullWidth
             required
             placeholder={`${dictionary['content'].enter} Description`}
-            label={`Description`}
+            label={dictionary['content'].description}
             multiline={true}
           />
           <MemberSelector
@@ -668,7 +690,7 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
             control={methods.control}
             employees={users}
             required={false}
-            label="Assign Members"
+            label={dictionary['content'].assignMembers}
             placeholder="Select team members"
             onChange={(selectedMembers) => {
               console.log({selectedMembers});

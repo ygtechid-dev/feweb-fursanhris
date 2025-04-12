@@ -76,7 +76,7 @@ const OvertimeDetailsDialog = ({ open, setOpen, overtimeData }: OvertimeDetailsD
       aria-labelledby="overtime-details-dialog-title"
     >
       <DialogTitle id="overtime-details-dialog-title" className="flex justify-between items-center py-3">
-        {'Overtime Details'}
+        {dictionary['content'].overtimeDetails || 'Overtime Details'}
         <IconButton onClick={handleClose} size="small">
           <i className="tabler-x" />
         </IconButton>
@@ -106,28 +106,28 @@ const OvertimeDetailsDialog = ({ open, setOpen, overtimeData }: OvertimeDetailsD
             
             <Grid item xs={12} md={6}>
               <Typography variant="body2" color="text.secondary">
-                {'Overtime Date'}
+                {dictionary['content'].overtimeDate || 'Overtime Date'}
               </Typography>
               <Typography variant="body1">{overtimeData.overtime_date}</Typography>
             </Grid>
             
             <Grid item xs={12} md={6}>
               <Typography variant="body2" color="text.secondary">
-                {'Total Hours'}
+                {dictionary['content'].totalHours || 'Total Hours'}
               </Typography>
               <Typography variant="body1">{overtimeData.hours} {'hours'}</Typography>
             </Grid>
             
             <Grid item xs={12} md={6}>
               <Typography variant="body2" color="text.secondary">
-                {'Start Time'}
+                {dictionary['content'].clockIn || 'Start Time'}
               </Typography>
               <Typography variant="body1">{formatTime(overtimeData.start_time)}</Typography>
             </Grid>
             
             <Grid item xs={12} md={6}>
               <Typography variant="body2" color="text.secondary">
-                {'End Time'}
+                {dictionary['content'].clockOut || 'End Time'}
               </Typography>
               <Typography variant="body1">{formatTime(overtimeData.end_time)}</Typography>
             </Grid>
@@ -187,7 +187,7 @@ const OvertimeDetailsDialog = ({ open, setOpen, overtimeData }: OvertimeDetailsD
                 {overtimeData.rejection_reason && (
                   <Grid item xs={12}>
                     <Typography variant="body2" color="text.secondary">
-                      { 'Rejection Reason'}
+                      {dictionary['content'].rejectionReason || 'Rejection Reason'}
                     </Typography>
                     <Typography variant="body1" className="mt-1">
                       {overtimeData.rejection_reason}

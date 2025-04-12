@@ -66,6 +66,7 @@ import { useDictionary } from '@/components/dictionary-provider/DictionaryContex
 import PaymentConfirmationDialog from '@/components/dialogs/payment-confirmation-dialog/PaymentConfirmationDialog'
 import { useSWRConfig } from 'swr'
 import PayslipViewDialog from '../view/PayslipViewDialog'
+import { useAuth } from '@/components/AuthProvider'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -80,13 +81,6 @@ type PayslipWithAction = Payslip & {
   action?: string
 }
 
-type UserRoleType = {
-  [key: string]: { icon: string; color: string }
-}
-
-type UserStatusType = {
-  [key: string]: ThemeColor
-}
 
 // Styled Components
 const Icon = styled('i')({})
@@ -137,6 +131,8 @@ const DebouncedInput = ({
 const columnHelper = createColumnHelper<PayslipWithAction>()
 
 const PayslipListTable = ({ tableData }: { tableData?: Payslip[] }) => {
+  const { user } = useAuth()
+
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -167,123 +163,142 @@ const PayslipListTable = ({ tableData }: { tableData?: Payslip[] }) => {
   }, [tableData])
 
   const columns = useMemo<ColumnDef<PayslipWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      columnHelper.accessor('employee.name', {
-        header: 'Employee',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original?.employee?.name}
-              </Typography>
+    () => {
+      const visibleColumns:ColumnDef<PayslipWithAction, any>[] = [
+        {
+          id: 'select',
+          header: ({ table }: { table: any }) => (
+            <Checkbox
+              {...{
+                checked: table.getIsAllRowsSelected(),
+                indeterminate: table.getIsSomeRowsSelected(),
+                onChange: table.getToggleAllRowsSelectedHandler()
+              }}
+            />
+          ),
+          cell: ({ row }: { row: any }) => (
+            <Checkbox
+              {...{
+                checked: row.getIsSelected(),
+                disabled: !row.getCanSelect(),
+                indeterminate: row.getIsSomeSelected(),
+                onChange: row.getToggleSelectedHandler()
+              }}
+            />
+          )
+        },
+        columnHelper.accessor('employee.name', {
+          header: dictionary['content'].employee,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                {row.original?.employee?.name}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('employee.salary_type', {
-        header: 'Payroll Type',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original?.employee?.salary_type}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+          )
+        }),
+        columnHelper.accessor('employee.salary_type', {
+          header: dictionary['content'].payrollType,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                {row.original?.employee?.salary_type}
+                </Typography>
+                {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('employee.salary', {
-        header: 'Salary',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {formatPrice(row.original?.employee?.salary || '')}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+          )
+        }),
+        columnHelper.accessor('employee.salary', {
+          header: dictionary['content'].salary,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                {formatPrice(row.original?.employee?.salary || '')}
+                </Typography>
+                {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('net_salary', {
-        header: 'Net Salary',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {formatPrice(row.original?.net_salary || '')}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+          )
+        }),
+        columnHelper.accessor('net_salary', {
+          header: dictionary['content'].netSalary,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                {formatPrice(row.original?.net_salary || '')}
+                </Typography>
+                {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('payment_status', {
-        header: 'Status',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              {/* <Typography color='text.primary' className='font-medium'>
-              Medicle Leave
-              </Typography> */}
-              <Chip label={row.original?.payment_status} color={row.original?.payment_status == 'paid' ? 'success' : 'secondary' }/>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+          )
+        }),
+        columnHelper.accessor('payment_status', {
+          header: dictionary['content'].status,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+                {/* <Typography color='text.primary' className='font-medium'>
+                Medicle Leave
+                </Typography> */}
+                <Chip label={row.original?.payment_status} color={row.original?.payment_status == 'paid' ? 'success' : 'secondary' }/>
+                {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+              </div>
             </div>
-          </div>
-        )
-      }),
-    
-      columnHelper.accessor('action', {
-        header: 'Action',
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-            <IconButton title='View Payslip' onClick={() => handleViewClick(row.original)}>
-              <i className='tabler-script text-textSecondary' />
-            </IconButton>
-            {
-              row.original.payment_status == 'unpaid' && 
-              <IconButton title='Click to paid' onClick={() => handlePaymentClick(row.original)}>
-                <i className='tabler-currency-dollar text-textSecondary' />
-              </IconButton> 
-            } 
-            <IconButton title='Delete' onClick={() => handleDeleteClick(row.original)}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+          )
+        }),
+      
+        columnHelper.accessor('action', {
+          header: dictionary['content'].action,
+          cell: ({ row }) => (
+            <div className='flex items-center'>
+              <IconButton title='View Payslip' onClick={() => handleViewClick(row.original)}>
+                <i className='tabler-script text-textSecondary' />
+              </IconButton>
+              {
+                row.original.payment_status == 'unpaid' && 
+                <IconButton title='Click to paid' onClick={() => handlePaymentClick(row.original)}>
+                  <i className='tabler-currency-dollar text-textSecondary' />
+                </IconButton> 
+              } 
+              <IconButton title='Delete' onClick={() => handleDeleteClick(row.original)}>
+                <i className='tabler-trash text-textSecondary' />
+              </IconButton>
+            </div>
+          ),
+          enableSorting: false
+        })
+      ]
+      
+         if (user?.type === 'super admin') {
+           visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+             header: dictionary['content'].company,
+             cell: ({ row }) => (
+               <div className='flex items-center gap-4'>
+                 <div className='flex flex-col'>
+                   <Typography color='text.primary' className='font-medium'>
+                     {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                   </Typography>
+                 </div>
+               </div>
+             )
+           }) as ColumnDef<PayslipWithAction, any>)
+         }
+         
+         return visibleColumns
+       },
+       
+       [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -393,11 +408,11 @@ const PayslipListTable = ({ tableData }: { tableData?: Payslip[] }) => {
   return (
     <>
     <Card className='mb-6'>
-      <CardHeader title='Generate Payslip' className='pbe-4' />
+      <CardHeader title={`${dictionary['content'].generate} ${dictionary['content'].payslip}`} className='pbe-4' />
       <GeneratePayslip  />
     </Card>
       <Card>
-        <CardHeader title='Find Employee Payslip' className='pbe-4' />
+        <CardHeader title={`${dictionary['content'].findEmployeePayslip}`} className='pbe-4' />
         <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -414,7 +429,7 @@ const PayslipListTable = ({ tableData }: { tableData?: Payslip[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search User'
+              placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
             {/* <Button

@@ -69,6 +69,7 @@ import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
 import moment from 'moment'
 import QTextField from '@/@core/components/mui/QTextField'
 import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
+import { useAuth } from '@/components/AuthProvider'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -135,6 +136,8 @@ const columnHelper = createColumnHelper<ComplaintWithAction>()
 type DialogMode = 'add' | 'edit' | 'delete' | null
 
 const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
+  const { user } = useAuth()
+  
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -233,118 +236,137 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
     }
 
   const columns = useMemo<ColumnDef<ComplaintWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      columnHelper.accessor('complaint_from.name', {
-        header: 'Complaint From',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original?.complaint_from?.name || '-'}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('complaint_against.name', {
-        header: 'Complaint Against',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original?.complaint_against?.name || '-'}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('title', {
-        header: 'Title',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.title}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('complaint_date', {
-        header: 'Complaint Date',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.complaint_date}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('description', {
-        header: 'Description',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.description}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
+    () => {
+      const visibleColumns: ColumnDef<ComplaintWithAction, any>[] = [
+        {
+           id: 'select',
+           header: ({ table }: { table: any }) => (
+             <Checkbox
+               {...{
+                 checked: table.getIsAllRowsSelected(),
+                 indeterminate: table.getIsSomeRowsSelected(),
+                 onChange: table.getToggleAllRowsSelectedHandler()
+               }}
+             />
+           ),
+           cell: ({ row }: { row: any }) => (
+             <Checkbox
+               {...{
+                 checked: row.getIsSelected(),
+                 disabled: !row.getCanSelect(),
+                 indeterminate: row.getIsSomeSelected(),
+                 onChange: row.getToggleSelectedHandler()
+               }}
+             />
+           )
+         },
+       columnHelper.accessor('complaint_from.name', {
+         header: dictionary['content'].complaintFrom,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original?.complaint_from?.name || '-'}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('complaint_against.name', {
+         header: dictionary['content'].complaintAgainst,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original?.complaint_against?.name || '-'}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('title', {
+         header: dictionary['content'].title,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.title}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('complaint_date', {
+         header: dictionary['content'].complaintDate,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.complaint_date}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('description', {
+         header:dictionary['content'].description,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.description}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+      
      
-    
-      columnHelper.accessor('action', {
-        header: 'Action',
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-             <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+       columnHelper.accessor('action', {
+         header: dictionary['content'].action,
+         cell: ({ row }) => (
+           <div className='flex items-center'>
+              <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
+               <i className='tabler-edit text-textSecondary' />
+             </IconButton>
+             <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
+               <i className='tabler-trash text-textSecondary' />
+             </IconButton>
+           </div>
+         ),
+         enableSorting: false
+       })
+     ];
+      
+           if (user?.type === 'super admin') {
+             visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+               header: dictionary['content'].company,
+               cell: ({ row }) => (
+                 <div className='flex items-center gap-4'>
+                   <div className='flex flex-col'>
+                     <Typography color='text.primary' className='font-medium'>
+                       {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                     </Typography>
+                   </div>
+                 </div>
+               )
+             }) as ColumnDef<ComplaintWithAction, any>)
+           }
+           
+           return visibleColumns
+         },
+         
+         [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -380,7 +402,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
   return (
     <>
       <Card>
-        <CardHeader title='Complaint List' className='pbe-4' />
+        <CardHeader title={dictionary['content'].complaintList} className='pbe-4' />
         <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -397,7 +419,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search Here ...'
+              placeholder={dictionary['content'].searchData}
               className='max-sm:is-full'
             />
             {/* <Button
@@ -414,7 +436,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
               onClick={() => handleOpenDialog('add' )}
               className='max-sm:is-full'
             >
-              Add Complaint
+             {dictionary['content'].addComplaint}
             </Button>
           </div>
         </div>
@@ -487,7 +509,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
         <FormDialog
         open={dialogOpen}
         setOpen={setDialogOpen}
-        title={'Add new Complaint'}
+        title= {dictionary['content'].addComplaint}
         onSubmit={async (data:Complaint) => {
           try {
             const res = await postComplaint({
@@ -516,7 +538,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
             fullWidth
             required
             select
-            label={`Complaint From`}
+            label= {dictionary['content'].complaintFrom}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
             }}
@@ -534,7 +556,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
             fullWidth
             required
             select
-            label={`Complaint Against`}
+            label={dictionary['content'].complaintAgainst}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
             }}
@@ -552,12 +574,12 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
             fullWidth
             required
             placeholder={`${dictionary['content'].enter} Title`}
-            label={`Title`}
+            label={dictionary['content'].title}
           />
            <QReactDatepicker
             name="complaint_date"
             control={methods.control}
-            label={'Complaint Date'}
+            label={dictionary['content'].complaintDate}
             required
           />
           <QTextField
@@ -566,7 +588,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
             fullWidth
             required
             placeholder={`${dictionary['content'].enter} Description`}
-            label={`Description`}
+            label={dictionary['content'].description}
             multiline={true}
           />
        </>
@@ -577,7 +599,7 @@ const ComplaintListTable = ({ tableData }: { tableData?: Complaint[] }) => {
         <FormDialog
           open={dialogOpen}
           setOpen={setDialogOpen}
-          title={`Edit Complaint`}
+          title={dictionary['content'].editComplaint}
           onSubmit={async (data:Complaint) => {
             try {
               if (!selectedComplaint) return

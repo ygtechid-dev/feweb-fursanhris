@@ -21,7 +21,7 @@ const ResignationListApp =  () => {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <div>{dictionary['content'].loading}...</div>
   }
 
   return <ResignationList datas={data?.data?.resignations} />

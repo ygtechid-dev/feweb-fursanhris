@@ -50,15 +50,15 @@ const PaymentConfirmationDialog = ({
             </DialogTitle>
             <DialogContent>
               <DialogContentText>
-                {/* {dictionary['content']?.confirmPaymentMessage || 'Are you sure you want to mark this payslip as paid?'} */}
-                {'Are you sure you want to mark this payslip as paid?'}
+                {dictionary['content']?.confirmPaymentMessage || 'Are you sure you want to mark this payslip as paid?'}
+                {/* {'Are you sure you want to mark this payslip as paid?'} */}
               </DialogContentText>
               
               {selectedPayslip && (
                 <div className='mt-4 border-t pt-4'>
                   <Typography variant='subtitle2' className='mb-2'>
-                    {/* {dictionary['content']?.payslipDetails || 'Payslip Details'}: */}
-                    {'Payslip Details'}:
+                    {dictionary['content']?.payslipDetails || 'Payslip Details'}:
+                    {/* {'Payslip Details'}: */}
                   </Typography>
                   
                   <div className='grid grid-cols-2 gap-2'>
@@ -104,8 +104,8 @@ const PaymentConfirmationDialog = ({
                 {isLoading 
                 //   ? (dictionary['content']?.processing || 'Processing...') 
                 //   : (dictionary['content']?.confirmPayment || 'Confirm Payment')}
-                  ? ('Processing...') 
-                  : ('Confirm Payment')}
+                  ? (`${dictionary['content'].processing}...`) 
+                  : (dictionary['content'].confirmPaymentButton)}
               </Button>
             </DialogActions>
           </>
@@ -121,14 +121,14 @@ const PaymentConfirmationDialog = ({
                 </DialogTitle>
             <DialogContent>
               <DialogContentText>
-                {/* {dictionary['content']?.genericConfirmationMessage || 'Are you sure you want to proceed with this action?'} */}
-                {'Are you sure you want to proceed with this action?'}
+                {dictionary['content']?.genericConfirmationMessage || 'Are you sure you want to proceed with this action?'}
+                {/* {'Are you sure you want to proceed with this action?'} */}
               </DialogContentText>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleClose} disabled={isLoading}>
-                {/* {dictionary['content']?.cancel || 'Cancel'} */}
-                {'Cancel'}
+                {dictionary['content']?.cancel || 'Cancel'}
+                {/* {'Cancel'} */}
               </Button>
               <Button 
                 onClick={onConfirm} 
@@ -141,8 +141,8 @@ const PaymentConfirmationDialog = ({
                   ? (dictionary['content']?.processing || 'Processing...') 
                   : (dictionary['content']?.confirm || 'Confirm')} */}
                 {isLoading 
-                  ? ( 'Processing...') 
-                  : ( 'Confirm')}
+                 ? (`${dictionary['content'].processing}...`) 
+                 : (dictionary['content'].confirmPaymentButton)}
               </Button>
             </DialogActions>
           </>

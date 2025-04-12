@@ -1,4 +1,5 @@
 import { Employee } from "./apps/userTypes";
+import { Company } from "./companyTypes";
 
 export interface LeaveType {
     id: number;
@@ -30,4 +31,5 @@ export interface LeaveType {
     leave_type: LeaveType;
     approver: null | any;
     rejecter: null | any;
+    company?: Company;
   }

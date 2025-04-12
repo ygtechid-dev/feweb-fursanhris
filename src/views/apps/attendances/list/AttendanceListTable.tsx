@@ -55,6 +55,7 @@ import { KeyedMutator } from 'swr'
 import { AttendanceEmployee } from '@/types/attendanceEmployeeTypes'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 import AttendanceDetailDialog from './AttendanceDetailDialog'
+import { useAuth } from '@/components/AuthProvider'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -67,14 +68,6 @@ declare module '@tanstack/table-core' {
 
 type AttendanceEmployeeWithAction = AttendanceEmployee & {
   action?: string
-}
-
-type UserRoleType = {
-  [key: string]: { icon: string; color: string }
-}
-
-type UserStatusType = {
-  [key: string]: ThemeColor
 }
 
 // Styled Components
@@ -122,25 +115,13 @@ const DebouncedInput = ({
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
 }
 
-// Vars
-// const userRoleObj: UserRoleType = {
-//   admin: { icon: 'tabler-crown', color: 'error' },
-//   author: { icon: 'tabler-device-desktop', color: 'warning' },
-//   editor: { icon: 'tabler-edit', color: 'info' },
-//   maintainer: { icon: 'tabler-chart-pie', color: 'success' },
-//   subscriber: { icon: 'tabler-user', color: 'primary' }
-// }
-
-// const userStatusObj: UserStatusType = {
-//   active: 'success',
-//   pending: 'warning',
-//   inactive: 'secondary'
-// }
 
 // Column Definitions
 const columnHelper = createColumnHelper<AttendanceEmployeeWithAction>()
 
 const AttendanceListTable = ({ tableData, mutate }: { tableData?: AttendanceEmployee[],  mutate: KeyedMutator<any> }) => {
+  const { user } = useAuth()
+
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -165,154 +146,159 @@ const AttendanceListTable = ({ tableData, mutate }: { tableData?: AttendanceEmpl
   const { dictionary } = useDictionary()
 
   const columns = useMemo<ColumnDef<AttendanceEmployeeWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      columnHelper.accessor('employee_name', {
-        header: dictionary['content'].employee,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.employee_name}
-              </Typography>
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('date', {
-        header: dictionary['content'].date,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.date}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('status', {
-        header: dictionary['content'].status,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.status}
-              </Typography>
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('clock_in', {
-        header: dictionary['content'].clockIn,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.clock_in}
-              </Typography>
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('clock_out', {
-        header: dictionary['content'].clockOut,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original?.clock_out || '-'}
-              </Typography>
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('late', {
-        header: dictionary['content'].late,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original?.late || '-'}
-              </Typography>
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('early_leaving', {
-        header: dictionary['content'].earlyLeaving,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original?.early_leaving || '-'}
-              </Typography>
-            </div>
-          </div>
-        )
-      }),
-     
-      // columnHelper.accessor('status', {
-      //   header: 'Status',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-3'>
-      //       <Chip
-      //         variant='tonal'
-      //         label={row.original.status}
-      //         size='small'
-      //         color={userStatusObj[row.original.status]}
-      //         className='capitalize'
-      //       />
-      //     </div>
-      //   )
-      // }),
-      columnHelper.accessor('action', {
-        header: dictionary['content'].action,
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-            {/* <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton> */}
-            <IconButton 
-              title='View' 
-              onClick={() => handleViewClick(row.original.id!)}
-            >
-              <i className='tabler-eye text-textSecondary' />
-            </IconButton>
-            {/* <IconButton  title='Manual Clock Out'>
-              <i className='tabler-logout text-textSecondary' />
-            </IconButton> */}
-           
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+    () => {
+      const visibleColumns:ColumnDef<AttendanceEmployeeWithAction, any>[] = [
+        {
+           id: 'select',
+           header: ({ table }: { table: any }) => (
+             <Checkbox
+               {...{
+                 checked: table.getIsAllRowsSelected(),
+                 indeterminate: table.getIsSomeRowsSelected(),
+                 onChange: table.getToggleAllRowsSelectedHandler()
+               }}
+             />
+           ),
+           cell: ({ row }: { row: any }) => (
+             <Checkbox
+               {...{
+                 checked: row.getIsSelected(),
+                 disabled: !row.getCanSelect(),
+                 indeterminate: row.getIsSomeSelected(),
+                 onChange: row.getToggleSelectedHandler()
+               }}
+             />
+           )
+         },
+       columnHelper.accessor('employee_name', {
+         header: dictionary['content'].employee,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.employee_name}
+               </Typography>
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('date', {
+         header: dictionary['content'].date,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.date}
+               </Typography>
+               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('status', {
+         header: dictionary['content'].status,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+                 {row.original.status}
+               </Typography>
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('clock_in', {
+         header: dictionary['content'].clockIn,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original.clock_in}
+               </Typography>
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('clock_out', {
+         header: dictionary['content'].clockOut,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original?.clock_out || '-'}
+               </Typography>
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('late', {
+         header: dictionary['content'].late,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original?.late || '-'}
+               </Typography>
+             </div>
+           </div>
+         )
+       }),
+       columnHelper.accessor('early_leaving', {
+         header: dictionary['content'].earlyLeaving,
+         cell: ({ row }) => (
+           <div className='flex items-center gap-4'>
+             <div className='flex flex-col'>
+               <Typography color='text.primary' className='font-medium'>
+               {row.original?.early_leaving || '-'}
+               </Typography>
+             </div>
+           </div>
+         )
+       }),
+      
+   
+       columnHelper.accessor('action', {
+         header: dictionary['content'].action,
+         cell: ({ row }) => (
+           <div className='flex items-center'>
+             {/* <IconButton onClick={() => setData(data?.filter(product => product.id !== row.original.id))}>
+               <i className='tabler-trash text-textSecondary' />
+             </IconButton> */}
+             <IconButton 
+               title='View' 
+               onClick={() => handleViewClick(row.original.id!)}
+             >
+               <i className='tabler-eye text-textSecondary' />
+             </IconButton>
+             {/* <IconButton  title='Manual Clock Out'>
+               <i className='tabler-logout text-textSecondary' />
+             </IconButton> */}
+            
+           </div>
+         ),
+         enableSorting: false
+       })
+     ];
+    if (user?.type === 'super admin') {
+           visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+             header: 'Company',
+             cell: ({ row }) => (
+               <div className='flex items-center gap-4'>
+                 <div className='flex flex-col'>
+                   <Typography color='text.primary' className='font-medium'>
+                     {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                   </Typography>
+                 </div>
+               </div>
+             )
+           }) as ColumnDef<AttendanceEmployeeWithAction, any>)
+         }
+         
+         return visibleColumns
+       },
+       
+       [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -343,16 +329,6 @@ const AttendanceListTable = ({ tableData, mutate }: { tableData?: AttendanceEmpl
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
-
-  // const getAvatar = (params: Pick<AttendanceEmployee, 'avatar' | 'fullName'>) => {
-  //   const { avatar, fullName } = params
-
-  //   if (avatar) {
-  //     return <CustomAvatar src={avatar} size={34} />
-  //   } else {
-  //     return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
-  //   }
-  // }
 
   return (
     <>

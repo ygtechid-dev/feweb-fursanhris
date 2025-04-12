@@ -72,6 +72,8 @@ import { getEmployees } from '@/services/employeeService'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import OvertimeDetailsDialog from '../view/detail-overtime/OvertimeDetail'
 import OvertimeStatusDialog from '../view/overtime-update-status/OvertimeStatusDialog'
+import { useAuth } from '@/components/AuthProvider'
+import useCompanies from '@/hooks/useCompanies'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -158,6 +160,9 @@ const userStatusObj: UserStatusType = {
 const columnHelper = createColumnHelper<OvertimeWithAction>()
 
 const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
+  const { user } = useAuth()
+  const { companies } = useCompanies()
+  
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -195,138 +200,157 @@ const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
   }, [tableData])
 
   const columns = useMemo<ColumnDef<OvertimeWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      columnHelper.accessor('employee.name', {
-        header: dictionary['content'].employee,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.employee.name}
-              </Typography>
+    () => {
+      const visibleColumns: ColumnDef<OvertimeWithAction, any>[] = [
+        {
+           id: 'select',
+           header: ({ table }: { table: any }) => (
+             <Checkbox
+               {...{
+                 checked: table.getIsAllRowsSelected(),
+                 indeterminate: table.getIsSomeRowsSelected(),
+                 onChange: table.getToggleAllRowsSelectedHandler()
+               }}
+             />
+           ),
+           cell: ({ row }: { row: any }) => (
+             <Checkbox
+               {...{
+                 checked: row.getIsSelected(),
+                 disabled: !row.getCanSelect(),
+                 indeterminate: row.getIsSomeSelected(),
+                 onChange: row.getToggleSelectedHandler()
+               }}
+             />
+           )
+         },
+         columnHelper.accessor('employee.name', {
+           header: dictionary['content'].employee,
+           cell: ({ row }) => (
+             <div className='flex items-center gap-4'>
+               <div className='flex flex-col'>
+                 <Typography color='text.primary' className='font-medium'>
+                 {row.original.employee.name}
+                 </Typography>
+               </div>
+             </div>
+           )
+         }),
+         columnHelper.accessor('overtime_date', {
+           header: dictionary['content'].date,
+           cell: ({ row }) => (
+             <div className='flex items-center gap-4'>
+               {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+               <div className='flex flex-col'>
+                 <Typography color='text.primary' className='font-medium'>
+                   {row.original.overtime_date}
+                 </Typography>
+                 {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+               </div>
+             </div>
+           )
+         }),
+         columnHelper.accessor('hours', {
+           header: dictionary['content'].overtimeHours,
+           cell: ({ row }) => (
+             <div className='flex items-center gap-4'>
+               {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+               <div className='flex flex-col'>
+                 <Typography color='text.primary' className='font-medium'>
+                 {row.original.hours}
+                 </Typography>
+                 {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+               </div>
+             </div>
+           )
+         }),
+         columnHelper.accessor('start_time', {
+           header: dictionary['content'].clockIn,
+           cell: ({ row }) => (
+             <div className='flex items-center gap-4'>
+               {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+               <div className='flex flex-col'>
+                 <Typography color='text.primary' className='font-medium'>
+                 {row.original.start_time}
+                 </Typography>
+                 {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+               </div>
+             </div>
+           )
+         }),
+         columnHelper.accessor('end_time', {
+           header: dictionary['content'].clockOut,
+           cell: ({ row }) => (
+             <div className='flex items-center gap-4'>
+               {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+               <div className='flex flex-col'>
+                 <Typography color='text.primary' className='font-medium'>
+                 {row.original.end_time}
+                 </Typography>
+                 {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+               </div>
+             </div>
+           )
+         }),
+         columnHelper.accessor('status', {
+           header: dictionary['content'].status,
+           cell: ({ row }) => (
+             <div className='flex items-center gap-4'>
+               <div className='flex flex-col'>
+                 <Chip label= {ucfirst(row.original.status)} color={row.original.status == 'approved' ? 'success' : (row.original.status == 'pending' ? 'secondary' : 'error')}/>
+               </div>
+             </div>
+           )
+         }),
+         columnHelper.accessor('action', {
+           header: dictionary['content'].action,
+           cell: ({ row }) => (
+             <div className='flex items-center'>
+             {
+               row.original.status == 'pending' &&  (
+                 <IconButton onClick={() => handleUpdateStatus(row.original)}>
+                   <i className='tabler-copy-check text-textSecondary' />
+                 </IconButton>
+               )
+             }
+             <IconButton onClick={() => handleViewDetails(row.original)}>
+               <i className='tabler-eye text-textSecondary' />
+             </IconButton>
+             {
+               row.original.status == 'pending' &&  (
+                 <IconButton onClick={() => handleEditClick(row.original)}>
+                   <i className='tabler-edit text-textSecondary' />
+                 </IconButton>
+               )
+             }
+             <IconButton onClick={() => handleDeleteClick(row.original)}>
+               <i className='tabler-trash text-textSecondary' />
+             </IconButton>
+           </div>
+           ),
+           enableSorting: false
+         })
+       ];
+        
+      if (user?.type === 'super admin') {
+        visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+          header: 'Company',
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('overtime_date', {
-        header: dictionary['content'].date,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.overtime_date}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('hours', {
-        header: dictionary['content'].overtimeHours,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.hours}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('start_time', {
-        header: dictionary['content'].clockIn,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.start_time}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('end_time', {
-        header: dictionary['content'].clockOut,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.end_time}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('status', {
-        header: dictionary['content'].status,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Chip label= {ucfirst(row.original.status)} color={row.original.status == 'approved' ? 'success' : (row.original.status == 'pending' ? 'secondary' : 'error')}/>
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('action', {
-        header: dictionary['content'].action,
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-          {
-            row.original.status == 'pending' &&  (
-              <IconButton onClick={() => handleUpdateStatus(row.original)}>
-                <i className='tabler-copy-check text-textSecondary' />
-              </IconButton>
-            )
-          }
-          <IconButton onClick={() => handleViewDetails(row.original)}>
-            <i className='tabler-eye text-textSecondary' />
-          </IconButton>
-          {
-            row.original.status == 'pending' &&  (
-              <IconButton onClick={() => handleEditClick(row.original)}>
-                <i className='tabler-edit text-textSecondary' />
-              </IconButton>
-            )
-          }
-          <IconButton onClick={() => handleDeleteClick(row.original)}>
-            <i className='tabler-trash text-textSecondary' />
-          </IconButton>
-        </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+          )
+        }) as ColumnDef<OvertimeWithAction, any>)
+      }
+      
+      return visibleColumns
+    },
+    
+    [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -587,6 +611,27 @@ const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
         handleSubmit={methods.handleSubmit}
       >
        <>
+       {
+          user && user?.type == 'super admin' && 
+          <QTextField
+          name='created_by'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].company}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+          {companies.map(company => (
+              <MenuItem key={company.id} value={company.id}>
+                {company.first_name} {company.last_name}
+              </MenuItem>
+            ))}
+        </QTextField>
+        }
         <QTextField
           name='employee_id'
           control={methods.control}
@@ -600,11 +645,17 @@ const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
           }}
         >
           <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].employee}</MenuItem>
-          {employees.map((employee) => (
-          <MenuItem key={employee.id} value={employee.id}>
-            {employee.name}
-          </MenuItem>
-        ))}
+          { user && user?.type != 'super admin' && employees.map((employee) => (
+            <MenuItem key={employee.id} value={employee.id}>
+              {employee.name}
+            </MenuItem>
+          ))}
+
+          { methods.watch('created_by') && employees.filter((emp) => emp.created_by == methods.getValues('created_by')).map((employee) => (
+            <MenuItem key={employee.id} value={employee.id}>
+              {employee.name}
+            </MenuItem>
+          ))}
         </QTextField>
 {/* 
         <QTextField
@@ -622,8 +673,6 @@ const OvertimeListTable = ({ tableData }: { tableData?: Overtime[] }) => {
           label={'Overtime Date'}
           required
         />
-
-
 
         <div className="flex space-x-4">
               <div className="flex-1">

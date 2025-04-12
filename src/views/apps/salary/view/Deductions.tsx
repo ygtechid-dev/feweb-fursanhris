@@ -147,7 +147,7 @@ const Deductions = () => {
    const columns = useMemo<ColumnDef<TableWithAction, any>[]>(
      () => [
        columnHelper.accessor('title', {
-         header: 'Title',
+         header: dictionary['content'].title,
          cell: ({ row }) => (
            <div className='flex items-center gap-3'>
              <div className='flex flex-col items-start'>
@@ -160,7 +160,7 @@ const Deductions = () => {
          )
        }),
        columnHelper.accessor('type', {
-         header: 'Type',
+         header: dictionary['content'].type,
          cell: ({ row }) => (
            <div className='flex items-center'>
                <Typography color='text.primary' className='font-medium'>
@@ -175,7 +175,7 @@ const Deductions = () => {
          )
        }),
        columnHelper.accessor('amount', {
-         header: 'Amount',
+         header: dictionary['content'].amount,
          cell: ({ row }) => (
            <div className='flex items-center gap-3'>
              <div className='flex flex-col items-start'>
@@ -187,7 +187,7 @@ const Deductions = () => {
          )
        }),
        columnHelper.accessor('action', {
-        header: 'Action',
+        header: dictionary['content'].action,
         cell: ({ row }) => (
           <div className='flex items-center'>
             <OptionMenu
@@ -226,7 +226,7 @@ return (
   <>
   <Card>
     <CardHeader 
-      title='Deduction' 
+      title={dictionary['content'].deduction}
       action={
         <Button
           variant='contained'
@@ -289,7 +289,7 @@ return (
           required
           placeholder={`${dictionary['content'].enter} Title ${dictionary['content'].name}`}
           // label={dictionary['content'].name}
-          label={`Title`}
+          label={dictionary['content'].title}
         />
         <QTextField
             name='type'
@@ -297,13 +297,13 @@ return (
             fullWidth
             required
             select
-            label={`Type`}
+            label={dictionary['content'].type}
             // disabled={dialogFetchLoading}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an type'
             }}
           >
-            <MenuItem value="0">{dictionary['content'].select} Type</MenuItem>
+            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].type}</MenuItem>
             <MenuItem value="permanent">Permanent</MenuItem>
             <MenuItem value="monthly">Monthly</MenuItem>
           </QTextField>
@@ -313,7 +313,7 @@ return (
               name='month'
               control={methods.control}
               // label={dictionary['content'].companyDateofJoining}
-              label={`Month / Year`}
+              label={`${dictionary['content'].month} / ${dictionary['content'].year}`}
               required
               placeholderText="MM/yyyy"
               dateFormat="MM/yyyy"
@@ -332,7 +332,7 @@ return (
             type='number'
             placeholder={`${dictionary['content'].enter} Amount`}
             // label={dictionary['content'].name}
-            label={`Amount`}
+            label={dictionary['content'].amount}
           />
           
        </>
@@ -389,7 +389,7 @@ return (
             fullWidth
             required
             select
-            label={`Type`}
+            label={dictionary['content'].type}
             // disabled={dialogFetchLoading}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an type'
@@ -405,7 +405,7 @@ return (
               name='month'
               control={methods.control}
               // label={dictionary['content'].companyDateofJoining}
-              label={`Month / Year`}
+              label={`${dictionary['content'].month} / ${dictionary['content'].year}`}
               required
               placeholderText="MM/yyyy"
               dateFormat="MM/yyyy"
@@ -424,7 +424,7 @@ return (
             type='number'
             placeholder={`${dictionary['content'].enter} Amount`}
             // label={dictionary['content'].name}
-            label={`Amount`}
+            label={dictionary['content'].amount}
           />
           
        </>

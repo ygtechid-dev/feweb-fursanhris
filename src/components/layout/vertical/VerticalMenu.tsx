@@ -85,9 +85,9 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         {/* </MenuSection> */}
         {/* <MenuSection label={'Super Admin'}> */}
         <SubMenu label={dictionary['navigation'].companies} icon={<i className='tabler-buildings' />}>
-        {user?.type == 'super admin' && (<MenuItem href={`/${locale}/companies`}>
+        {/* {user?.type == 'super admin' && (<MenuItem href={`/${locale}/companies`}>
           {dictionary['navigation'].companyList}
-          </MenuItem>)}
+          </MenuItem>)} */}
           
         <MenuItem href={`/${locale}/companies/branches`}>
           {dictionary['navigation'].branches}

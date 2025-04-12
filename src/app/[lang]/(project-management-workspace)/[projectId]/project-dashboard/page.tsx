@@ -2,8 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Calendar, Clock, CheckCircle, AlertCircle, Circle, ListChecks, Briefcase, Users, RefreshCw, ListTodo, Loader, FolderKanban } from 'lucide-react';
-import { Activity, DashboardStats, getDashboardStats, getProjectCompletionData, getRecentActivities, ProjectCompletion } from '@/services/projectDashboardService';
+import { Activity, DashboardStats, getDashboardStats, getProject, getProjectCompletionData, getRecentActivities, ProjectCompletion } from '@/services/projectDashboardService';
 import { useParams, useSearchParams } from 'next/navigation';
+import { Project } from '@/types/projectTypes';
+import ProjectMembersList from '@/views/dashboards/projects/ProjectMembersList';
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext';
 
 // Interface for chart data items
 interface ChartDataItem {
@@ -13,8 +16,11 @@ interface ChartDataItem {
 }
 
 export default function Dashboard() {
+  const { dictionary } = useDictionary();
+  
   // State for dashboard data
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [project, setProject] = useState<Project | null>(null);
   const [statistics, setStatistics] = useState<DashboardStats | null>(null);
   const [projectCompletionData, setProjectCompletionData] = useState<ProjectCompletion[]>([]);
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
@@ -67,12 +73,14 @@ export default function Dashboard() {
         // Fetch all data in parallel with project ID filter if provided
         const params = projectId ? { projectId: Number(projectId) } : undefined;
         
-        const [stats, completionData, activities] = await Promise.all([
+        const [projectData, stats, completionData, activities] = await Promise.all([
+          getProject(params),
           getDashboardStats(params),
           getProjectCompletionData(params),
           getRecentActivities(4, params) // Limit to 4 recent activities
         ]);
         
+        setProject(projectData);
         setStatistics(stats);
         setProjectCompletionData(completionData);
         setRecentActivities(activities);
@@ -83,7 +91,7 @@ export default function Dashboard() {
         setIsLoading(false);
       }
     };
-
+  
     fetchDashboardData();
   }, [projectId]); // Re-fetch when projectId changes
 
@@ -95,16 +103,16 @@ export default function Dashboard() {
   ] : [];
 
   const taskStatusData: ChartDataItem[] = statistics ? [
-    { name: 'To Do', value: statistics.tasks.todo, color: COLORS.tasks[0] },
-    { name: 'In Progress', value: statistics.tasks.in_progress, color: COLORS.tasks[1] },
-    { name: 'In Review', value: statistics.tasks.in_review, color: COLORS.tasks[2] },
-    { name: 'Done', value: statistics.tasks.done, color: COLORS.tasks[3] }
+    { name: dictionary['content'].todoTasks, value: statistics.tasks.todo, color: COLORS.tasks[0] },
+    { name: dictionary['content'].inProgressTasks, value: statistics.tasks.in_progress, color: COLORS.tasks[1] },
+    { name: dictionary['content'].inReviewTasks, value: statistics.tasks.in_review, color: COLORS.tasks[2] },
+    { name: dictionary['content'].completedTasks, value: statistics.tasks.done, color: COLORS.tasks[3] }
   ] : [];
 
   const priorityData: ChartDataItem[] = statistics ? [
-    { name: 'High', value: statistics.priorities.high, color: getPriorityColor('high') },
-    { name: 'Medium', value: statistics.priorities.medium, color: getPriorityColor('medium') },
-    { name: 'Low', value: statistics.priorities.low, color: getPriorityColor('low') }
+    { name: dictionary['content'].highPriority || 'High', value: statistics.priorities.high, color: getPriorityColor('high') },
+    { name: dictionary['content'].mediumPriority || 'Medium', value: statistics.priorities.medium, color: getPriorityColor('medium') },
+    { name: dictionary['content'].lowPriority || 'Low', value: statistics.priorities.low, color: getPriorityColor('low') }
   ] : [];
 
   // Helper functions
@@ -134,7 +142,7 @@ export default function Dashboard() {
     return (
       <div className="p-6 max-w-6xl mx-auto">
         <div className="flex items-center justify-center h-64">
-          <p className="text-xl text-gray-500">Loading dashboard data...</p>
+          <p className="text-xl text-gray-500">{dictionary['content'].loadingDashboardData || 'Loading dashboard data...'}</p>
         </div>
       </div>
     );
@@ -145,7 +153,7 @@ export default function Dashboard() {
     return (
       <div className="p-3 max-w-6xl mx-auto">
         <div className="flex items-center justify-center h-64">
-          <p className="text-xl text-gray-500">No data available</p>
+          <p className="text-xl text-gray-500">{dictionary['content'].noDataAvailable || 'No data available'}</p>
         </div>
       </div>
     );
@@ -155,11 +163,11 @@ export default function Dashboard() {
     <div className="p-3 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">
-          {projectId ? 'Project Dashboard' : 'Project Management Dashboard'}
+          {projectId ? (dictionary['content'].projectDashboard || 'Project Dashboard') : (dictionary['content'].projectManagementDashboard || 'Project Management Dashboard')} {project && ` - ${project.name}`}
         </h1>
         {projectId && (
           <a href={`/${searchParams?.lang}/projects`} className="flex items-center text-blue-600 hover:text-blue-800">
-            <RefreshCw className="h-4 w-4 mr-1" /> View All Projects
+            <RefreshCw className="h-4 w-4 mr-1" /> {dictionary['content'].viewAllProjects || 'View All Projects'}
           </a>
         )}
       </div>
@@ -169,7 +177,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Total Tasks</p>
+              <p className="text-gray-500 text-sm">{dictionary['content'].totalTasks || 'Total Tasks'}</p>
               <p className="text-2xl font-bold">{statistics.tasks.total}</p>
             </div>
             <ListChecks className="h-8 w-8 text-indigo-600" />
@@ -178,7 +186,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">To Do Tasks</p>
+              <p className="text-gray-500 text-sm">{dictionary['content'].todoTasks || 'To Do Tasks'}</p>
               <p className="text-2xl font-bold">{statistics.tasks.todo}</p>
             </div>
             <ListTodo className="h-8 w-8 text-blue-500" />
@@ -187,7 +195,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">In Progress Tasks</p>
+              <p className="text-gray-500 text-sm">{dictionary['content'].inProgressTasks || 'In Progress Tasks'}</p>
               <p className="text-2xl font-bold">{statistics.tasks.in_progress}</p>
             </div>
             <Loader className="h-8 w-8 text-blue-500" />
@@ -196,7 +204,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">In Review Tasks</p>
+              <p className="text-gray-500 text-sm">{dictionary['content'].inReviewTasks || 'In Review Tasks'}</p>
               <p className="text-2xl font-bold">{statistics.tasks.in_review}</p>
             </div>
             <FolderKanban className="h-8 w-8 text-blue-500" />
@@ -205,7 +213,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Completed Tasks</p>
+              <p className="text-gray-500 text-sm">{dictionary['content'].completedTasks || 'Completed Tasks'}</p>
               <p className="text-2xl font-bold">{statistics.tasks.done}</p>
             </div>
             <CheckCircle className="h-8 w-8 text-green-600" />
@@ -214,7 +222,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Low Priority Tasks</p>
+              <p className="text-gray-500 text-sm">{dictionary['content'].lowPriorityTasks || 'Low Priority Tasks'}</p>
               <p className="text-2xl font-bold">{statistics.priorities.low}</p>
             </div>
             <AlertCircle className="h-8 w-8 text-green-600" />
@@ -223,7 +231,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Medium Priority Tasks</p>
+              <p className="text-gray-500 text-sm">{dictionary['content'].mediumPriorityTasks || 'Medium Priority Tasks'}</p>
               <p className="text-2xl font-bold">{statistics.priorities.medium}</p>
             </div>
             <AlertCircle className="h-8 w-8 text-orange-500" />
@@ -232,7 +240,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">High Priority Tasks</p>
+              <p className="text-gray-500 text-sm">{dictionary['content'].highPriorityTasks || 'High Priority Tasks'}</p>
               <p className="text-2xl font-bold">{statistics.priorities.high}</p>
             </div>
             <AlertCircle className="h-8 w-8 text-red-500" />
@@ -244,10 +252,10 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-6 mb-6">
         {/* Task Distribution */}
         <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-xl font-semibold mb-4">Task Distribution</h2>
+          <h2 className="text-xl font-semibold mb-4">{dictionary['content'].taskDistribution || 'Task Distribution'}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">By Status</h3>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">{dictionary['content'].byStatus || 'By Status'}</h3>
               {taskStatusData.some(item => item.value > 0) ? (
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
@@ -270,12 +278,12 @@ export default function Dashboard() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-32">
-                  <p className="text-gray-500 text-sm">No task status data</p>
+                  <p className="text-gray-500 text-sm">{dictionary['content'].noTaskStatusData || 'No task status data'}</p>
                 </div>
               )}
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">By Priority</h3>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">{dictionary['content'].byPriority || 'By Priority'}</h3>
               {priorityData.some(item => item.value > 0) ? (
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
@@ -298,7 +306,7 @@ export default function Dashboard() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-32">
-                  <p className="text-gray-500 text-sm">No priority data</p>
+                  <p className="text-gray-500 text-sm">{dictionary['content'].noPriorityData || 'No priority data'}</p>
                 </div>
               )}
             </div>
@@ -307,10 +315,10 @@ export default function Dashboard() {
       </div>
 
       {/* Activity Feed and Upcoming Deadlines */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Recent Activities */}
         <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-xl font-semibold mb-4">Recent Activities</h2>
+          <h2 className="text-xl font-semibold mb-4">{dictionary['content'].recentActivities || 'Recent Activities'}</h2>
           <div className="space-y-4">
             {recentActivities.length > 0 ? (
               recentActivities.map(activity => (
@@ -331,14 +339,14 @@ export default function Dashboard() {
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-sm">No recent activities</p>
+              <p className="text-gray-500 text-sm">{dictionary['content'].noRecentActivities || 'No recent activities'}</p>
             )}
           </div>
         </div>
         
         {/* Upcoming Deadlines */}
         <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-xl font-semibold mb-4">Upcoming Deadlines</h2>
+          <h2 className="text-xl font-semibold mb-4">{dictionary['content'].upcomingDeadlines || 'Upcoming Deadlines'}</h2>
           <div className="space-y-4">
             {statistics.upcomingDeadlines.length > 0 ? (
               statistics.upcomingDeadlines.map((task) => (
@@ -348,18 +356,22 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900">{task.name}</p>
-                    <p className="text-xs text-gray-600">Project: {task.project}</p>
+                    <p className="text-xs text-gray-600">{dictionary['content'].project || 'Project'}: {task.project}</p>
                     <p className="text-xs text-gray-500 flex items-center mt-1">
-                      Due: {formatDate(task.dueDate)}
+                      {dictionary['content'].due || 'Due'}: {formatDate(task.dueDate)}
                     </p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-sm">No upcoming deadlines</p>
+              <p className="text-gray-500 text-sm">{dictionary['content'].noUpcomingDeadlines || 'No upcoming deadlines'}</p>
             )}
           </div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <ProjectMembersList project={project} />
       </div>
     </div>
   );

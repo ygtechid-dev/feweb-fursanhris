@@ -69,6 +69,7 @@ import moment from 'moment'
 import QTextField from '@/@core/components/mui/QTextField'
 import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import { useAuth } from '@/components/AuthProvider'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -134,6 +135,8 @@ const columnHelper = createColumnHelper<ResignationWithAction>()
 type DialogMode = 'add' | 'edit' | 'delete' | null
 
 const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
+  const { user } = useAuth()
+  
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -231,105 +234,124 @@ const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
     }
 
   const columns = useMemo<ColumnDef<ResignationWithAction, any>[]>(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      columnHelper.accessor('employee_name', {
-        header: 'Employee',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.employee_name}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+    () => {
+      const visibleColumns:ColumnDef<ResignationWithAction, any>[] = [
+        {
+           id: 'select',
+           header: ({ table }: { table: any }) => (
+             <Checkbox
+               {...{
+                 checked: table.getIsAllRowsSelected(),
+                 indeterminate: table.getIsSomeRowsSelected(),
+                 onChange: table.getToggleAllRowsSelectedHandler()
+               }}
+             />
+           ),
+           cell: ({ row }: { row: any }) => (
+             <Checkbox
+               {...{
+                 checked: row.getIsSelected(),
+                 disabled: !row.getCanSelect(),
+                 indeterminate: row.getIsSomeSelected(),
+                 onChange: row.getToggleSelectedHandler()
+               }}
+             />
+           )
+         },
+         columnHelper.accessor('employee_name', {
+           header: dictionary['content'].employee,
+           cell: ({ row }) => (
+             <div className='flex items-center gap-4'>
+               {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+               <div className='flex flex-col'>
+                 <Typography color='text.primary' className='font-medium'>
+                 {row.original.employee_name}
+                 </Typography>
+                 {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+               </div>
+             </div>
+           )
+         }),
+         columnHelper.accessor('notice_date', {
+           header: dictionary['content'].resignationDate,
+           cell: ({ row }) => (
+             <div className='flex items-center gap-4'>
+               {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+               <div className='flex flex-col'>
+                 <Typography color='text.primary' className='font-medium'>
+                 {row.original.notice_date}
+                 </Typography>
+                 {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+               </div>
+             </div>
+           )
+         }),
+         columnHelper.accessor('resignation_date', {
+           header: dictionary['content'].lastWorkingDay,
+           cell: ({ row }) => (
+             <div className='flex items-center gap-4'>
+               {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+               <div className='flex flex-col'>
+                 <Typography color='text.primary' className='font-medium'>
+                 {row.original.resignation_date}
+                 </Typography>
+                 {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+               </div>
+             </div>
+           )
+         }),
+         columnHelper.accessor('description', {
+           header: dictionary['content'].reason,
+           cell: ({ row }) => (
+             <div className='flex items-center gap-4'>
+               {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+               <div className='flex flex-col'>
+                 <Typography color='text.primary' className='font-medium'>
+                 {row.original.description}
+                 </Typography>
+                 {/* <Typography variant='body2'>{row.original.username}</Typography> */}
+               </div>
+             </div>
+           )
+         }),
+        
+        
+         columnHelper.accessor('action', {
+           header:  dictionary['content'].action,
+           cell: ({ row }) => (
+             <div className='flex items-center'>
+                 <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
+                 <i className='tabler-edit text-textSecondary' />
+               </IconButton>
+               <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
+                 <i className='tabler-trash text-textSecondary' />
+               </IconButton>
+             
+             </div>
+           ),
+           enableSorting: false
+         })
+       ];
+
+       if (user?.type === 'super admin') {
+        visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+          header:dictionary['content'].company,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('notice_date', {
-        header: 'Resignation Date',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.notice_date}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('resignation_date', {
-        header: 'Last Working Day',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.resignation_date}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('description', {
-        header: 'Reason',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-              {row.original.description}
-              </Typography>
-              {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-            </div>
-          </div>
-        )
-      }),
-     
-     
-      columnHelper.accessor('action', {
-        header: 'Action',
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-              <IconButton title='Edit' onClick={() => handleOpenDialog('edit', row.original)}>
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton title='Delete' onClick={() => handleOpenDialog('delete', row.original)}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-          
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+          )
+        }) as ColumnDef<ResignationWithAction, any>)
+      }
+      
+      return visibleColumns
+    },
+    
+    [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -364,8 +386,8 @@ const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
   return (
     <>
       <Card>
-        <CardHeader title='Resignation List' className='pbe-4' />
-        {/* <TableFilters setData={setFilteredData} tableData={data} /> */}
+        <CardHeader title={`${dictionary['content'].resignation} ${dictionary['content'].list}`} className='pbe-4' />
+        <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select
@@ -471,7 +493,7 @@ const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
         <FormDialog
         open={dialogOpen}
         setOpen={setDialogOpen}
-        title={'Add new Resignation'}
+        title={`${dictionary['content'].add} ${dictionary['content'].new} ${dictionary['content'].resignation}`}
         onSubmit={async (data:Resignation) => {
           try {
             const res = await postResignation({
@@ -501,7 +523,7 @@ const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
             fullWidth
             required
             select
-            label={`Employee`}
+            label={`${dictionary['content'].employee}`}
             rules={{
               validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
             }}

@@ -278,33 +278,6 @@ const UserListTable = ({ tableData, mutate }: { tableData?: User[],  mutate: Key
           </div>
         )
       }),
-    
-      // // columnHelper.accessor('currentPlan', {
-      // //   header: 'Plan',
-      // //   cell: ({ row }) => (
-      // //     <Typography className='capitalize' color='text.primary'>
-      // //       {row.original.currentPlan}
-      // //     </Typography>
-      // //   )
-      // // }),
-      // // columnHelper.accessor('billing', {
-      // //   header: 'Billing',
-      // //   cell: ({ row }) => <Typography>{row.original.billing}</Typography>
-      // // }),
-      // columnHelper.accessor('status', {
-      //   header: 'Status',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-3'>
-      //       <Chip
-      //         variant='tonal'
-      //         label={row.original.status}
-      //         size='small'
-      //         color={userStatusObj[row.original.status]}
-      //         className='capitalize'
-      //       />
-      //     </div>
-      //   )
-      // }),
       columnHelper.accessor('action', {
         header: dictionary['content'].action,
         cell: ({ row }) => (

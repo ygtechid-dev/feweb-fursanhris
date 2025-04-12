@@ -18,8 +18,10 @@ import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
 
 // Slice Imports
 import { filterAllCalendarLabels, filterCalendarLabel, selectedEvent } from '@/redux-store/slices/calendar'
+import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 
 const SidebarLeft = (props: SidebarLeftProps) => {
+  const{dictionary} = useDictionary()
   // Props
   const {
     mdAbove,
@@ -96,7 +98,7 @@ const SidebarLeft = (props: SidebarLeftProps) => {
             onClick={handleSidebarToggleSidebar}
             startIcon={<i className='tabler-plus' />}
           >
-            Add Event
+            {dictionary['content'].addEvent}
           </Button>
         </div>
         <Divider className='is-full' />

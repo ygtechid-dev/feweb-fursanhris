@@ -1,3 +1,5 @@
+import { Company } from "./companyTypes";
+
 export interface Complaint {
   id: number;
   title: string;
@@ -22,6 +24,8 @@ export interface Complaint {
   };
   created_at: string;
   updated_at: string;
+  created_by: number;
+  company?: Company;
 }
 
 export const defaultFormValuesComplaint = {
@@ -46,5 +50,7 @@ export const defaultFormValuesComplaint = {
     department: ''
   },
   created_at: '',
-  updated_at: ''
+  updated_at: '',
+  created_by: 0,
+  company: undefined, 
 };

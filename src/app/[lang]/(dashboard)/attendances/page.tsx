@@ -24,7 +24,7 @@ const AttendanceListApp = () => {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <div>{dictionary['content'].loading}...</div>
   }
 
   return <AttendanceList datas={data?.data?.attendanceEmployee} mutate={mutate} />

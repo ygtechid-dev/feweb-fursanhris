@@ -1,5 +1,6 @@
 // Type Imports
 import type { ThemeColor } from '@core/types'
+import { Company } from '../companyTypes'
 
 export type UsersType = {
   id: number
@@ -101,7 +102,7 @@ export interface EmployeeFormData {
   tax_payer_id: string | null
   
   // Documents
-  document: null | any
+  documents: null | any
 }
 
 export interface Employee {
@@ -138,4 +139,5 @@ export interface Employee {
   department: Department
   designation: Designation
   user: User
+  company?: Company;
 }

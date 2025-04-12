@@ -67,6 +67,8 @@ import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import { getBranches } from '@/services/branchService'
 import { Branch } from '@/types/branchTypes'
+import { useAuth } from '@/components/AuthProvider'
+import useCompanies from '@/hooks/useCompanies'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -153,6 +155,10 @@ const userStatusObj: UserStatusType = {
 const columnHelper = createColumnHelper<DepartmentWithAction>()
 
 const DepartmentListTable =({ tableData }: { tableData?: Department[] })  => {
+  const { user } = useAuth()
+  const { companies } = useCompanies()
+    
+
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -185,108 +191,92 @@ const DepartmentListTable =({ tableData }: { tableData?: Department[] })  => {
   }, [tableData])
 
   const columns = useMemo<ColumnDef<DepartmentWithAction, any>[]>(
-    () => [
+    () => {
+      const visibleColumns: ColumnDef<DepartmentWithAction, any>[] = [
       {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
-      },
-      // columnHelper.accessor('fullName', {
-      //   header: 'Company',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-4'>
-      //       {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-      //       <div className='flex flex-col'>
-      //         <Typography color='text.primary' className='font-medium'>
-      //           ABC
-      //         </Typography>
-      //         {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-      //       </div>
-      //     </div>
-      //   )
-      // }),
-      columnHelper.accessor('branch.name', {
-        header: dictionary['content'].branch,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.branch.name}
-              </Typography>
+          id: 'select',
+          header: ({ table }: { table: any }) => (
+            <Checkbox
+              {...{
+                checked: table.getIsAllRowsSelected(),
+                indeterminate: table.getIsSomeRowsSelected(),
+                onChange: table.getToggleAllRowsSelectedHandler()
+              }}
+            />
+          ),
+          cell: ({ row }: { row: any }) => (
+            <Checkbox
+              {...{
+                checked: row.getIsSelected(),
+                disabled: !row.getCanSelect(),
+                indeterminate: row.getIsSomeSelected(),
+                onChange: row.getToggleSelectedHandler()
+              }}
+            />
+          )
+        },
+        columnHelper.accessor('branch.name', {
+          header: dictionary['content'].branch,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row.original.branch.name}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('name', {
-        header: dictionary['content'].department,
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.name}
-              </Typography>
+          )
+        }),
+        columnHelper.accessor('name', {
+          header: dictionary['content'].department,
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row.original.name}
+                </Typography>
+              </div>
             </div>
-          </div>
-        )
-      }),
-     
-     
-      columnHelper.accessor('action', {
-        header: dictionary['content'].action,
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-            <IconButton  onClick={() => handleEditClick(row.original)}>
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-            <IconButton onClick={() => handleDeleteClick(row.original)}>
-              <i className='tabler-trash text-textSecondary' />
-            </IconButton>
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('/apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-textSecondary' />
-              </Link>
-            </IconButton> */}
-            {/* <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'tabler-download',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
-          </div>
-        ),
-        enableSorting: false
-      })
-    ],
+          )
+        }),
+       
+       
+        columnHelper.accessor('action', {
+          header: dictionary['content'].action,
+          cell: ({ row }) => (
+            <div className='flex items-center'>
+              <IconButton  onClick={() => handleEditClick(row.original)}>
+                <i className='tabler-edit text-textSecondary' />
+              </IconButton>
+              <IconButton onClick={() => handleDeleteClick(row.original)}>
+                <i className='tabler-trash text-textSecondary' />
+              </IconButton>
+            </div>
+          ),
+          enableSorting: false
+        })
+      ]
+
+      if (user?.type === 'super admin') {
+        visibleColumns.splice(1, 0, columnHelper.accessor('created_by', {
+          header: 'Company',
+          cell: ({ row }) => (
+            <div className='flex items-center gap-4'>
+              <div className='flex flex-col'>
+                <Typography color='text.primary' className='font-medium'>
+                  {row?.original?.company?.first_name} {row?.original?.company?.last_name}
+                </Typography>
+              </div>
+            </div>
+          )
+        }) as ColumnDef<DepartmentWithAction, any>)
+      }
+      
+      return visibleColumns
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+   [data, filteredData, user, dictionary]
   )
 
   const table = useReactTable({
@@ -527,6 +517,49 @@ const DepartmentListTable =({ tableData }: { tableData?: Department[] })  => {
         handleSubmit={methods.handleSubmit}
       >
        <>
+        {
+          user && user?.type == 'super admin' && 
+          <QTextField
+          name='created_by'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].company}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+          }}
+          onChange={async (value) => {
+            let branchess: Branch[] = [];
+            try {
+              setDialogFetchLoading(true)
+              const [branchesResponse] = await Promise.all([
+                getBranches(),
+              ])
+              
+              branchess = branchesResponse?.data || []
+              
+              methods.setValue('branch_id', 0)
+              setBranches((prev) => {
+                const filteredBranches = value != "0" ? branchess.filter((p) => p.created_by == value) : branchess;
+                return filteredBranches;
+              })
+            } catch (error) {
+              console.error('Error loading dialog data:', error)
+            } finally {
+              setDialogFetchLoading(false)
+            }
+
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+          {companies.map(company => (
+              <MenuItem key={company.id} value={company.id}>
+                {company.first_name} {company.last_name}
+              </MenuItem>
+            ))}
+        </QTextField>
+        }
        <QTextField
             name='branch_id'
             control={methods.control}
@@ -593,6 +626,49 @@ const DepartmentListTable =({ tableData }: { tableData?: Department[] })  => {
         handleSubmit={methods.handleSubmit}
       >
         <>
+        {
+          user && user?.type == 'super admin' && 
+          <QTextField
+          name='created_by'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].company}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+          }}
+          onChange={async (value) => {
+            let branchess: Branch[] = [];
+            try {
+              setDialogFetchLoading(true)
+              const [branchesResponse] = await Promise.all([
+                getBranches(),
+              ])
+              
+              branchess = branchesResponse?.data || []
+              
+              methods.setValue('branch_id', 0)
+              setBranches((prev) => {
+                const filteredBranches = value != "0" ? branchess.filter((p) => p.created_by == value) : branchess;
+                return filteredBranches;
+              })
+            } catch (error) {
+              console.error('Error loading dialog data:', error)
+            } finally {
+              setDialogFetchLoading(false)
+            }
+
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+          {companies.map(company => (
+              <MenuItem key={company.id} value={company.id}>
+                {company.first_name} {company.last_name}
+              </MenuItem>
+            ))}
+        </QTextField>
+        }
         <QTextField
             name='branch_id'
             control={methods.control}
