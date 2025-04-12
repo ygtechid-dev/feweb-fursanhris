@@ -111,7 +111,8 @@ const AddUserDrawer = (props: Props) => {
       overtime: '',
       total_rest: '',
       clock_in_formatted: '',
-      clock_out_formatted: ''
+      clock_out_formatted: '',
+      created_by: 0
     }
 
     setData([...(userData ?? []), newUser])
