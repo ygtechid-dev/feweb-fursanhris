@@ -5,7 +5,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['127.0.0.1', 'localhost'],
+    domains: ['127.0.0.1', 'localhost', '103.196.155.202'],
   },
   basePath: process.env.BASEPATH,
   redirects: async () => {
