@@ -1,5 +1,6 @@
 {
   "navigation": {
+    "assets": "Assets",
     "dashboards": "Dasbor",
     "companies": "Perusahaan",
     "companyList": "Daftar Perusahaan",
@@ -372,6 +373,15 @@
     "lowPriority": "Rendah",
     "addEvent": "Tambah Acara",
     "priority": "Prioritas",
-    "dueDate": "Tanggal Jatuh Tempo"
+    "dueDate": "Tanggal Jatuh Tempo",
+    "brand": "Merek",
+    "warrantyStatus": "Status Garansi",
+    "buyingDate": "Tanggal Pembelian",
+    "addNewAsset": "Tambah Aset Baru",
+    "assetList": "Daftar Aset",
+    "editAsset": "Ubah Aset",
+    "on": "Hidup",
+    "off": "Mati",
+    "asset": "Aset"
   }
 }

@@ -1,5 +1,6 @@
 {
   "navigation": {
+    "assets": "Assets",
     "dashboards": "Dashboard",
     "companies": "Companies",
     "companyList": "Company List",
@@ -372,6 +373,15 @@
     "lowPriority": "Low",
     "addEvent": "AddEvent",
     "priority": "Priority",
-    "dueDate": "Due Date"
+    "dueDate": "Due Date",
+    "brand": "Brand",
+    "warrantyStatus": "Warranty Status",
+    "buyingDate": "Buying Date",
+    "addNewAsset": "Add New Asset",
+    "assetList": "Asset List",
+    "editAsset": "Edit Asset",
+    "on": "On",
+    "off": "Off",
+    "asset": "Asset"
   }
 }

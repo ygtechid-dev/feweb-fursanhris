@@ -1,5 +1,6 @@
 {
   "navigation": {
+    "assets": "Assets",
     "dashboards": "Papan Pemuka",
     "companies": "Syarikat",
     "companyList": "Senarai Syarikat",
@@ -372,6 +373,15 @@
     "lowPriority": "Rendah",
     "addEvent": "Tambah Acara",
     "priority": "Keutamaan",
-    "dueDate": "Tarikh Tamat"
+    "dueDate": "Tarikh Tamat",
+    "brand": "Jenama",
+    "warrantyStatus": "Status Waranti",
+    "buyingDate": "Tarikh Pembelian",
+    "addNewAsset": "Tambah Aset Baru",
+    "assetList": "Senarai Aset",
+    "editAsset": "Edit Aset",
+    "on": "Hidup",
+    "off": "Mati",
+    "asset": "Aset"
   }
 }

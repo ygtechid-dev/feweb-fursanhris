@@ -1,5 +1,6 @@
 {
   "navigation": {
+    "assets": "Assets",
     "dashboards": "لوحة القيادة",
     "companies": "الشركات",
     "companyList": "قائمة الشركات",
@@ -372,6 +373,15 @@
     "lowPriority": "منخفضة",
     "addEvent": "إضافة فعالية",
     "priority": "الأولوية",
-    "dueDate": "تاريخ الاستحقاق"
+    "dueDate": "تاريخ الاستحقاق",
+    "brand": "العلامة التجارية",
+    "warrantyStatus": "حالة الضمان",
+    "buyingDate": "تاريخ الشراء",
+    "addNewAsset": "إضافة أصل جديد",
+    "assetList": "قائمة الأصول",
+    "editAsset": "تعديل الأصل",
+    "on": "تشغيل",
+    "off": "إيقاف",
+    "asset": "أصل"
   }
 }
