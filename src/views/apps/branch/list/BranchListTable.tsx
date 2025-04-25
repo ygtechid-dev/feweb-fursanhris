@@ -440,24 +440,24 @@ const BranchListTable = ({ tableData }: { tableData?: Branches }) => {
         <>
           {
             user && user?.type == 'super admin' && 
-            <QTextField
-            name='created_by'
-            control={methods.control}
-            fullWidth
-            required
-            select
-            label={dictionary['content'].company}
-            rules={{
-              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
-            }}
-          >
-            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
-            {companies.map(company => (
-                <MenuItem key={company.id} value={company.id}>
-                  {company.first_name} {company.last_name}
-                </MenuItem>
-              ))}
-          </QTextField>
+              <QTextField
+                name='created_by'
+                control={methods.control}
+                fullWidth
+                required
+                select
+                label={dictionary['content'].company}
+                rules={{
+                  validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+                }}
+              >
+                <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+                {companies.map(company => (
+                    <MenuItem key={company.id} value={company.id}>
+                      {company.first_name} {company.last_name}
+                    </MenuItem>
+                  ))}
+              </QTextField>
           }
           <QTextField
             name='name'

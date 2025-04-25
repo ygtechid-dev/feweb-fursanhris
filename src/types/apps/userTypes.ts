@@ -69,7 +69,7 @@ export interface User {
   dark_mode: number
   messenger_color: string
   is_disable: number
-  created_by: string
+  created_by: number;
   created_at: string
   updated_at: string
 }

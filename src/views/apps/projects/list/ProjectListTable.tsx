@@ -74,6 +74,7 @@ import MemberSelector from '@/components/MemberSelector'
 import moment from 'moment'
 import { getUsers } from '@/services/userService'
 import { useAuth } from '@/components/AuthProvider'
+import useCompanies from '@/hooks/useCompanies'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -140,6 +141,7 @@ type DialogMode = 'add' | 'edit' | 'delete' | null
 
 const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
   const { user } = useAuth()
+  const { companies } = useCompanies()
   
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
@@ -150,7 +152,6 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
 
   const [employees, setEmployees] = useState<Employee[]>([])
   const [users, setUsers] = useState<User[]>([])
-
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<DialogMode>(null)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
@@ -585,10 +586,31 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
             label={dictionary['content'].description}
             multiline={true}
           />
+          {
+            user && user?.type == 'super admin' && 
+              <QTextField
+                name='created_by'
+                control={methods.control}
+                fullWidth
+                required
+                select
+                label={dictionary['content'].company}
+                rules={{
+                  validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+                }}
+              >
+                <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+                {companies.map(company => (
+                    <MenuItem key={company.id} value={company.id}>
+                      {company.first_name} {company.last_name}
+                    </MenuItem>
+                  ))}
+              </QTextField>
+          }
           <MemberSelector
             name="members"
             control={methods.control}
-            employees={users}
+            employees={user && user?.type != 'super admin' ? users : (methods.watch('created_by') ? users.filter((user) => user.created_by == methods.getValues('created_by')) : [])}
             required={false}
             label={dictionary['content'].assignMembers}
             placeholder="Select team members"
@@ -685,10 +707,31 @@ const ProjectListTable = ({ tableData }: { tableData?: Project[] }) => {
             label={dictionary['content'].description}
             multiline={true}
           />
+           {
+            user && user?.type == 'super admin' && 
+              <QTextField
+                name='created_by'
+                control={methods.control}
+                fullWidth
+                required
+                select
+                label={dictionary['content'].company}
+                rules={{
+                  validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+                }}
+              >
+                <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+                {companies.map(company => (
+                    <MenuItem key={company.id} value={company.id}>
+                      {company.first_name} {company.last_name}
+                    </MenuItem>
+                  ))}
+              </QTextField>
+          }
           <MemberSelector
             name="members"
             control={methods.control}
-            employees={users}
+            employees={user && user?.type != 'super admin' ? users : (methods.watch('created_by') ? users.filter((user) => user.created_by == methods.getValues('created_by')) : [])}
             required={false}
             label={dictionary['content'].assignMembers}
             placeholder="Select team members"
