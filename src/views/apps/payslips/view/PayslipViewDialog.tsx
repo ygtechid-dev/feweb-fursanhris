@@ -153,7 +153,7 @@ const PayslipViewDialog = ({ open, setOpen, payslip }: PayslipViewDialogProps) =
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">Position:</Typography>
-                  <Typography variant="body1">{payslip.employee?.designation.name || '-'}</Typography>
+                  <Typography variant="body1">{payslip.employee?.designation?.name || '-'}</Typography>
                 </Grid>
               </Grid>
             </CardContent>
