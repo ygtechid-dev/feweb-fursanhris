@@ -412,7 +412,7 @@ const PayslipDetailPage = () => {
                 </div>
                 <div className="flex justify-between">
                   <Typography variant="body2" color="text.secondary">Position:</Typography>
-                  <Typography variant="body2">{payslipData?.employee?.designation.name}</Typography>
+                  <Typography variant="body2">{payslipData?.employee?.designation?.name}</Typography>
                 </div>
               </div>
             </div>
