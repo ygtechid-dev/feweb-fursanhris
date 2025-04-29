@@ -403,6 +403,7 @@
     "paid": "Dibayar",
     "approve": "Setujui",
     "reject": "Tolak",
-    "reimbursementStatus": "Status Penggantian Biaya"
+    "reimbursementStatus": "Status Penggantian Biaya",
+    "viewReceipt": "Lihat Struk"
   }
 }

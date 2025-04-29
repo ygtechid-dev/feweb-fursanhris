@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -10,6 +10,7 @@ import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
+import Link from '@mui/material/Link';
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext';
 import { ucfirst } from '@/utils/string';
 import { Reimbursement } from '@/types/reimburseTypes';
@@ -23,6 +24,7 @@ interface ReimburseDetailProps {
 
 const ReimburseDetail = ({ open, setOpen, data }: ReimburseDetailProps) => {
   const { dictionary } = useDictionary();
+  const [previewOpen, setPreviewOpen] = useState(false);
   
   if (!data) return null;
   
@@ -56,6 +58,26 @@ const ReimburseDetail = ({ open, setOpen, data }: ReimburseDetailProps) => {
     }
   };
   
+  // Function to determine if file is an image or PDF
+  const isImageFile = (url: string) => {
+    const lowerCaseUrl = url.toLowerCase();
+    return lowerCaseUrl.endsWith('.jpg') || 
+           lowerCaseUrl.endsWith('.jpeg') || 
+           lowerCaseUrl.endsWith('.png') || 
+           lowerCaseUrl.endsWith('.gif') || 
+           lowerCaseUrl.endsWith('.webp');
+  };
+  
+  const isPdfFile = (url: string) => {
+    return url.toLowerCase().endsWith('.pdf');
+  };
+  
+  // Function to open receipt in new tab
+  const handleViewReceipt = () => {
+    if (data.receipt_path) {
+      window.open(data.receipt_path, '_blank');
+    }
+  };
  
   return (
     <Dialog
@@ -122,6 +144,56 @@ const ReimburseDetail = ({ open, setOpen, data }: ReimburseDetailProps) => {
               </Typography>
               <Typography variant="body1">{data.description}</Typography>
             </Grid>
+            
+            {/* Receipt Display Section */}
+            {data.receipt_path && (
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary" className="mb-1">
+                  {dictionary['content']?.receipt || 'Receipt'}
+                </Typography>
+                
+                <Box className="mt-1 flex flex-col">
+                  {isImageFile(data.receipt_path) ? (
+                    <Box className="max-w-xs mb-2">
+                      <img 
+                        src={data.receipt_path} 
+                        alt="Receipt" 
+                        className="w-full rounded border cursor-pointer" 
+                        onClick={handleViewReceipt}
+                        style={{ maxHeight: '150px', objectFit: 'contain' }}
+                      />
+                    </Box>
+                  ) : isPdfFile(data.receipt_path) ? (
+                    <Box className="flex items-center">
+                      <i className="tabler-file-type-pdf text-red-500 text-xl mr-2" />
+                      <Link 
+                        href="#" 
+                        onClick={handleViewReceipt}
+                        underline="hover"
+                        className="text-primary"
+                      >
+                        {dictionary['content']?.viewReceipt || 'View PDF Receipt'}
+                      </Link>
+                    </Box>
+                  ) : (
+                    <Link 
+                      href={data.receipt_path} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      underline="hover"
+                      className="text-primary"
+                    >
+                      {dictionary['content']?.viewReceipt || 'View Receipt'}
+                    </Link>
+                  )}
+                  
+                  <Typography variant="caption" color="text.secondary" className="mt-1">
+                    {data.receipt_path.split('/').pop() || 'Receipt'}
+                  </Typography>
+                </Box>
+              </Grid>
+            )}
+            
             {data.remark && (
               <Grid item xs={12}>
                 <Typography variant="body2" color="text.secondary">
@@ -176,7 +248,7 @@ const ReimburseDetail = ({ open, setOpen, data }: ReimburseDetailProps) => {
                 <Typography variant="body2" color="text.secondary" className="mt-1">
                   {formatDateTime(data.paid_at)}
                 </Typography>
-                {/* {data.payment_method && (
+                {data.payment_method && (
                   <Box className="mt-2">
                     <Typography variant="body2" color="text.secondary">
                       {dictionary['content']?.paymentMethod || 'Payment Method'}
@@ -185,13 +257,18 @@ const ReimburseDetail = ({ open, setOpen, data }: ReimburseDetailProps) => {
                       {data.payment_method}
                     </Typography>
                   </Box>
-                )} */}
+                )}
               </Grid>
             )}
           </Grid>
         </Box>
       </DialogContent>
       <DialogActions className="py-3">
+        {data.receipt_path && (
+          <Button onClick={handleViewReceipt} color="primary" startIcon={<i className="tabler-file-download" />}>
+            {dictionary['content']?.viewReceipt || 'View Receipt'}
+          </Button>
+        )}
         <Button onClick={handleClose} color="primary">
           {dictionary['content'].close}
         </Button>

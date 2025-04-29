@@ -403,6 +403,7 @@
     "paid": "Paid",
     "approve": "Approve",
     "reject": "Reject",
-    "reimbursementStatus": "Reimbursement Status"
+    "reimbursementStatus": "Reimbursement Status",
+    "viewReceipt": "View Receipt"
   }
 }

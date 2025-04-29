@@ -403,6 +403,7 @@
     "paid": "مدفوع",
     "approve": "موافقة",
     "reject": "رفض",
-    "reimbursementStatus": "حالة المبلغ المسترد"
+    "reimbursementStatus": "حالة المبلغ المسترد",
+    "viewReceipt": "عرض الإيصال"
   }
 }

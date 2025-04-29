@@ -403,6 +403,7 @@
     "paid": "Dibayar",
     "approve": "Luluskan",
     "reject": "Tolak",
-    "reimbursementStatus": "Status Bayaran Balik"
+    "reimbursementStatus": "Status Bayaran Balik",
+    "viewReceipt": "Lihat Resit"
   }
 }
