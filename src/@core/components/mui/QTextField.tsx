@@ -2,7 +2,7 @@
 import { Controller, Control, FieldValues, Path, ValidationRule } from 'react-hook-form'
 import CustomTextField from '@core/components/mui/TextField'
 import { InputProps } from '@mui/material/Input'
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, Link } from '@mui/material'
 
 interface QTextFieldProps<TFieldValues extends FieldValues> {
   name: Path<TFieldValues>
@@ -75,6 +75,14 @@ function QTextField<TFieldValues extends FieldValues>({
     ? `${label} *`
     : label
 
+  // Helper function to extract file name from URL
+  const getFileNameFromUrl = (url: string): string => {
+    if (!url) return '';
+    // Try to get the filename from the URL
+    const parts = url.split('/');
+    return parts[parts.length - 1] || url;
+  }
+
   if (control) {
     return (
       <Controller
@@ -84,9 +92,12 @@ function QTextField<TFieldValues extends FieldValues>({
         render={({ field, fieldState: { error } }) => {
           // Special handling for file input
           if (type === 'file') {
-            // Get file name from field.value if it exists
+            // Helpers to check value types
             const isFile = (value: unknown): value is File => value instanceof File;
-            const currentFileName = isFile(field.value) ? field.value.name : '';
+            const isString = (value: unknown): value is string => typeof value === 'string';
+            
+            // Check if we have an existing file URL in the field value
+            const existingFileUrl = isString(field.value) && field.value !== '' ? field.value : '';
             
             return (
               <>
@@ -114,10 +125,30 @@ function QTextField<TFieldValues extends FieldValues>({
                   // to avoid React controlled/uncontrolled warning
                   value=""
                 />
-                {currentFileName && (
+                
+                {/* Display existing file information when editing */}
+                {existingFileUrl && (
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Typography variant="body2" color="primary" mr={1}>
+                      File:
+                    </Typography>
+                    <Link 
+                      href={existingFileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      variant="body2"
+                      sx={{ textDecoration: 'underline', wordBreak: 'break-all' }}
+                    >
+                      {getFileNameFromUrl(existingFileUrl)}
+                    </Link>
+                  </Box>
+                )}
+                
+                {/* Display newly selected file */}
+                {isFile(field.value) && (
                   <Box mt={1}>
                     <Typography variant="body2" color="primary">
-                      Selected file: {currentFileName}
+                      New File: {field.value.name}
                     </Typography>
                   </Box>
                 )}
@@ -161,20 +192,24 @@ function QTextField<TFieldValues extends FieldValues>({
 
   // For uncontrolled use case (no control provided)
   return (
-    <CustomTextField
-      name={name}
-      {...props}
-      fullWidth={fullWidth}
-      InputProps={readonlyInputProps}
-      disabled={disabled}
-      select={select}
-      type={type}
-      inputProps={{
-        ...(type === 'file' && { accept })
-      }}
-    >
-      {children}
-    </CustomTextField>
+    <>
+      <CustomTextField
+        name={name}
+        {...props}
+        fullWidth={fullWidth}
+        InputProps={readonlyInputProps}
+        disabled={disabled}
+        select={select}
+        type={type}
+        inputProps={{
+          ...(type === 'file' && { accept })
+        }}
+      >
+        {children}
+      </CustomTextField>
+      
+      {/* No existing file display for uncontrolled component as we don't have access to its value */}
+    </>
   );
 }
 

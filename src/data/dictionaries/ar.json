@@ -1,6 +1,7 @@
 {
   "navigation": {
-    "assets": "Assets",
+    "reimbursements": "المبالغ المستردة",
+    "assets": "الأصول",
     "dashboards": "لوحة القيادة",
     "companies": "الشركات",
     "companyList": "قائمة الشركات",
@@ -382,6 +383,26 @@
     "editAsset": "تعديل الأصل",
     "on": "تشغيل",
     "off": "إيقاف",
-    "asset": "أصل"
+    "asset": "أصل",
+    "transactionDate": "تاريخ المعاملة",
+    "requestNumber": "رقم الطلب",
+    "reimburseList": "قائمة المبالغ المستردة",
+    "addNewReimburse": "إضافة مبلغ مسترد جديد",
+    "editReimburse": "تعديل مبلغ مسترد",
+    "reimburseCategory": "فئة المبالغ المستردة",
+    "reimbursement": "مبلغ مسترد",
+    "receiptPath": "مسار الإيصال",
+    "receipt": "إيصال",
+    "reimburseDetail": "تفاصيل المبلغ المسترد",
+    "requestedAt": "تم الطلب في",
+    "paidBy": "دفع بواسطة",
+    "paymentMethod": "طريقة الدفع",
+    "updateReimburseStatus": "تحديث حالة المبلغ المسترد",
+    "markAsPaid": "وضع علامة كمدفوع",
+    "enterPaymentDetails": "أدخل تفاصيل الدفع",
+    "paid": "مدفوع",
+    "approve": "موافقة",
+    "reject": "رفض",
+    "reimbursementStatus": "حالة المبلغ المسترد"
   }
 }

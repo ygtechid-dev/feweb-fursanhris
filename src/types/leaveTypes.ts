@@ -33,3 +33,36 @@ export interface LeaveType {
     rejecter: null | any;
     company?: Company;
   }
+
+  export const defaultLeaveTypeValues: LeaveType = {
+    id: 0,
+    title: "",
+    days: 0,
+    created_by: 0,
+    created_at: "",
+    updated_at: ""
+  };
+  
+  export const defaultLeaveValues: Leave = {
+    id: 0,
+    employee_id: 0,
+    leave_type_id: 0,
+    applied_on: "",
+    start_date: "",
+    end_date: "",
+    total_leave_days: "0",
+    leave_reason: "",
+    emergency_contact: "",
+    remark: "",
+    status: "pending",
+    approved_at: null,
+    rejected_at: null,
+    created_by: 0,
+    created_at: "",
+    updated_at: "",
+    employee: {} as Employee,
+    leave_type: defaultLeaveTypeValues,
+    approver: null,
+    rejecter: null,
+    company: undefined
+  };

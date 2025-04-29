@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -13,21 +13,21 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Radio from '@mui/material/Radio'
 import TextField from '@mui/material/TextField'
 import CircularProgress from '@mui/material/CircularProgress'
-import { Leave } from '@/types/leaveTypes'
-import { updateLeaveStatus } from '@/services/leaveService'
 import { toast } from 'react-toastify'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import { Reimbursement } from '@/types/reimburseTypes'
+import { updateReimbursementStatus } from '@/services/reimbursementService'
 
-interface LeaveStatusDialogProps {
+interface ReimburseUpdateStatusDialogProps {
   open: boolean
   setOpen: (open: boolean) => void
-  leaveData: Leave | null
+  data: Reimbursement | null
   onStatusUpdate: () => void
 }
 
-const LeaveStatusDialog = ({ open, setOpen, leaveData, onStatusUpdate }: LeaveStatusDialogProps) => {
+const ReimburseUpdateStatusDialog = ({ open, setOpen, data, onStatusUpdate }: ReimburseUpdateStatusDialogProps) => {
   // States
-  const [status, setStatus] = useState<'approved' | 'rejected'>('approved')
+  const [status, setStatus] = useState<'approved' | 'rejected' | 'paid'>('approved')
   const [remark, setRemark] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   
@@ -41,35 +41,67 @@ const LeaveStatusDialog = ({ open, setOpen, leaveData, onStatusUpdate }: LeaveSt
   }
   
   const handleSubmit = async () => {
-    if (!leaveData) return
+    if (!data) return
     
     try {
       setIsSubmitting(true)
       
-      const response = await updateLeaveStatus(leaveData.id, {
+      const response = await updateReimbursementStatus(data.id, {
         status,
-        remark: remark.trim() || (status === 'approved' ? 'Leave approved' : 'Leave rejected')
+        remark: remark.trim() || getDefaultRemark()
       })
       
       if (response.status) {
-        toast.success(response.message || `${dictionary['content'].leave} ${status} ${dictionary['content'].successfully}`)
+        toast.success(response.message || `${dictionary['content'].reimbursement} ${status} ${dictionary['content'].successfully}`)
         onStatusUpdate()
         handleClose()
       }
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || `${dictionary['content'].errorUpdating} ${dictionary['content'].leaveStatus}`)
+      toast.error(error?.response?.data?.message || `${dictionary['content'].errorUpdating} ${dictionary['content'].reimbursementStatus}`)
     } finally {
       setIsSubmitting(false)
     }
   }
   
+  const getDefaultRemark = () => {
+    switch (status) {
+      case 'approved':
+        return 'Reimbursement approved';
+      case 'rejected':
+        return 'Reimbursement rejected';
+      case 'paid':
+        return 'Reimbursement paid';
+      default:
+        return '';
+    }
+  }
+  
+  const getButtonColor = () => {
+    switch (status) {
+      case 'approved':
+        return 'success';
+      case 'rejected':
+        return 'error';
+      case 'paid':
+        return 'primary';
+      default:
+        return 'primary';
+    }
+  }
+
+  useEffect(() => {
+    if (data?.status == 'approved') {
+      setStatus('paid')
+    }
+  }, [data, open])
+  
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle className="flex justify-between items-center">
-        {dictionary['content'].updateLeaveStatus}
-        {leaveData && (
+        {dictionary['content'].updateReimburseStatus}
+        {data && (
           <span className="text-sm font-normal">
-            {leaveData.employee.name} • {leaveData.leave_type.title}
+            {data.employee.name} • {data?.category?.name}
           </span>
         )}
       </DialogTitle>
@@ -82,17 +114,29 @@ const LeaveStatusDialog = ({ open, setOpen, leaveData, onStatusUpdate }: LeaveSt
               row
               name="status"
               value={status}
-              onChange={(e) => setStatus(e.target.value as 'approved' | 'rejected')}
+              onChange={(e) => setStatus(e.target.value as 'approved' | 'rejected' | 'paid')}
             >
-              <FormControlLabel 
-                value="approved" 
-                control={<Radio color="success" />} 
-                label={dictionary['content'].approved} 
-              />
-              <FormControlLabel 
+             
+               {
+                data?.status != 'approved' && data?.status != 'paid'&& 
+                  <FormControlLabel 
+                  value="approved" 
+                  control={<Radio color="success" />} 
+                  label={dictionary['content'].approved} 
+                />
+              }
+              {
+                data?.status != 'approved' && data?.status != 'paid' && 
+                <FormControlLabel 
                 value="rejected" 
                 control={<Radio color="error" />} 
                 label={dictionary['content'].rejected} 
+              />
+              }
+              <FormControlLabel 
+                value="paid" 
+                control={<Radio color="primary" />} 
+                label={dictionary['content'].paid} 
               />
             </RadioGroup>
           </FormControl>
@@ -105,9 +149,12 @@ const LeaveStatusDialog = ({ open, setOpen, leaveData, onStatusUpdate }: LeaveSt
           label={dictionary['content'].remark}
           value={remark}
           onChange={(e) => setRemark(e.target.value)}
-          placeholder={status === 'approved' 
-            ? dictionary['content'].enterApprovalRemark 
-            : dictionary['content'].enterRejectionReason
+          placeholder={
+            status === 'approved' 
+              ? dictionary['content'].enterApprovalRemark 
+              : status === 'rejected'
+                ? dictionary['content'].enterRejectionReason
+                : dictionary['content'].enterPaymentDetails
           }
           variant="outlined"
           className="mt-4"
@@ -120,7 +167,7 @@ const LeaveStatusDialog = ({ open, setOpen, leaveData, onStatusUpdate }: LeaveSt
         </Button>
         <Button 
           variant="contained" 
-          color={status === 'approved' ? 'success' : 'error'}
+          color={getButtonColor()}
           onClick={handleSubmit}
           disabled={isSubmitting}
           startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
@@ -129,7 +176,9 @@ const LeaveStatusDialog = ({ open, setOpen, leaveData, onStatusUpdate }: LeaveSt
             ? dictionary['content'].updating 
             : status === 'approved' 
               ? dictionary['content'].approve
-              : dictionary['content'].reject
+              : status === 'rejected'
+                ? dictionary['content'].reject
+                : dictionary['content'].markAsPaid
           }
         </Button>
       </DialogActions>
@@ -137,4 +186,4 @@ const LeaveStatusDialog = ({ open, setOpen, leaveData, onStatusUpdate }: LeaveSt
   )
 }
 
-export default LeaveStatusDialog
+export default ReimburseUpdateStatusDialog

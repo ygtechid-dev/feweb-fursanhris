@@ -1,5 +1,6 @@
 {
   "navigation": {
+    "reimbursements": "Reimbursements",
     "assets": "Assets",
     "dashboards": "Dashboard",
     "companies": "Companies",
@@ -382,6 +383,26 @@
     "editAsset": "Edit Asset",
     "on": "On",
     "off": "Off",
-    "asset": "Asset"
+    "asset": "Asset",
+    "transactionDate": "Transaction Date",
+    "requestNumber": "Request Number",
+    "reimburseList": "Reimbursement List",
+    "addNewReimburse": "Add New Reimbursement",
+    "editReimburse": "Edit Reimbursement",
+    "reimburseCategory": "Reimbursement Category",
+    "reimbursement": "Reimbursement",
+    "receiptPath": "Receipt Path",
+    "receipt": "Receipt",
+    "reimburseDetail": "Reimburse Details",
+    "requestedAt": "Requested At",
+    "paidBy": "Paid By",
+    "paymentMethod": "Payment Method",
+    "updateReimburseStatus": "Update Reimbursement Status",
+    "markAsPaid": "Mark as Paid",
+    "enterPaymentDetails": "Enter Payment Details",
+    "paid": "Paid",
+    "approve": "Approve",
+    "reject": "Reject",
+    "reimbursementStatus": "Reimbursement Status"
   }
 }

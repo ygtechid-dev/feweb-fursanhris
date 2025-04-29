@@ -128,8 +128,8 @@ const OvertimeStatusDialog = ({ open, setOpen, overtimeData, onStatusUpdate }: O
           {isSubmitting 
             ? (dictionary['content'].updating || 'Updating')
             : status === 'approved' 
-              ? (dictionary['content'].approved || 'Approve') 
-              : (dictionary['content'].rejected || 'Reject')
+              ? (dictionary['content'].approve || 'Approve') 
+              : (dictionary['content'].reject || 'Reject')
           }
         </Button>
       </DialogActions>

@@ -44,8 +44,7 @@ import CustomTextField from '@core/components/mui/TextField'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import { KeyedMutator, ScopedMutator, useSWRConfig } from 'swr'
-import { defaultLeaveValues, Leave, LeaveType } from '@/types/leaveTypes'
+import {  useSWRConfig } from 'swr'
 import { ucfirst } from '@/utils/string'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
@@ -58,10 +57,17 @@ import { deleteLeave, getLeaves, getLeaveTypes, postLeave, updateLeave } from '@
 import { toast } from 'react-toastify'
 import moment from 'moment'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
-import LeaveDetailsDialog from '../view/detail-leave/LeaveDetail'
-import LeaveStatusDialog from '../view/leave-update-status/LeaveUpdateStatusDialog'
+import LeaveDetailsDialog from '../view/detail-leave/ReimburseDetail'
+import LeaveStatusDialog from '../view/reimburse-update-status/ReimburseUpdateStatusDialog'
 import { useAuth } from '@/components/AuthProvider'
 import useCompanies from '@/hooks/useCompanies'
+import { defaultReimbursementValues, Reimbursement } from '@/types/reimburseTypes'
+import { deleteReimbursement, postReimbursement, updateReimbursement } from '@/services/reimbursementService'
+import useReimbursementCategory from '@/hooks/useReimbursementCategory'
+import { toFormData } from '@/utils/toFormData'
+import ReimburseDetail from '../view/detail-leave/ReimburseDetail'
+import ReimburseUpdateStatusDialog from '../view/reimburse-update-status/ReimburseUpdateStatusDialog'
+import { formatCurrency } from '@/utils/formatCurrency'
 
 
 declare module '@tanstack/table-core' {
@@ -73,7 +79,7 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type LeaveTypeWithAction = Leave & {
+type ReimbursementTypeWithAction = Reimbursement & {
   action?: string
 }
 
@@ -123,11 +129,12 @@ const DebouncedInput = ({
 }
 
 // Column Definitions
-const columnHelper = createColumnHelper<LeaveTypeWithAction>()
+const columnHelper = createColumnHelper<ReimbursementTypeWithAction>()
 
-const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
+const ReimbursementListTable = ({ tableData }: { tableData?: Reimbursement[] }) => {
   const { user } = useAuth()
   const { companies } = useCompanies()
+  const { data: reimburseDatas, isLoading: isLoadingReimburse, refetch:refetchReimburse } = useReimbursementCategory()
 
   // States
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -136,39 +143,27 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
   const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
   const [employees, setEmployees] = useState<Employee[]>([])
-  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([])
+  const [ReimbursementTypes, setReimbursementTypes] = useState<Reimbursement[]>([])
   const [dialogFetchLoading, setDialogFetchLoading] = useState(false)
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [objectToDelete, setObjectToDelete] = useState<Leave | null>(null)
+  const [objectToDelete, setObjectToDelete] = useState<Reimbursement | null>(null)
   const [isDeleting, setIsDeleting] = useState<boolean>(false)
 
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
+  const [selectedReimbursement, setSelectedReimbursement] = useState<Reimbursement | null>(null);
 
   const [statusDialogOpen, setStatusDialogOpen] = useState(false)
-  const [selectedLeaveForStatus, setSelectedLeaveForStatus] = useState<Leave | null>(null)
+  const [selectedReimbursementForStatus, setSelectedReimbursementForStatus] = useState<Reimbursement | null>(null)
 
   const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [leaveToEdit, setLeaveToEdit] = useState<Leave | null>(null)
+  const [ReimbursementToEdit, setReimbursementToEdit] = useState<Reimbursement | null>(null)
 
   // Hooks
   // const { lang: locale } = useParams()
   const { dictionary } = useDictionary()
-  const methods = useForm<Leave>({
-      // defaultValues: {
-      // employee_id: 0,
-      // leave_type_id: 0,
-      // start_date: '',
-      // end_date: '',
-      // total_leave_days: '',
-      // leave_reason: '',
-      // emergency_contact: '',
-      // remark: '',
-      // status: 'pending',
-      // created_by: 0,
-      // }
-      defaultValues: defaultLeaveValues
+  const methods = useForm<Reimbursement>({
+      defaultValues: defaultReimbursementValues
   })
   const { cache, mutate: swrMutate } = useSWRConfig();
 
@@ -177,9 +172,9 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
     setFilteredData(tableData)
   }, [tableData])
 
-  const columns = useMemo<ColumnDef<LeaveTypeWithAction, any>[]>(
+  const columns = useMemo<ColumnDef<ReimbursementTypeWithAction, any>[]>(
     () => {
-      const visibleColumns:ColumnDef<LeaveTypeWithAction, any>[] = [
+      const visibleColumns:ColumnDef<ReimbursementTypeWithAction, any>[] = [
         {
            id: 'select',
            header: ({ table }: { table: any }) => (
@@ -214,96 +209,54 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
            </div>
          )
        }),
-       columnHelper.accessor('leave_type.title', {
-         header: dictionary['content'].leaveType,
+       columnHelper.accessor('category.name', {
+         header: dictionary['content'].reimburseCategory,
          cell: ({ row }) => (
            <div className='flex items-center gap-4'>
              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
              <div className='flex flex-col'>
                <Typography color='text.primary' className='font-medium'>
-                 {row.original.leave_type.title}
+                 {row.original?.category?.name}
                </Typography>
                {/* <Typography variant='body2'>{row.original.username}</Typography> */}
              </div>
            </div>
          )
        }),
-       columnHelper.accessor('applied_on', {
-         header: dictionary['content'].appliedOn,
+       columnHelper.accessor('amount', {
+         header: dictionary['content'].amount,
          cell: ({ row }) => (
            <div className='flex items-center gap-4'>
              {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
              <div className='flex flex-col'>
                <Typography color='text.primary' className='font-medium'>
-               {row.original.applied_on}
+               {row.original.amount ? formatCurrency(row.original.amount) : ''}
                </Typography>
                {/* <Typography variant='body2'>{row.original.username}</Typography> */}
              </div>
            </div>
          )
        }),
-       columnHelper.accessor('start_date', {
-         header: dictionary['content'].startDate,
-         cell: ({ row }) => (
-           <div className='flex items-center gap-4'>
-             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-             <div className='flex flex-col'>
-               <Typography color='text.primary' className='font-medium'>
-               {row.original.start_date}
-               </Typography>
-               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-             </div>
-           </div>
-         )
-       }),
-       columnHelper.accessor('end_date', {
-         header: dictionary['content'].endDate,
-         cell: ({ row }) => (
-           <div className='flex items-center gap-4'>
-             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-             <div className='flex flex-col'>
-               <Typography color='text.primary' className='font-medium'>
-               {row.original.end_date}
-               </Typography>
-               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-             </div>
-           </div>
-         )
-       }),
-       columnHelper.accessor('total_leave_days', {
-         header: dictionary['content'].totalDays,
-         cell: ({ row }) => (
-           <div className='flex items-center gap-4'>
-             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-             <div className='flex flex-col'>
-               <Typography color='text.primary' className='font-medium'>
-               {row.original.total_leave_days}
-               </Typography>
-               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-             </div>
-           </div>
-         )
-       }),
-       columnHelper.accessor('leave_reason', {
-         header: dictionary['content'].leaveReason,
-         cell: ({ row }) => (
-           <div className='flex items-center gap-4'>
-             {/* {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })} */}
-             <div className='flex flex-col'>
-               <Typography color='text.primary' className='font-medium'>
-                 {row.original.leave_reason} 
-               </Typography>
-               {/* <Typography variant='body2'>{row.original.username}</Typography> */}
-             </div>
-           </div>
-         )
-       }),
+       columnHelper.accessor('description', {
+        header: dictionary['content'].description,
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.description.length > 25 
+                  ? row.original.description.substring(0, 25) + '...' 
+                  : row.original.description}
+              </Typography>
+            </div>
+          </div>
+        )
+      }),
        columnHelper.accessor('status', {
          header: dictionary['content'].status,
          cell: ({ row }) => (
            <div className='flex items-center gap-4'>
              <div className='flex flex-col'>
-               <Chip label= {ucfirst(row.original.status)}  color={row.original.status == 'approved' ? 'success' : (row.original.status == 'pending' ? 'secondary' : 'error')}/>
+               <Chip label= {ucfirst(row.original.status)}  color={row.original.status == 'approved' ? 'success' : (row.original.status == 'pending' ? 'secondary' : (row.original.status == 'paid' ? 'success' : 'error'))}/>
              </div>
            </div>
          )
@@ -313,22 +266,22 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
          cell: ({ row }) => (
            <div className='flex items-center'>
              {
-               row.original.status == 'pending' &&  (
-                 <IconButton onClick={() => handleUpdateStatus(row.original)}>
-                   <i className='tabler-copy-check text-textSecondary' />
-                 </IconButton>
-               )
-             }
-             <IconButton onClick={() => handleViewDetails(row.original)}>
-               <i className='tabler-eye text-textSecondary' />
-             </IconButton>
-             {
-               row.original.status == 'pending' &&  (
-                 <IconButton onClick={() => handleEditClick(row.original)}>
-                   <i className='tabler-edit text-textSecondary' />
-                 </IconButton>
-               )
-             }
+                (row.original.status == 'pending' || row.original.status == 'approved') &&  (
+                  <IconButton onClick={() => handleUpdateStatus(row.original)}>
+                    <i className='tabler-copy-check text-textSecondary' />
+                  </IconButton>
+                )
+              }
+              <IconButton onClick={() => handleViewDetails(row.original)}>
+                <i className='tabler-eye text-textSecondary' />
+              </IconButton>
+              {
+                row.original.status == 'pending' &&  (
+                  <IconButton onClick={() => handleEditClick(row.original)}>
+                    <i className='tabler-edit text-textSecondary' />
+                  </IconButton>
+                )
+              }
              <IconButton onClick={() => handleDeleteClick(row.original)}>
                <i className='tabler-trash text-textSecondary' />
              </IconButton>
@@ -350,7 +303,7 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
             </div>
           </div>
         )
-      }) as ColumnDef<LeaveTypeWithAction, any>)
+      }) as ColumnDef<ReimbursementTypeWithAction, any>)
     }
     
     return visibleColumns
@@ -360,7 +313,7 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
   )
 
   const table = useReactTable({
-    data: filteredData as Leave[],
+    data: filteredData as Reimbursement[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -388,8 +341,9 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const handleViewDetails = (leave: Leave) => {
-    setSelectedLeave(leave);
+  const handleViewDetails = (leave: Reimbursement) => {
+    console.log({leave})
+    setSelectedReimbursement(leave);
     setDetailsDialogOpen(true);
   };
 
@@ -399,13 +353,15 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
     
     try {
       // Load both employees and leaves in parallel
-      const [employeesResponse, leavesResponse] = await Promise.all([
+      const [employeesResponse] = await Promise.all([
         getEmployees(),
-        getLeaveTypes()
+        // getLeaveTypes()
       ])
+
+      refetchReimburse()
       
       setEmployees(employeesResponse?.data || [])
-      setLeaveTypes(leavesResponse?.data || [])
+      // setLeaveTypes(leavesResponse?.data || [])
     } catch (error) {
       console.error('Error loading dialog data:', error)
     } finally {
@@ -414,7 +370,7 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
   }
 
   // Handle delete dialog
-  const handleDeleteClick = (user: Leave) => {
+  const handleDeleteClick = (user: Reimbursement) => {
     setObjectToDelete(user)
     setDeleteDialogOpen(true)
   }
@@ -425,7 +381,7 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
         try {
           setIsDeleting(true)
           
-          const response = await deleteLeave(objectToDelete.id)
+          const response = await deleteReimbursement(objectToDelete.id)
           
           if (response.status) {
             // Remove the deleted leave from the table data
@@ -450,37 +406,30 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
   }
 
   // Add this function
-  const handleUpdateStatus = (leave: Leave) => {
-    setSelectedLeaveForStatus(leave)
+  const handleUpdateStatus = (leave: Reimbursement) => {
+    console.log({leave})
+    setSelectedReimbursementForStatus(leave)
     setStatusDialogOpen(true)
   }
 
-  const handleEditClick = async (leave: Leave) => {
-    setLeaveToEdit(leave)
+  const handleEditClick = async (leave: Reimbursement) => {
+  
+    setReimbursementToEdit(leave)
     setDialogFetchLoading(true)
     setEditDialogOpen(true)
     
     try {
       // Load both employees and leaves in parallel
-      const [employeesResponse, leavesResponse] = await Promise.all([
+      const [employeesResponse] = await Promise.all([
         getEmployees(),
-        getLeaveTypes()
       ])
       
       setEmployees(employeesResponse?.data || [])
-      setLeaveTypes(leavesResponse?.data || [])
+      refetchReimburse();
       
       // Reset form with the leave data
       methods.reset({
-        employee_id: leave.employee_id,
-        leave_type_id: leave.leave_type_id,
-        start_date: leave.start_date,
-        end_date: leave.end_date,
-        total_leave_days: leave.total_leave_days,
-        leave_reason: leave.leave_reason,
-        emergency_contact: leave.emergency_contact,
-        remark: leave.remark,
-        status: leave.status
+        ...leave
       })
     } catch (error) {
       console.error('Error loading dialog data:', error)
@@ -492,7 +441,7 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
   return (
     <>
       <Card>
-        <CardHeader title={dictionary['content'].leaveList} className='pbe-4' />
+        <CardHeader title={dictionary['content'].reimburseList} className='pbe-4' />
         <TableFilters setData={setFilteredData} tableData={data} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -526,7 +475,7 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
               onClick={handleDialogOpen}
               className='max-sm:is-full'
             >
-              {dictionary['content'].addNewLeave}
+              {dictionary['content'].addNewReimburse}
             </Button>
           </div>
         </div>
@@ -598,24 +547,32 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
 
       <FormDialog
         open={dialogOpen}
-        setOpen={setDialogOpen}
-        title={dictionary['content'].addNewLeave}
+        setOpen={(open) => {
+          setDialogOpen(open)
+          methods.reset(defaultReimbursementValues)
+        }}
+        title={dictionary['content'].addNewReimburse}
         onSubmit={async (data:any) => {
           try {
             const formattedData = {
               ...data,
-              start_date: data.start_date ? moment(data.start_date).format('YYYY-MM-DD') : '',
-              end_date: data.end_date ? moment(data.end_date).format('YYYY-MM-DD') : '',
+              transaction_date: data.transaction_date ? moment(data.transaction_date).format('YYYY-MM-DD') : '',
             }
 
-            const res = await postLeave(formattedData);
-            console.log({res})
+            const res = await postReimbursement(toFormData(formattedData));
+           
             if (res.status) {
-              swrMutate('/web/leaves')
+              swrMutate('/web/reimbursements')
               toast.success(res.message)
             }
-          } catch (error) {
-            console.log('Error post leave', error)
+          } catch (error: any) {
+            console.log('Error post', error)
+            // Tampilkan pesan error dengan toast
+            if (error.response && error.response.data) {
+              toast.error(error.response.data.message)
+            } else {
+              toast.error('Terjadi kesalahan pada sistem')
+            }
           } finally{
             methods.reset();
             setDialogOpen(false)
@@ -673,210 +630,235 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
         </QTextField>
 
         <QTextField
-          name='leave_type_id'
+          name='category_id'
           control={methods.control}
           fullWidth
           required
           select
-          label={dictionary['content'].leaveType}
-          disabled={dialogFetchLoading}
+          label={dictionary['content'].reimburseCategory}
+          disabled={isLoadingReimburse}
           rules={{
-            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an leave type'
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an reimbursement category'
           }}
         >
-          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].leaveType}</MenuItem>
-          {leaveTypes.map((leaveType) => (
-            <MenuItem key={leaveType.id} value={leaveType.id}>
-              {leaveType.title}
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].reimburseCategory}</MenuItem>
+          {reimburseDatas?.map((reimburse) => (
+            <MenuItem key={reimburse.id} value={reimburse.id}>
+              {reimburse.name}
             </MenuItem>
           ))}
         </QTextField>
-          
-        <div className="flex space-x-4">
-              <div className="flex-1">
-                <QReactDatepicker
-                  name="start_date"
-                  control={methods.control}
-                  label={dictionary['content'].startDate}
-                  required
-                />
-              </div>
-              <div className="flex-1">
-                <QReactDatepicker
-                  name="end_date"
-                  control={methods.control}
-                  label={dictionary['content'].endDate}
-                  required
-                />
-              </div>
-        </div>
-         
-       <QTextField
-          name='leave_reason'
+
+        <QReactDatepicker
+          name="transaction_date"
           control={methods.control}
-          fullWidth
+          label={dictionary['content'].transactionDate}
           required
-          placeholder={`${dictionary['content'].enter} ${dictionary['content'].leaveReason}`}
-          label={dictionary['content'].leaveReason}
         />
-       <QTextField
-          name='remark'
+      
+        <QTextField
+          name='amount'
           control={methods.control}
           fullWidth
           required
-          placeholder={`${dictionary['content'].enter} ${dictionary['content'].remark}`}
-          label={dictionary['content'].remark}
+          type='number'
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].amount}`}
+          label={dictionary['content'].amount}
+        />
+
+        <QTextField
+          name='description'
+          control={methods.control}
+          fullWidth
+          required
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].description}`}
+          label={dictionary['content'].description}
+        />
+
+        <QTextField
+          name='receipt_path'
+          control={methods.control}
+          fullWidth
+          type='file'
+          accept="image/*, application/pdf"
+          required
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].receipt}`}
+          label={dictionary['content'].receipt}
         />
        </>
       </FormDialog>
 
       <FormDialog
         open={editDialogOpen}
-        setOpen={setEditDialogOpen}
-        title={dictionary['content'].editLeave}
+        setOpen={(open) => {
+          setEditDialogOpen(open)
+          methods.reset(defaultReimbursementValues)
+        }}
+        title={dictionary['content'].editReimburse}
         onSubmit={async (data:any) => {
           try {
-            if (!leaveToEdit) return
+            if (!ReimbursementToEdit) return
             
             const formattedData = {
               ...data,
-              start_date: data.start_date ? moment(data.start_date).format('YYYY-MM-DD') : '',
-              end_date: data.end_date ? moment(data.end_date).format('YYYY-MM-DD') : '',
+              transaction_date: data.transaction_date ? moment(data.transaction_date).format('YYYY-MM-DD') : '',
             }
             
-            const res = await updateLeave(formattedData, leaveToEdit.id);
+            const res = await updateReimbursement(toFormData(formattedData), ReimbursementToEdit.id);
             
-            const response = await res.json()
-            
-            if (response.status) {
-              // Update the local data
-              const updatedData = data?.map((leave: Leave) => 
-                leave.id === leaveToEdit.id ? { ...leave, ...formattedData } : leave
-              )
-              
-              setData(updatedData)
-              setFilteredData(updatedData)
-              
+            if (res.status) {
               // Refresh data with SWR
-              swrMutate('/web/leaves')
-              toast.success(response.message || dictionary['content'].leaveUpdatedSuccessfully)
+              swrMutate('/web/reimbursements')
+              toast.success(res.message || dictionary['content'].leaveUpdatedSuccessfully)
             }
-          } catch (error) {
-            console.log('Error updating leave', error)
-            toast.error(dictionary['content'].errorUpdatingLeave)
+          } catch (error: any) {
+            console.log('Error updating', error)
+            if (error.response && error.response.data) {
+              toast.error(error.response.data.message)
+            } else {
+              toast.error('Terjadi kesalahan pada sistem')
+            }
           } finally {
             methods.reset()
             setEditDialogOpen(false)
-            setLeaveToEdit(null)
+            setReimbursementToEdit(null)
           }
         }}
         handleSubmit={methods.handleSubmit}
       >
         <>
+       {
+          user && user?.type == 'super admin' && 
           <QTextField
-            name='employee_id'
-            control={methods.control}
-            fullWidth
-            required
-            select
-            label={dictionary['content'].employee}
-            disabled={dialogFetchLoading}
-            rules={{
-              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
-            }}
-          >
-            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].employee}</MenuItem>
-            {employees.map((employee) => (
-              <MenuItem key={employee.id} value={employee.id}>
-                {employee.name}
+          name='created_by'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].company}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an company'
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].company}</MenuItem>
+          {companies.map(company => (
+              <MenuItem key={company.id} value={company.id}>
+                {company.first_name} {company.last_name}
               </MenuItem>
             ))}
-          </QTextField>
+        </QTextField>
+        }
+        <QTextField
+          name='employee_id'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].employee}
+          disabled={dialogFetchLoading}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an employee'
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].employee}</MenuItem>
+          { user && user?.type != 'super admin' && employees.map((employee) => (
+            <MenuItem key={employee.id} value={employee.id}>
+              {employee.name}
+            </MenuItem>
+          ))}
 
-          <QTextField
-            name='leave_type_id'
-            control={methods.control}
-            fullWidth
-            required
-            select
-            label={dictionary['content'].leaveType}
-            disabled={dialogFetchLoading}
-            rules={{
-              validate: (value:any) => value !== 0 && value !== "0" || 'Please select an leave type'
-            }}
-          >
-            <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].leaveType}</MenuItem>
-            {leaveTypes.map((leaveType) => (
-              <MenuItem key={leaveType.id} value={leaveType.id}>
-                {leaveType.title}
-              </MenuItem>
-            ))}
-          </QTextField>
-            
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <QReactDatepicker
-                name="start_date"
-                control={methods.control}
-                label={dictionary['content'].startDate}
-                required
-              />
-            </div>
-            <div className="flex-1">
-              <QReactDatepicker
-                name="end_date"
-                control={methods.control}
-                label={dictionary['content'].endDate}
-                required
-              />
-            </div>
-          </div>
-          
-          <QTextField
-            name='leave_reason'
-            control={methods.control}
-            fullWidth
-            required
-            placeholder={`${dictionary['content'].enter} ${dictionary['content'].leaveReason}`}
-            label={dictionary['content'].leaveReason}
-          />
-          <QTextField
-            name='remark'
-            control={methods.control}
-            fullWidth
-            required
-            placeholder={`${dictionary['content'].enter} ${dictionary['content'].remark}`}
-            label={dictionary['content'].remark}
-          />
-        </>
+          { methods.watch('created_by') && employees.filter((emp) => emp.created_by == methods.getValues('created_by')).map((employee) => (
+            <MenuItem key={employee.id} value={employee.id}>
+              {employee.name}
+            </MenuItem>
+          ))}
+        </QTextField>
+
+        <QTextField
+          name='category_id'
+          control={methods.control}
+          fullWidth
+          required
+          select
+          label={dictionary['content'].reimburseCategory}
+          disabled={isLoadingReimburse}
+          rules={{
+            validate: (value:any) => value !== 0 && value !== "0" || 'Please select an reimbursement category'
+          }}
+        >
+          <MenuItem value="0">{dictionary['content'].select} {dictionary['content'].reimburseCategory}</MenuItem>
+          {reimburseDatas?.map((reimburse) => (
+            <MenuItem key={reimburse.id} value={reimburse.id}>
+              {reimburse.name}
+            </MenuItem>
+          ))}
+        </QTextField>
+
+        <QReactDatepicker
+          name="transaction_date"
+          control={methods.control}
+          label={dictionary['content'].transactionDate}
+          required
+        />
+      
+        <QTextField
+          name='amount'
+          control={methods.control}
+          fullWidth
+          required
+          type='number'
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].amount}`}
+          label={dictionary['content'].amount}
+        />
+
+        <QTextField
+          name='description'
+          control={methods.control}
+          fullWidth
+          required
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].description}`}
+          label={dictionary['content'].description}
+        />
+
+        <QTextField
+          name='receipt_path'
+          control={methods.control}
+          fullWidth
+          type='file'
+          accept="image/*, application/pdf"
+          required
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].receipt}`}
+          label={dictionary['content'].receipt}
+        />
+       </>
       </FormDialog>
 
        {/* Delete Confirmation Dialog */}
        <ConfirmationDialog
         open={deleteDialogOpen} 
         setOpen={setDeleteDialogOpen}
-        type='delete-leave'
+        type='delete-reimbursement'
         onConfirm={handleDeleteConfirm}
         isLoading={isDeleting}
       />
 
       {/** Detail Dialog */}
-      <LeaveDetailsDialog
+      <ReimburseDetail
         open={detailsDialogOpen}
         setOpen={setDetailsDialogOpen}
-        leaveData={selectedLeave}
+        data={selectedReimbursement}
       />
 
-      <LeaveStatusDialog
+      <ReimburseUpdateStatusDialog
         open={statusDialogOpen}
         setOpen={setStatusDialogOpen}
-        leaveData={selectedLeaveForStatus}
+        data={selectedReimbursementForStatus}
         onStatusUpdate={async () => {
-          await swrMutate('/web/leaves')
+          await swrMutate('/web/reimbursements')
         }}
       />
     </>
   )
 }
 
-export default LeaveListTable
+export default ReimbursementListTable

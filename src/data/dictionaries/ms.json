@@ -1,6 +1,7 @@
 {
   "navigation": {
-    "assets": "Assets",
+    "reimbursements": "Bayaran Balik",
+    "assets": "Aset",
     "dashboards": "Papan Pemuka",
     "companies": "Syarikat",
     "companyList": "Senarai Syarikat",
@@ -382,6 +383,26 @@
     "editAsset": "Edit Aset",
     "on": "Hidup",
     "off": "Mati",
-    "asset": "Aset"
+    "asset": "Aset",
+    "transactionDate": "Tarikh Transaksi",
+    "requestNumber": "Nombor Permintaan",
+    "reimburseList": "Senarai Bayaran Balik",
+    "addNewReimburse": "Tambah Bayaran Balik Baru",
+    "editReimburse": "Edit Bayaran Balik",
+    "reimburseCategory": "Kategori Bayaran Balik",
+    "reimbursement": "Bayaran Balik",
+    "receiptPath": "Laluan Resit",
+    "receipt": "Resit",
+    "reimburseDetail": "Butiran Bayaran Balik",
+    "requestedAt": "Diminta Pada",
+    "paidBy": "Dibayar Oleh",
+    "paymentMethod": "Kaedah Pembayaran",
+    "updateReimburseStatus": "Kemaskini Status Bayaran Balik",
+    "markAsPaid": "Tandakan sebagai Dibayar",
+    "enterPaymentDetails": "Masukkan Butiran Pembayaran",
+    "paid": "Dibayar",
+    "approve": "Luluskan",
+    "reject": "Tolak",
+    "reimbursementStatus": "Status Bayaran Balik"
   }
 }

@@ -20,12 +20,25 @@ import { i18n, Locale } from '@/configs/i18n'
 import { getDictionary } from '@/utils/getDictionary'
 import { DictionaryProvider } from '@/components/dictionary-provider/DictionaryContext'
 import { SWRConfig } from 'swr'
+import { QueryClient } from '@tanstack/react-query'
+import QueryProvider from '@/components/query-client-provider/QueryProvider'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 menit
+      retry: 1,
+    },
+  },
+})
 
 const Layout = async ({ children, params }: ChildrenType & { params: { lang: Locale } }) => {
   const direction = i18n.langDirection[params.lang]
   const dictionary = await getDictionary(params.lang)
   const mode = getMode()
   const systemMode = getSystemMode()
+
+  
   
   return (
     <Providers direction={direction}>
@@ -40,7 +53,8 @@ const Layout = async ({ children, params }: ChildrenType & { params: { lang: Loc
             <DictionaryProvider dictionary={dictionary}>
               <Suspense fallback={<Loading />}>
                 <ProtectedRoute lang={params.lang}> 
-                  <LayoutWrapper
+                <QueryProvider>
+                <LayoutWrapper
                     systemMode={systemMode}
                     verticalLayout={
                       <VerticalLayout
@@ -57,6 +71,9 @@ const Layout = async ({ children, params }: ChildrenType & { params: { lang: Loc
                       </HorizontalLayout>
                     }
                   />
+
+                </QueryProvider>
+                  
                 </ProtectedRoute>
                 <ScrollToTop className='mui-fixed'>
                   <Button

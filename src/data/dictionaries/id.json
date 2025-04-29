@@ -1,6 +1,7 @@
 {
   "navigation": {
-    "assets": "Assets",
+    "reimbursements": "Penggantian Biaya",
+    "assets": "Aset",
     "dashboards": "Dasbor",
     "companies": "Perusahaan",
     "companyList": "Daftar Perusahaan",
@@ -382,6 +383,26 @@
     "editAsset": "Ubah Aset",
     "on": "Hidup",
     "off": "Mati",
-    "asset": "Aset"
+    "asset": "Aset",
+    "transactionDate": "Tanggal Transaksi",
+    "requestNumber": "Nomor Permintaan",
+    "reimburseList": "Daftar Penggantian Biaya",
+    "addNewReimburse": "Tambah Penggantian Biaya Baru",
+    "editReimburse": "Ubah Penggantian Biaya",
+    "reimburseCategory": "Kategori Penggantian Biaya",
+    "reimbursement": "Penggantian Biaya",
+    "receiptPath": "Lokasi Struk",
+    "receipt": "Struk",
+    "reimburseDetail": "Detail Penggantian Biaya",
+    "requestedAt": "Diminta Pada",
+    "paidBy": "Dibayar Oleh",
+    "paymentMethod": "Metode Pembayaran",
+    "updateReimburseStatus": "Perbarui Status Penggantian Biaya",
+    "markAsPaid": "Tandai sebagai Dibayar",
+    "enterPaymentDetails": "Masukkan Rincian Pembayaran",
+    "paid": "Dibayar",
+    "approve": "Setujui",
+    "reject": "Tolak",
+    "reimbursementStatus": "Status Penggantian Biaya"
   }
 }

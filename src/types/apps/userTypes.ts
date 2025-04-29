@@ -135,9 +135,9 @@ export interface Employee {
   created_by: number
   created_at: string
   updated_at: string
-  branch: Branch
-  department: Department
-  designation: Designation
-  user: User
+  branch?: Branch
+  department?: Department
+  designation?: Designation
+  user?: User
   company?: Company;
 }
