@@ -18,6 +18,7 @@ import { toast } from 'react-toastify'
 import QTextField from '@/@core/components/mui/QTextField'
 import { updateEmployeeSalary } from '@/services/employeeService'
 import { useParams } from 'next/navigation'
+import { useSWRConfig } from 'swr'
 
 type DialogMode = 'add' | 'edit' | 'delete' | null
 
@@ -29,6 +30,7 @@ type Salary = {
 const EmployeeSalary = ({employee, fetchEmployee} : {employee?:Employee, fetchEmployee:any}) => {
   const {dictionary} = useDictionary();
   const params = useParams()
+  const { cache, mutate } = useSWRConfig();
 
    // States
    const [rowSelection, setRowSelection] = useState({})
@@ -83,6 +85,7 @@ const EmployeeSalary = ({employee, fetchEmployee} : {employee?:Employee, fetchEm
   
     const handleDialogSuccess = async () => {
       fetchEmployee();
+      mutate('/web/salaries');
       handleCloseDialog()
     }
 return (

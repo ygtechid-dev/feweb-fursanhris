@@ -146,10 +146,9 @@ const userStatusObj: UserStatusType = {
 const columnHelper = createColumnHelper<EmployeeWithAction>()
 
 const SalaryListTable = ({ tableData }: { tableData?: Employee[] }) => {
-    const { user } = useAuth()
+  const { user } = useAuth()
 
-    const { dictionary } = useDictionary()
-    
+  const { dictionary } = useDictionary()
 
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
@@ -160,6 +159,11 @@ const SalaryListTable = ({ tableData }: { tableData?: Employee[] }) => {
 
   // Hooks
   const { lang: locale } = useParams()
+
+  useEffect(() => {
+    setData(tableData)
+    setFilteredData(tableData)
+  }, [tableData])
 
   const columns = useMemo<ColumnDef<EmployeeWithAction, any>[]>(
     () => {

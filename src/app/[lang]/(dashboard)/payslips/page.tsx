@@ -10,12 +10,12 @@ import useSWR from "swr";
 const PayslipListApp =  () => {
   const {dictionary} = useDictionary();
   const { data, error, isLoading, mutate } = useSWR('/web/payslips', fetcher,{
-    // Enable auto refresh every 5 seconds
     refreshInterval: 5000,
-    // Revalidate on focus
     revalidateOnFocus: true,
-    // Revalidate on reconnect
-    revalidateOnReconnect: true
+    revalidateOnReconnect: true,
+    // Tambahkan ini untuk memaksa revalidasi
+    revalidateIfStale: true,
+    revalidateOnMount: true,
   })
 
   if (error) {

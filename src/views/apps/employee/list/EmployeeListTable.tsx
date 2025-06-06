@@ -367,18 +367,10 @@ const EmployeeListTable = ({ tableData }: { tableData?: Employee[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<Employee, 'name'>) => {
-    const { name } = params
-
-    // if (avatar) {
-    //   return <CustomAvatar src={avatar} size={34} />
-    // } else {
-      return <CustomAvatar size={34}>{getInitials(name as string)}</CustomAvatar>
-    // }
-  }
 
   useEffect(() => {
     setData(...[tableData])
+     setFilteredData(tableData)
   }, [tableData])
 
   return (

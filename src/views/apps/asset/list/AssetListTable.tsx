@@ -362,6 +362,7 @@ const AssetListTable = ({ tableData }: { tableData?: Asset[] }) => {
 
     const handleDialogOpen = async () => {
       setDialogOpen(true)
+      setEmployees([]);
       setDialogFetchLoading(true)
       
       try {
@@ -371,6 +372,7 @@ const AssetListTable = ({ tableData }: { tableData?: Asset[] }) => {
         ])
         
         setEmployees(employeesResponse?.data || [])
+        methods.reset(defaultFormValuesAsset)
       } catch (error) {
         console.error('Error loading dialog data:', error)
       } finally {
@@ -416,6 +418,7 @@ const AssetListTable = ({ tableData }: { tableData?: Asset[] }) => {
     const handleEditClick = async (obj: Asset) => {
       setAssetToEdit(obj)
       // setDialogFetchLoading(true)
+      setEmployees([])
       setEditDialogOpen(true)
       
       try {
@@ -423,11 +426,13 @@ const AssetListTable = ({ tableData }: { tableData?: Asset[] }) => {
         const [employeesResponse] = await Promise.all([
           getEmployees(),
         ])
-        
+
+     
+      
         setEmployees(employeesResponse?.data || [])
         
         // Reset form with the leave data
-        methods.reset({
+           methods.reset({
           ...obj,
           buying_date: obj.buying_date ? moment(obj.buying_date).format('YYYY-MM-DD') : '',
         })
@@ -750,7 +755,7 @@ const AssetListTable = ({ tableData }: { tableData?: Asset[] }) => {
             </MenuItem>
           ))}
 
-          { methods.watch('created_by') && employees.filter((emp) => emp.created_by == methods.getValues('created_by')).map((employee) => (
+          { methods.watch('created_by') && user && user?.type == 'super admin' && employees.filter((emp) => emp.created_by == methods.getValues('created_by')).map((employee) => (
             <MenuItem key={employee.id} value={employee.id}>
               {employee.name}
             </MenuItem>

@@ -23,6 +23,7 @@ import moment from 'moment'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import { toast } from 'react-toastify'
 import { deleteAllowance, postAllowance, updateAllowance } from '@/services/allowanceService'
+import { mutate, useSWRConfig } from 'swr'
 
 type TableWithAction = Allowance & {
   action?: string
@@ -41,6 +42,8 @@ const Allowances = () => {
   const [allowances, setAllowances] = useState<Allowance[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+    // const { cache, mutate } = useSWRConfig();
   
   // Dialog states
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -117,6 +120,7 @@ const Allowances = () => {
   }
   
   const handleDialogSuccess = async () => {
+    //  await mutate('/web/salaries');
     await fetchAllowances()
     handleCloseDialog()
   }
@@ -359,6 +363,7 @@ const Allowances = () => {
             if (res.status) {
               
               // Refresh data with SWR
+                //  await mutate('/web/salaries', undefined, { revalidate: true });
               handleDialogSuccess()
               toast.success(res.message || dictionary['content'].leaveUpdatedSuccessfully)
             }

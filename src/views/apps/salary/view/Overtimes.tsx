@@ -24,6 +24,7 @@ import QTextField from '@/@core/components/mui/QTextField'
 import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import { formatPrice } from '@/utils/formatPrice'
+import { useSWRConfig } from 'swr'
 
 type TableWithAction = Overtime & {
   action?: string
@@ -40,10 +41,12 @@ const Overtimes = () => {
    const [overtimes, setOvertimes] = useState<Overtime[]>([])
 
    const [dialogOpen, setDialogOpen] = useState(false)
-     const [dialogMode, setDialogMode] = useState<DialogMode>(null)
-     const [selectedOvertime, setSelectedOvertime] = useState<Overtime | null>(null)
-     
-     const [isDeleting, setIsDeleting] = useState<boolean>(false)
+    const [dialogMode, setDialogMode] = useState<DialogMode>(null)
+    const [selectedOvertime, setSelectedOvertime] = useState<Overtime | null>(null)
+    
+    const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
+    const { cache, mutate } = useSWRConfig();
 
    // Extract employee ID from the URL params
    const employeeId = typeof params.id === 'string' 
@@ -105,6 +108,7 @@ const Overtimes = () => {
       }
       
       const handleDialogSuccess = async () => {
+        mutate('/web/salaries');
         await fetchOvertime()
         handleCloseDialog()
       }

@@ -23,6 +23,7 @@ import FormDialog from '@/components/dialogs/form-dialog/FormDialog'
 import QTextField from '@/@core/components/mui/QTextField'
 import QReactDatepicker from '@/@core/components/mui/QReactDatepicker'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import { useSWRConfig } from 'swr'
 
 type TableWithAction = Deduction & {
   action?: string
@@ -43,6 +44,7 @@ const Deductions = () => {
   const [selectedDeduction, setSelectedDeduction] = useState<Deduction | null>(null)
   
   const [isDeleting, setIsDeleting] = useState<boolean>(false)
+  const { cache, mutate } = useSWRConfig();
 
    // Extract employee ID from the URL params
    const employeeId = typeof params.id === 'string' 
@@ -108,6 +110,7 @@ const Deductions = () => {
       }
       
       const handleDialogSuccess = async () => {
+        mutate('/web/salaries');
         await fetchDeduction()
         handleCloseDialog()
       }

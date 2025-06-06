@@ -328,7 +328,8 @@ const SalaryDetailTable = ({ tableData }: { tableData?: UsersType[] }) => {
           <Button
                 variant='contained'
                 // startIcon={<i className='tabler-plus' />}
-                onClick={() => router.push(`/${locale}/salary`)}
+                onClick={() => router.replace(`/${locale}/salary`)}
+                // href={`/${locale}/salary`}
                 className='bg-secondary '
               >
                 {dictionary['content'].back}
