@@ -46,6 +46,7 @@ import type { Locale } from '@configs/i18n'
 // Component Imports
 import TableFilters from './TableFilters'
 import AddUserDrawer from './AddUserDrawer'
+import ImportSalaryModal from './ImportSalaryModal'
 import OptionMenu from '@core/components/option-menu'
 import TablePaginationComponent from '@components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
@@ -60,6 +61,9 @@ import tableStyles from '@core/styles/table.module.css'
 import { formatPrice } from '@/utils/formatPrice'
 import { useAuth } from '@/components/AuthProvider'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import { postImportSalaryComnponent } from '@/services/employeeService'
+import { useSWRConfig } from 'swr'
+import { toast } from 'react-toastify'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -149,9 +153,11 @@ const SalaryListTable = ({ tableData }: { tableData?: Employee[] }) => {
   const { user } = useAuth()
 
   const { dictionary } = useDictionary()
+  const { mutate } = useSWRConfig()
 
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
+  const [importModalOpen, setImportModalOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
   const [data, setData] = useState(...[tableData])
   const [filteredData, setFilteredData] = useState(data)
@@ -164,6 +170,42 @@ const SalaryListTable = ({ tableData }: { tableData?: Employee[] }) => {
     setData(tableData)
     setFilteredData(tableData)
   }, [tableData])
+
+  // Handle import salary component
+  const handleImportSalary = async (file: File) => {
+    try {
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      // Make API call to import salary data
+      const response = await postImportSalaryComnponent(formData);
+      
+      if (!response.success) {
+        throw new Error('Failed to import salary data')
+      }
+      
+      // const result = await response.json()
+      
+      // For demo purposes, we'll simulate success
+      console.log('Importing file:', file.name)
+
+      toast.success("Data successfully imported");
+      mutate('/web/salaries')
+      
+      // Refresh data after successful import
+      // You can call your data fetching function here
+      // await refetchData()
+      
+      // Show success message (you can use your notification system)
+      console.log('Import successful!')
+      
+    } catch (error) {
+       toast.error("an error occurred while importing");
+      console.error('Import error:', error)
+      throw error
+    }
+  }
 
   const columns = useMemo<ColumnDef<EmployeeWithAction, any>[]>(
     () => {
@@ -340,14 +382,17 @@ const SalaryListTable = ({ tableData }: { tableData?: Employee[] }) => {
               placeholder={`${dictionary['content'].searchData}`}
               className='max-sm:is-full'
             />
-            {/* <Button
-              color='secondary'
+            
+            <Button
+              color='warning'
               variant='tonal'
               startIcon={<i className='tabler-upload' />}
               className='max-sm:is-full'
+              onClick={() => setImportModalOpen(true)}
             >
-              Export
-            </Button> */}
+              Import Salary Component
+            </Button>
+
             {/* <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
@@ -423,6 +468,14 @@ const SalaryListTable = ({ tableData }: { tableData?: Employee[] }) => {
           }}
         />
       </Card>
+
+      {/* Import Salary Modal */}
+      <ImportSalaryModal
+        open={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onImport={handleImportSalary}
+      />
+
       {/* <AddUserDrawer
         open={addUserOpen}
         handleClose={() => setAddUserOpen(!addUserOpen)}

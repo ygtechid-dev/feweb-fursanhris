@@ -84,6 +84,20 @@ export const fetchBranches = async (): Promise<Branch[]> => {
   return response.data.data
 }
 
+export const exportEmployeeSalary = async (): Promise<any> => {
+  const response = await axiosInstance.get('/web/export-salary-component')
+  return response.data
+}
+export const postImportSalaryComnponent = async (formData: FormData): Promise<any> => {
+  try {
+    const response = await axiosFileInstance.post('/web/import-salary-component', formData);
+    return response?.data;
+  } catch (error) {
+    console.error('Error importing salary component with files:', error);
+    throw error;
+  }
+};
+
 export const fetchDepartmentsByBranch = async (branchId: string): Promise<Department[]> => {
   const response = await axiosInstance.get(`/departments`, {
     params: { branch_id: branchId }
