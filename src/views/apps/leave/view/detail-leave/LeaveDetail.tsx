@@ -13,6 +13,7 @@ import Grid from '@mui/material/Grid';
 import { Leave } from '@/types/leaveTypes';
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext';
 import { ucfirst } from '@/utils/string';
+import { Link } from '@mui/material';
 
 interface LeaveDetailsDialogProps {
   open: boolean;
@@ -40,6 +41,27 @@ const LeaveDetailsDialog = ({ open, setOpen, leaveData }: LeaveDetailsDialogProp
 
   const handleClose = () => {
     setOpen(false);
+  };
+
+  // Function to determine if file is an image or PDF
+  const isImageFile = (url: string) => {
+    const lowerCaseUrl = url.toLowerCase();
+    return lowerCaseUrl.endsWith('.jpg') || 
+           lowerCaseUrl.endsWith('.jpeg') || 
+           lowerCaseUrl.endsWith('.png') || 
+           lowerCaseUrl.endsWith('.gif') || 
+           lowerCaseUrl.endsWith('.webp');
+  };
+  
+  const isPdfFile = (url: string) => {
+    return url.toLowerCase().endsWith('.pdf');
+  };
+  
+  // Function to open receipt in new tab
+  const handleViewReceipt = () => {
+    if (leaveData.document_path) {
+      window.open(leaveData.document_path, '_blank');
+    }
   };
 
   // Format date and time from timestamp
@@ -147,6 +169,55 @@ const LeaveDetailsDialog = ({ open, setOpen, leaveData }: LeaveDetailsDialogProp
                 <Typography variant="body1" className="mt-1">
                   {leaveData.remark}
                 </Typography>
+              </Grid>
+            )}
+
+            {/* Receipt Display Section */}
+            {leaveData.document_path && (
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary" className="mb-1">
+                  {dictionary['content']?.document || 'Receipt'}
+                </Typography>
+                
+                <Box className="mt-1 flex flex-col">
+                  {isImageFile(leaveData.document_path) ? (
+                    <Box className="max-w-xs mb-2">
+                      <img 
+                        src={leaveData.document_path} 
+                        alt="Receipt" 
+                        className="w-full rounded border cursor-pointer" 
+                        onClick={handleViewReceipt}
+                        style={{ maxHeight: '150px', objectFit: 'contain' }}
+                      />
+                    </Box>
+                  ) : isPdfFile(leaveData.document_path) ? (
+                    <Box className="flex items-center">
+                      <i className="tabler-file-type-pdf text-red-500 text-xl mr-2" />
+                      <Link
+                        href="#" 
+                        onClick={handleViewReceipt}
+                        underline="hover"
+                        className="text-primary"
+                      >
+                        {dictionary['content']?.viewReceipt || 'View PDF Receipt'}
+                      </Link>
+                    </Box>
+                  ) : (
+                    <Link 
+                      href={leaveData.document_path} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      underline="hover"
+                      className="text-primary"
+                    >
+                      {dictionary['content']?.viewReceipt || 'View Receipt'}
+                    </Link>
+                  )}
+                  
+                  <Typography variant="caption" color="text.secondary" className="mt-1">
+                    {leaveData.document_path.split('/').pop() || 'Receipt'}
+                  </Typography>
+                </Box>
               </Grid>
             )}
             

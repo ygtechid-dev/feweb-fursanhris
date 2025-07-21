@@ -25,6 +25,7 @@
     "complaint": "Complaint",
     "warning": "Warning",
     "termination": "Termination",
+    "leaveType": "Leave Type",
     "analytics": "Analytics",
     "eCommerce": "E-Commerce",
     "academy": "Academy",
@@ -404,6 +405,10 @@
     "approve": "Approve",
     "reject": "Reject",
     "reimbursementStatus": "Reimbursement Status",
-    "viewReceipt": "View Receipt"
+    "viewReceipt": "View Receipt",
+    "addCompany": "Add New Company",
+    "family": "Family",
+    "days": "Days",
+    "addNewLeaveType": "Add New Leave Type"
   }
 }

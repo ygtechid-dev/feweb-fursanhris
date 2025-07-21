@@ -14,6 +14,7 @@ import moment from 'moment'
 import { useParams, useRouter } from 'next/navigation'
 import { useSWRConfig } from 'swr'
 import { toFormData } from '@/utils/toFormData'
+import Family from '@/views/apps/employee/add/Family'
 
 
 const EmployeeAdd = () => {
@@ -41,7 +42,10 @@ const EmployeeAdd = () => {
       bank_identifier_code: '',
       branch_location: '', 
       tax_payer_id: '', 
-      documents: { certificate: '', photo: '' }
+      documents: { certificate: '', photo: '' },
+      family_name: '',
+      family_address: '',
+      family_phone: '',
     }
   })
 
@@ -86,6 +90,9 @@ const EmployeeAdd = () => {
           </Grid>
           <Grid item xs={12} md={6}>
             <BankAccount />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Family />
           </Grid>
         </Grid>
     </FormProvider>

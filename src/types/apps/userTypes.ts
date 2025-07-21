@@ -103,6 +103,10 @@ export interface EmployeeFormData {
   
   // Documents
   documents: null | any
+
+  family_name: string,
+      family_address: string,
+      family_phone: string,
 }
 
 export interface Employee {

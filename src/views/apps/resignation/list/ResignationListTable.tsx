@@ -547,6 +547,16 @@ const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
             label={'Last Working Day'}
             required
           />
+            <QTextField
+                name='document_path'
+                control={methods.control}
+                fullWidth
+                type='file'
+                accept="image/*, application/pdf"
+                required
+                placeholder={`${dictionary['content'].enter} ${dictionary['content'].document}`}
+                label={dictionary['content'].document}
+              />
           <QTextField
             name='description'
             control={methods.control}
@@ -623,6 +633,16 @@ const ResignationListTable = ({ tableData }: { tableData?: Resignation[] }) => {
             label={'Last Working Day'}
             required
           />
+            <QTextField
+              name='document_path'
+              control={methods.control}
+              fullWidth
+              type='file'
+              accept="image/*, application/pdf"
+              required
+              placeholder={`${dictionary['content'].enter} ${dictionary['content'].document}`}
+              label={dictionary['content'].document}
+            />
           <QTextField
             name='description'
             control={methods.control}

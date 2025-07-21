@@ -1,4 +1,5 @@
 import axiosInstance from "@/libs/axios";
+import axiosFileInstance from "@/libs/axiosFileInstance";
 
 
 export const getResignation = async (params?: {
@@ -33,7 +34,7 @@ export const getResignation = async (params?: {
 
 export const postResignation = async (datas:any): Promise<any> => {
     try {
-      const response = await axiosInstance.post('/web/resignations', { ...datas });
+      const response = await axiosFileInstance.post('/web/resignations', { ...datas });
       return response?.data;
     } catch (error) {
       console.error('Error fetching Resignationes:', error);
@@ -43,7 +44,7 @@ export const postResignation = async (datas:any): Promise<any> => {
 
 export const updateResignation = async (id:number, datas:any) => {
   try {
-    const response = await axiosInstance.put(`/web/resignations/${id}`, { ...datas });
+    const response = await axiosFileInstance.put(`/web/resignations/${id}`, { ...datas });
     return response?.data;
   } catch (error) {
     console.error('Error:', error);

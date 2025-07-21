@@ -16,6 +16,7 @@ import { useSWRConfig } from 'swr'
 import { useEffect, useState } from 'react'
 import CircularProgress from '@mui/material/CircularProgress'
 import CompanyDetail from '@/views/apps/employee/edit/CompanyDetail'
+import Family from '@/views/apps/employee/add/Family'
 
 interface InitialOptions {
     branches: Branch[]
@@ -62,7 +63,10 @@ const EmployeeEdit = () => {
       bank_identifier_code: '',
       branch_location: '',
       tax_payer_id: '',
-      documents: { certificate: '', photo: '' }
+      documents: { certificate: '', photo: '' },
+        family_name: '',
+      family_address: '',
+      family_phone: '',
     }
   })
 
@@ -185,6 +189,9 @@ console.log({formattedData})
         <Grid item xs={12} md={6}>
           <BankAccount />
         </Grid>
+        <Grid item xs={12} md={6}>
+            <Family />
+          </Grid>
       </Grid>
     </FormProvider>
   )

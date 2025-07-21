@@ -34,6 +34,7 @@ type ConfirmationType = 'delete-account'
 | 'delete-project'
 | 'delete-asset'
 | 'delete-reimbursement'
+| 'delete-leave-type'
 
 type ConfirmationDialogProps = {
   open: boolean
@@ -102,6 +103,7 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, isLoading }: Confi
               {type === 'delete-project' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].project.toLowerCase()}?`}
               {type === 'delete-asset' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].asset.toLowerCase()}?`}
               {type === 'delete-reimbursement' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].reimbursement.toLowerCase()}?`}
+              {type === 'delete-leave-type' && `${dictionary['content'].areYouSureWantToDelete} ${dictionary['content'].leaveType.toLowerCase()}?`}
             </Typography>
             {type === 'suspend-account' && (
               <Typography color='text.primary'>You won&#39;t be able to revert user!</Typography>
@@ -185,6 +187,7 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, isLoading }: Confi
                 {type === 'delete-project' && `${dictionary['content'].project} ${dictionary['content'].removedSuccessfully}`}
                 {type === 'delete-asset' && `${dictionary['content'].asset} ${dictionary['content'].removedSuccessfully}`}
                 {type === 'delete-reimbursement' && `${dictionary['content'].reimbursement} ${dictionary['content'].removedSuccessfully}`}
+                {type === 'delete-leave-type' && `${dictionary['content'].leaveType} ${dictionary['content'].removedSuccessfully}`}
               </>
             ) : (
               <>
@@ -210,6 +213,7 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, isLoading }: Confi
                 {type === 'delete-project' && `${dictionary['content'].project} ${dictionary['content'].deletionCancelled}`}
                 {type === 'delete-asset' && `${dictionary['content'].asset} ${dictionary['content'].deletionCancelled}`}
                 {type === 'delete-reimbursement' && `${dictionary['content'].reimbursement} ${dictionary['content'].deletionCancelled}`}
+                {type === 'delete-leave-type' && `${dictionary['content'].leaveType} ${dictionary['content'].deletionCancelled}`}
               </>
             )}
           </Typography>

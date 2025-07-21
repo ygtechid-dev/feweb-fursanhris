@@ -25,6 +25,7 @@
     "complaint": "Aduan",
     "warning": "Amaran",
     "termination": "Penamatan",
+    "leaveType": "Leave Type",
     "analytics": "Analitik",
     "eCommerce": "E-dagang",
     "academy": "Akademi",
@@ -404,6 +405,10 @@
     "approve": "Luluskan",
     "reject": "Tolak",
     "reimbursementStatus": "Status Bayaran Balik",
-    "viewReceipt": "Lihat Resit"
+    "viewReceipt": "Lihat Resit",
+    "addCompany": "Tambah Syarikat Baru",
+    "family": "Keluarga",
+    "days": "Hari",
+    "addNewLeaveType": "Tambah Jenis Cuti Baharu"
   }
 }

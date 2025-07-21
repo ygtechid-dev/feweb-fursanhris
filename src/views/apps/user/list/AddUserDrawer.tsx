@@ -25,6 +25,7 @@ import { KeyedMutator, useSWRConfig } from 'swr'
 import { useParams, useRouter } from 'next/navigation'
 import { Dictionary } from '@/@core/types'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
+import { useAuth } from '@/components/AuthProvider'
 
 type Props = {
   open: boolean
@@ -56,6 +57,7 @@ const AddUserDrawer = (props: Props) => {
 
 
   // Hooks
+    const { user } = useAuth()
   const { mutate } = useSWRConfig()
   const {dictionary} = useDictionary();
   const router = useRouter()
@@ -122,7 +124,7 @@ const AddUserDrawer = (props: Props) => {
       sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
     >
       <div className='flex items-center justify-between plb-5 pli-6'>
-        <Typography variant='h5'>{dictionary['content'].addUser}</Typography>
+        <Typography variant='h5'>{user && user?.type == 'super admin' ?  dictionary['content'].addCompany : dictionary['content'].addUser}</Typography>
         <IconButton size='small' onClick={handleReset}>
           <i className='tabler-x text-2xl text-textPrimary' />
         </IconButton>

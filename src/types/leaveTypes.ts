@@ -8,6 +8,7 @@ export interface LeaveType {
     created_by: number;
     created_at: string;
     updated_at: string;
+     company?: Company;
   }
   
   export interface Leave {
@@ -32,6 +33,7 @@ export interface LeaveType {
     approver: null | any;
     rejecter: null | any;
     company?: Company;
+    document_path: string;
   }
 
   export const defaultLeaveTypeValues: LeaveType = {
@@ -40,7 +42,8 @@ export interface LeaveType {
     days: 0,
     created_by: 0,
     created_at: "",
-    updated_at: ""
+    updated_at: "",
+      company: undefined
   };
   
   export const defaultLeaveValues: Leave = {
@@ -64,5 +67,6 @@ export interface LeaveType {
     leave_type: defaultLeaveTypeValues,
     approver: null,
     rejecter: null,
-    company: undefined
+    company: undefined,
+    document_path: ''
   };

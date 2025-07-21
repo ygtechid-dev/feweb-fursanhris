@@ -20,6 +20,7 @@
     "payslip": "قسيمة الراتب",
     "reward": "المكافأة",
     "resignation": "الاستقالة",
+    "leaveType": "نوع الإجازة",
     "trip": "الرحلة",
     "promotion": "الترقية",
     "complaint": "الشكوى",
@@ -404,6 +405,10 @@
     "approve": "موافقة",
     "reject": "رفض",
     "reimbursementStatus": "حالة المبلغ المسترد",
-    "viewReceipt": "عرض الإيصال"
+    "viewReceipt": "عرض الإيصال",
+    "addCompany": "إضافة شركة جديدة",
+    "family": "أقرب عائلة",
+    "days": "أيام",
+    "addNewLeaveType": "إضافة نوع إجازة جديد"
   }
 }

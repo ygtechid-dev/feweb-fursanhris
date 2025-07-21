@@ -25,6 +25,7 @@
     "complaint": "Keluhan",
     "warning": "Peringatan",
     "termination": "Pemberhentian",
+    "leaveType": "Leave Type",
     "analytics": "Analytique",
     "eCommerce": "commerce électronique",
     "academy": "Académie",
@@ -404,6 +405,10 @@
     "approve": "Setujui",
     "reject": "Tolak",
     "reimbursementStatus": "Status Penggantian Biaya",
-    "viewReceipt": "Lihat Struk"
+    "viewReceipt": "Lihat Struk",
+    "addCompany": "Tambah Perusahaan Baru",
+    "family": "Keluarga",
+    "days": "Hari",
+    "addNewLeaveType": "Tambah Jenis Cuti Baru"
   }
 }

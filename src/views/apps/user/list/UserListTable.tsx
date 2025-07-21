@@ -65,6 +65,7 @@ import EditUserDrawer from './EditUserDrawer'
 import { Role } from '@/types/userTypes'
 import { useDictionary } from '@/components/dictionary-provider/DictionaryContext'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import { useAuth } from '@/components/AuthProvider'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -142,6 +143,8 @@ const userStatusObj: UserStatusType = {
 const columnHelper = createColumnHelper<UsersTypeWithAction>()
 
 const UserListTable = ({ tableData, mutate }: { tableData?: User[],  mutate: KeyedMutator<any> }) => {
+  const { user } = useAuth()
+  
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -353,7 +356,7 @@ const UserListTable = ({ tableData, mutate }: { tableData?: User[],  mutate: Key
   return (
     <>
       <Card>
-        <CardHeader title={dictionary['content'].users} className='pbe-4' />
+        <CardHeader title={user && user?.type == 'super admin' ? `${dictionary['content'].list} ${dictionary['content'].company}` : `${dictionary['content'].list} ${dictionary['content'].users}`} className='pbe-4' />
         <TableFilters setData={setFilteredData} tableData={data} roles={roles} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
@@ -387,7 +390,7 @@ const UserListTable = ({ tableData, mutate }: { tableData?: User[],  mutate: Key
               onClick={() => setAddUserOpen(!addUserOpen)}
               className='max-sm:is-full'
             >
-              {dictionary['content'].addUser}
+              {user && user?.type == 'super admin' ? dictionary['content'].addCompany : dictionary['content'].addUser }
             </Button>
           </div>
         </div>

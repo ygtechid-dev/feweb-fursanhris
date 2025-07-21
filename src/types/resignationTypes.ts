@@ -9,6 +9,7 @@ export interface Resignation {
   resignation_date: string;
   resignation_date_formatted: string;
   description: string;
+  document_path: string;
   status: string;
   created_at: string;
   created_at_formatted: string;
@@ -27,6 +28,7 @@ export const defaultFormValuesResignation = {
   status: '',
   created_at: '',
   created_at_formatted: '',
+  document_path: '',
   created_by: 0,
   company: undefined, 
 }

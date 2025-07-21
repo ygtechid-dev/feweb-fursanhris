@@ -1,4 +1,5 @@
 import axiosInstance from "@/libs/axios"
+import axiosFileInstance from "@/libs/axiosFileInstance";
 
 export const getLeaveTypes = async (params?: {
   page?: number;
@@ -32,7 +33,7 @@ export const getLeaves = async (params?: {
 
 export const postLeave = async (datas:any): Promise<any> => {
     try {
-      const response = await axiosInstance.post('/web/leaves', { ...datas });
+      const response = await axiosFileInstance.post('/web/leaves', { ...datas });
       return response?.data;
     } catch (error) {
       console.error('Error:', error);

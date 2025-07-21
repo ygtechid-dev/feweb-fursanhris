@@ -79,26 +79,17 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         {dictionary['navigation'].dashboard}
         </MenuItem>
         {/* <MenuSection label={'Administration'}> */}
-        <MenuItem href={`/${locale}/users`} icon={<i className='tabler-users' />}>
+        {
+          user && user?.type == 'super admin' ? <MenuItem href={`/${locale}/users`} icon={<i className='tabler-users' />}>
+          {dictionary['navigation'].companies}
+        </MenuItem> : <MenuItem href={`/${locale}/users`} icon={<i className='tabler-users' />}>
           {dictionary['navigation'].user}
         </MenuItem>
+        }
+        
         {/* </MenuSection> */}
         {/* <MenuSection label={'Super Admin'}> */}
-        <SubMenu label={dictionary['navigation'].companies} icon={<i className='tabler-buildings' />}>
-        {/* {user?.type == 'super admin' && (<MenuItem href={`/${locale}/companies`}>
-          {dictionary['navigation'].companyList}
-          </MenuItem>)} */}
-          
-        <MenuItem href={`/${locale}/companies/branches`}>
-          {dictionary['navigation'].branches}
-        </MenuItem>
-        <MenuItem href={`/${locale}/companies/departments`}>
-          {dictionary['navigation'].departments}
-        </MenuItem>
-        <MenuItem href={`/${locale}/companies/designations`}>
-          {dictionary['navigation'].designations}
-        </MenuItem>
-        </SubMenu>
+        
         {/* </MenuSection> */}
         {/* <MenuSection label={'Hrm'}> */}
         <MenuItem href={`/${locale}/employees`} icon={<i className='tabler-user' />}>
@@ -153,6 +144,28 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
           <MenuItem href={`/${locale}/termination`}>
           {dictionary['navigation'].termination}
           </MenuItem>
+        </SubMenu>
+        <SubMenu
+        //  label={dictionary['navigation'].companies} 
+         label='HR System Setup'
+         icon={<i className='tabler-buildings' />}
+         >
+        {/* {user?.type == 'super admin' && (<MenuItem href={`/${locale}/companies`}>
+          {dictionary['navigation'].companyList}
+          </MenuItem>)} */}
+          
+        <MenuItem href={`/${locale}/companies/branches`}>
+          {dictionary['navigation'].branches}
+        </MenuItem>
+        <MenuItem href={`/${locale}/companies/departments`}>
+          {dictionary['navigation'].departments}
+        </MenuItem>
+        <MenuItem href={`/${locale}/companies/designations`}>
+          {dictionary['navigation'].designations}
+        </MenuItem>
+          <MenuItem href={`/${locale}/system-setup/leave-type`}>
+          {dictionary['navigation'].leaveType}
+        </MenuItem>
         </SubMenu>
         {/* <MenuItem href={`/${locale}/documents`} icon={<i className='tabler-file' />}>
         {dictionary['navigation'].document}

@@ -710,7 +710,16 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
                 />
               </div>
         </div>
-         
+        <QTextField
+          name='document_path'
+          control={methods.control}
+          fullWidth
+          type='file'
+          accept="image/*, application/pdf"
+          required
+          placeholder={`${dictionary['content'].enter} ${dictionary['content'].document}`}
+          label={dictionary['content'].document}
+        />
        <QTextField
           name='leave_reason'
           control={methods.control}
@@ -831,7 +840,16 @@ const LeaveListTable = ({ tableData }: { tableData?: Leave[] }) => {
               />
             </div>
           </div>
-          
+           <QTextField
+            name='document_path'
+            control={methods.control}
+            fullWidth
+            type='file'
+            accept="image/*, application/pdf"
+            required
+            placeholder={`${dictionary['content'].enter} ${dictionary['content'].document}`}
+            label={dictionary['content'].document}
+          />
           <QTextField
             name='leave_reason'
             control={methods.control}
